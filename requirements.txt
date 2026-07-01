@@ -12,3 +12,4 @@ python-multipart
 uv add --dev pytest pytest-asyncio httpx
 uv add --dev ruff
 uv add --dev mypy
+greenlet

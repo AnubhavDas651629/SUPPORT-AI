@@ -1,7 +1,6 @@
 # Create SQLALchemy engine -> to connect to Postgres SQL
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from app.core.config import settings
-from app.db.base import Base
 
 engine = create_async_engine(
     settings.database_url,
