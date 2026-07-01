@@ -10,7 +10,7 @@ from alembic import context
 config = context.config
 from app.core.config import settings
 config.set_main_option(
-    "sqlalchemy,url",
+    "sqlalchemy.url",
     settings.database_url.replace("+asyncpg", "")
 )
 # Interpret the c
