@@ -1,0 +1,14 @@
+fastapi 
+uvicorn
+sqlalchemy 
+asyncpg 
+alembic
+pydantic-settings 
+python-dotenv
+python-jose[cryptography] 
+passlib[bcrypt]
+structlog
+python-multipart
+uv add --dev pytest pytest-asyncio httpx
+uv add --dev ruff
+uv add --dev mypy
