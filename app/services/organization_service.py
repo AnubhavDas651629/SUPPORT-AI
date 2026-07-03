@@ -1,7 +1,9 @@
 from slugify import slugify
 from sqlalchemy.ext.asyncio import AsyncSession
+from uuid import UUID
 
-from app.models import Organization
+from app.exceptions.organization import OrganizationNotFoundException
+from app.models import Organization, organization
 from app.models.organization_member import OrganizationRole
 from app.models.user import User
 from app.repositories.organization_member_repository import OrganizationMemberRepository
@@ -36,3 +38,15 @@ class OrganizationService:
         return await self.organization_repository.list_for_user(
             user_id=current_user.id
         )
+
+    async def get_organization(self, *, organization_id: UUID, current_user: User) -> Organization:
+        organization = (
+            await self.organization_repository.get_by_id_for_user(
+                organization_id=organization_id,
+                user_id=current_user.id,
+            )
+        )
+        if organization is None:
+            raise OrganizationNotFoundException()
+
+        return organization
