@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.repositories.user_repository import UserRepository
 from app.core.security import create_access_token, hash_password, verify_password
-from app.core.exception_handlers import UserAlreadyExistsException
+from app.exceptions.auth import UserAlreadyExistsException
 from app.schemas.auth import TokenResponse
 
 class AuthService:

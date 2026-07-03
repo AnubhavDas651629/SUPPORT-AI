@@ -13,7 +13,7 @@ from app.models.mixins import TimestampMixin, UUIDMixin
 
 class User(Base, TimestampMixin,UUIDMixin):
     __tablename__ = "users"
-    email: Mapped[str] = mapped_column(String(255),unique=True, nullable=False, index=True)
+    email: Mapped[str] = mapped_column(String(255),unique=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     phone_number: Mapped[str | None] = mapped_column(String(20), nullable=True)
     full_name: Mapped[str] = mapped_column(String(100), nullable=False)
