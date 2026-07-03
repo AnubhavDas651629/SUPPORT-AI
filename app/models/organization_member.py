@@ -1,13 +1,18 @@
 from enum import Enum
 from uuid import UUID
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.user import User
+    from app.models.organization import Organization
+
 from sqlalchemy import Enum as SQLEnum, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.models.mixins import TimestampMixin
-from app.models.user import User
-from app.models.organization import Organization
+
 
 
 class OrganizationRole(str, Enum):
@@ -22,9 +27,9 @@ class OrganizationMember(Base, TimestampMixin):
     organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), primary_key=True)
     role: Mapped[OrganizationRole] = mapped_column(SQLEnum(OrganizationRole), default=OrganizationRole.MEMBER, nullable=False)
     user: Mapped["User"] = relationship(
-        back_populates="organization_memberships",
+        back_populates="organization_member",
     )
     organization: Mapped["Organization"] = relationship(
-        back_populates="members",
+        back_populates="member",
     )
 

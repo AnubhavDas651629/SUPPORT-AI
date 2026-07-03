@@ -1,17 +1,10 @@
-from sqlite3.dbapi2 import Timestamp
-from time import timezone
 from tokenize import String
-from turtle import update
-from uuid import UUID, uuid4
-from sqlalchemy import Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
-from datetime import datetime, UTC
-from sqlalchemy import Boolean, func, String
+from sqlalchemy import Boolean, String
 
 from app.models.organization_member import OrganizationMember
 from app.models.mixins import TimestampMixin, UUIDMixin
-from app.models.organization import Organization
 
 class User(Base, TimestampMixin,UUIDMixin):
     __tablename__ = "users"

@@ -1,7 +1,7 @@
 from slugify import slugify
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import organization
+from app.models import Organization
 from app.models.organization_member import OrganizationRole
 from app.models.user import User
 from app.repositories.organization_member_repository import OrganizationMemberRepository
@@ -31,3 +31,8 @@ class OrganizationService:
         )
         await self.session.commit()
         return organization
+
+    async def list_organizations(self, *, current_user:User,) -> list[Organization]:
+        return await self.organization_repository.list_for_user(
+            user_id=current_user.id
+        )

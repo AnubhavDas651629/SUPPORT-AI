@@ -1,3 +1,4 @@
+from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import query
@@ -19,7 +20,7 @@ class OrganizationRepository(BaseRepository):
         await self.session.flush()
         return organization
 
-    async def list_for_user(self, *, user_id,) -> list[Organization]:
+    async def list_for_user(self, *, user_id:UUID) -> list[Organization]:
         query = (
             select(Organization)
             .join(OrganizationMember)
@@ -31,3 +32,15 @@ class OrganizationRepository(BaseRepository):
 
         return list(result.scalars().all())
 
+    async def get_by_id_for_user(self, *, organization_id: UUID, user_id: UUID) -> Organization | None:
+        query = (
+            select(Organization)
+            .join(OrganizationMember)
+            .where(
+                organization.id == organization_id,
+                OrganizationMember.user_id == user_id,
+            )
+        )
+        result = await self.session.execute(query)
+        return result.scalar_one_or_none()
+    
