@@ -31,3 +31,20 @@ async def create_organization(
         name=organization.name,
     )
     return OrganizationResponse.model_validate(created)
+
+@router.get("", response_model=list[OrganizationResponse],)
+async def list_organizations(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+
+    service = OrganizationService(db)
+
+    organizations = await service.list_organizations(
+        current_user=current_user,
+    )
+
+    return [
+        OrganizationResponse.model_validate(org)
+        for org in organizations
+    ]
