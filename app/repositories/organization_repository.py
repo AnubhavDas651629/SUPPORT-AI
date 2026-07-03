@@ -6,7 +6,7 @@ from sqlalchemy.orm import query
 from app.models.organization import Organization
 from app.models.organization import OrganizationMember
 from app.db.base import Base
-from app.models import organization
+from app.models import Organization
 from app.models.organization import Organization
 from app.repositories.base import BaseRepository
 
@@ -37,7 +37,7 @@ class OrganizationRepository(BaseRepository):
             select(Organization)
             .join(OrganizationMember)
             .where(
-                organization.id == organization_id,
+                Organization.id == organization_id,
                 OrganizationMember.user_id == user_id,
             )
         )
