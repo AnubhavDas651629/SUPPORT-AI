@@ -14,4 +14,6 @@ uv add --dev ruff
 uv add --dev mypy
 greenlet
 alembic
-
+psycopg2-binary
+pwdlib
+python-jose[cryptography]

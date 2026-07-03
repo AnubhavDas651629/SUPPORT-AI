@@ -9,6 +9,11 @@ class Settings(BaseSettings):
     #Database
     database_url: str
 
+    #security
+    jwt_secret: str
+    jwt_algorithm: str
+    access_token_expire_minutes: int
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
