@@ -4,9 +4,7 @@ from uuid import UUID
 from sqlalchemy import Enum as SQLEnum, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.api.v1 import users
 from app.db.base import Base
-from app.models import organization
 from app.models.mixins import TimestampMixin
 
 class OrganizationRole(str, Enum):

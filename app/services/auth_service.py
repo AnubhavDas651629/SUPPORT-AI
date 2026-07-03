@@ -3,6 +3,7 @@ from app.repositories.user_repository import UserRepository
 from app.core.security import create_access_token, hash_password, verify_password
 from app.exceptions.auth import UserAlreadyExistsException
 from app.schemas.auth import TokenResponse
+from app.exceptions.auth import InvalidCredentialsException
 
 class AuthService:
     def __init__(self, session: AsyncSession):
@@ -30,13 +31,13 @@ class AuthService:
         user = await self.user_repository.get_by_email(email)
 
         if not user:
-            raise InvalidCredentialException()
+            raise InvalidCredentialsException()
 
         if not verify_password(
             password, 
             user.hashed_password
         ): 
-            raise InvalidCredentialException()
+            raise InvalidCredentialsException()
 
         token = create_access_token(
             str(user.id),
