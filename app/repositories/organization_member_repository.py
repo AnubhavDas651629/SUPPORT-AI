@@ -1,3 +1,4 @@
+from unittest import result
 from sqlalchemy import select
 from uuid import UUID
 
@@ -33,5 +34,17 @@ class OrganizationMemberRepository(BaseRepository):
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
-
-
+    #List every member belong to this org
+    async def list_members(self, *, organization_id:UUID) -> list[tuple[User, OrganizationMember]]:
+        query = (
+            select(User, OrganizationMember)
+            .join(
+                OrganizationMember,
+                User.id == OrganizationMember.user_id
+            )
+            .where(
+                OrganizationMember.organization_id == organization_id,
+            )
+        )
+        result = await self.session.execute(query)
+        return list(result.all())

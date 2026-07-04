@@ -9,7 +9,7 @@ from app.dependencies.auth import get_current_user
 from app.models import organization
 from app.models.organization_member import OrganizationMember, OrganizationRole
 from app.models.user import User
-from app.schemas.member import (MemberInviteRequest, MemberResponse)
+from app.schemas.member import (MemberInviteRequest, MemberResponse, OrganizationMemberResponse)
 from app.services.organization_service import OrganizationService
 from migrations.versions.e28f3806fcc1_add_phone_number_to_users import depends_on
 
@@ -36,5 +36,20 @@ async def invite_member(
         current_user=current_user,
     )
     return MemberResponse.model_validate(invited)
+
+#lists all the membres of a organization
+@router.get("", response_model=list[OrganizationMemberResponse])
+async def list_members(
+    organization_id: UUID, 
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    service  = OrganizationService(db)
+
+    return await service.list_members(
+        organization_id=organization_id,
+        current_user=current_user
+    )
+
 
     

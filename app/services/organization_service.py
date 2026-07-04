@@ -10,6 +10,7 @@ from app.models.user import User
 from app.repositories.user_repository import UserRepository
 from app.repositories.organization_member_repository import OrganizationMemberRepository
 from app.repositories.organization_repository import OrganizationRepository
+from app.schemas.member import OrganizationMemberResponse
 
 class OrganizationService:
     def __init__(self, session: AsyncSession):
@@ -95,6 +96,30 @@ class OrganizationService:
         )
         await self.session.commit()
         return created_membership
+
+    async def list_members(self, *, organization_id: UUID, current_user: User) -> list[OrganizationMemberResponse]:
+        organization = await self.organization_repository.get_by_id_for_user(
+            organization_id=organization_id,
+            user_id = current_user.id
+        )
+        if organization is None:
+            raise OrganizationNotFoundException()
+
+        members = await self.membership_repository.list_members(
+            organization_id=organization_id,
+        )
+
+        return [
+            OrganizationMemberResponse(
+                id=user.id,
+                full_name=user.full_name,
+                email=user.email,
+                role=user.role
+            )
+            for user, membership in members
+        ]
+            
+
 
 
 
