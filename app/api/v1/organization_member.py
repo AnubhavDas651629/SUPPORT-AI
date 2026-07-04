@@ -52,7 +52,7 @@ async def list_members(
         current_user=current_user
     )
 
-# to update the roll of member
+# to update the roll of member, user_id is the id of the target
 @router.patch("/{user_id}", response_model=MemberResponse)
 async def update_member_role(
     organization_id:UUID, 
@@ -71,3 +71,18 @@ async def update_member_role(
     )
     return MemberResponse.model_validate(membership)
     
+@router.delete("/{user_id}", status_code=204)
+async def remove_member(
+    organization_id:UUID,
+    user_id:UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    service = OrganizationService(db)
+
+    deleted = await service.remove_member(
+        organization_id=organization_id,
+        current_user=current_user,
+        target_user_id=user_id
+    )
+

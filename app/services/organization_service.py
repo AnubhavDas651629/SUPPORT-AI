@@ -116,7 +116,7 @@ class OrganizationService:
                 id=user.id,
                 full_name=user.full_name,
                 email=user.email,
-                role=user.role
+                role=membership.role
             )
             for user, membership in members
         ]
@@ -153,6 +153,38 @@ class OrganizationService:
         target_membership.role = role
         await self.session.commit()
         return target_membership
+
+    #an owner(only) can remove a member
+    async def remove_member(self, *, organization_id:UUID, target_user_id:UUID, current_user: User):
+        organization = await self.organization_repository.get_by_id_for_user(
+            organization_id=organization_id,
+            user_id=current_user.id
+        )
+        if organization is None:
+            raise OrganizationNotFoundException()
+
+        membership = await self.membership_repository.get_membership(
+            organization_id=organization_id,
+            user_id=current_user.id
+        )
+        if(membership is None or membership.role != OrganizationRole.OWNER):
+            raise PermissionDeniedException()
+
+        target_membership = await self.membership_repository.get_membership(
+            organization_id=organization_id,
+            user_id=target_user_id,
+        )
+        if target_membership is None:
+            raise MemberNotFoundException()
+
+        if target_membership.role == OrganizationRole.OWNER:
+            raise PermissionDeniedException()
+
+        if target_user_id == current_user.id:
+            raise PermissionDeniedException()
+
+        await self.membership_repository.delete(target_membership)
+        await self.session.commit()
 
 
 

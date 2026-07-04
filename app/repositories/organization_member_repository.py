@@ -1,5 +1,5 @@
 from unittest import result
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from uuid import UUID
 
 from sqlalchemy.orm import query
@@ -48,3 +48,7 @@ class OrganizationMemberRepository(BaseRepository):
         )
         result = await self.session.execute(query)
         return list(result.all())
+
+    async def delete(self, membership: OrganizationMember,) -> None:
+        await self.session.delete(membership)
+
