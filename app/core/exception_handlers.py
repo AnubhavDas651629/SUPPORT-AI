@@ -1,7 +1,13 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from app.exceptions.auth import UserAlreadyExistsException, InvalidCredentialsException
+from app.exceptions.auth import (
+    UserAlreadyExistsException,
+    InvalidCredentialsException,
+    PermissionDeniedException,
+    UserNotFoundException,
+    AlreadyOrganizationMemberException
+)
 from app.exceptions.organization import OrganizationNotFoundException
 def register_exception_handlers(app: FastAPI):
 
@@ -37,3 +43,39 @@ def register_exception_handlers(app: FastAPI):
                 "detail": str(exc),
             }
         )
+
+    @app.exception_handler(PermissionDeniedException)
+    async def permission_denied(
+        request: Request,
+        exc: PermissionDeniedException,
+    ):
+        return JSONResponse(
+            status_code=403,
+            content={
+                "detail": str(exc),
+            }
+        ) 
+
+    @app.exception_handler(UserNotFoundException)
+    async def user_not_found(
+        request: Request,
+        exc: UserNotFoundException,
+    ):
+        return JSONResponse(
+            status_code=404,
+            content={
+                "detail": str(exc),
+            }
+        ) 
+
+    @app.exception_handler(AlreadyOrganizationMemberException)
+    async def already_organization_member(
+        request: Request,
+        exc: AlreadyOrganizationMemberException,
+    ):
+        return JSONResponse(
+            status_code=409,
+            content={
+                "detail": str(exc),
+            }
+        ) 
