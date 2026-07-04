@@ -9,7 +9,7 @@ class MemberInviteRequest(BaseModel):
 
 class MemberResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-    
+
     user_id: UUID
     organization_id: UUID
     role:OrganizationRole
@@ -18,4 +18,7 @@ class OrganizationMemberResponse(BaseModel):
     id: UUID
     full_name: str
     email: EmailStr
+    role: OrganizationRole
+
+class UpdateMemberRoleRequest(BaseModel):
     role: OrganizationRole

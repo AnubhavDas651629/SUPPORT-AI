@@ -4,7 +4,7 @@ from uuid import UUID
 
 from app.exceptions.organization import OrganizationAlreadyExistsException, OrganizationNotFoundException
 from app.exceptions.auth import AlreadyOrganizationMemberException, UserNotFoundException, PermissionDeniedException 
-from app.models import Organization
+from app.models import Organization, organization
 from app.models.organization_member import OrganizationRole
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
@@ -66,6 +66,7 @@ class OrganizationService:
             raise OrganizationNotFoundException()
 
         # if this function returns org this means we have identified the org and the current user is a part of the org, now in order to invite, next step is to check the role of the current user, that decides he they can invite a person
+        #the purpose of defining membership is just because the return of this will have the role attribute which we need
         membership = await self.membership_repository.get_membership(
             organization_id=organization_id,
             user_id=current_user.id,
@@ -97,6 +98,7 @@ class OrganizationService:
         await self.session.commit()
         return created_membership
 
+
     async def list_members(self, *, organization_id: UUID, current_user: User) -> list[OrganizationMemberResponse]:
         organization = await self.organization_repository.get_by_id_for_user(
             organization_id=organization_id,
@@ -118,8 +120,39 @@ class OrganizationService:
             )
             for user, membership in members
         ]
-            
 
+    async def update_member_role(self, *, organization_id: UUID, target_user_id: UUID, current_user: User, role: OrganizationRole):
+        organization = await self.organization_repository.get_by_id_for_user(
+            organization_id=organization_id,
+            user_id=current_user.id
+        )
+        if organization is None:
+            raise OrganizationNotFoundException()
+
+        membership = await self.membership_repository.get_membership(
+            organization_id=organization_id,
+            user_id=current_user.id
+        )
+        if(membership is None or membership.role != OrganizationRole.OWNER):
+            raise PermissionDeniedException()
+        
+        target_membership = await self.membership_repository.get_membership(
+            organization_id=organization_id,
+            user_id=target_user_id,
+        )
+        if target_membership is None:
+            raise MemberNotFoundException()
+
+        if target_membership.role == OrganizationRole.OWNER:
+            raise PermissionDeniedException()
+        
+        # Owner cannot demote themselves
+        if target_user_id == current_user.id:
+            raise PermissionDeniedException
+
+        target_membership.role = role
+        await self.session.commit()
+        return target_membership
 
 
 

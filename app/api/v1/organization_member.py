@@ -3,13 +3,14 @@ from uuid import UUID
 
 from fastapi import Depends, APIRouter, Request
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql.functions import current_user
 
 from app.db.dependencies import get_db
 from app.dependencies.auth import get_current_user
 from app.models import organization
 from app.models.organization_member import OrganizationMember, OrganizationRole
 from app.models.user import User
-from app.schemas.member import (MemberInviteRequest, MemberResponse, OrganizationMemberResponse)
+from app.schemas.member import (MemberInviteRequest, MemberResponse, OrganizationMemberResponse, UpdateMemberRoleRequest)
 from app.services.organization_service import OrganizationService
 from migrations.versions.e28f3806fcc1_add_phone_number_to_users import depends_on
 
@@ -51,5 +52,22 @@ async def list_members(
         current_user=current_user
     )
 
+# to update the roll of member
+@router.patch("/{user_id}", response_model=MemberResponse)
+async def update_member_role(
+    organization_id:UUID, 
+    user_id:UUID,
+    request:UpdateMemberRoleRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    service = OrganizationService(db)
 
+    membership = await service.update_member_role(
+        organization_id=organization_id,
+        target_user_id=user_id,
+        current_user=current_user,
+        role=request.role,
+    )
+    return MemberResponse.model_validate(membership)
     
