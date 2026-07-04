@@ -21,6 +21,10 @@ class OrganizationRepository(BaseRepository):
         return organization
 
     async def list_for_user(self, *, user_id:UUID) -> list[Organization]:
+        """
+        Retrieves all organizations that the specified user belongs to.
+        Used for dashboard list views.
+        """
         query = (
             select(Organization)
             .join(OrganizationMember)
@@ -33,6 +37,10 @@ class OrganizationRepository(BaseRepository):
         return list(result.scalars().all())
 
     async def get_by_id_for_user(self, *, organization_id: UUID, user_id: UUID) -> Organization | None:
+        """
+        Retrieves a specific organization by ID ONLY if the user is a member of it.
+        Acts as an authorization check to prevent unauthorized cross-user access (IDOR).
+        """
         query = (
             select(Organization)
             .join(OrganizationMember)
@@ -44,3 +52,9 @@ class OrganizationRepository(BaseRepository):
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
     
+    async def get_by_slug(self, slug:str) -> Organization | None :
+        query = select(Organization).where(
+            Organization.slug == slug
+        )
+        result = await self.session.execute(query)
+        return result.scalar_one_or_none()

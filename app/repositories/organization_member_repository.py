@@ -1,4 +1,4 @@
-import select
+from sqlalchemy import select
 from uuid import UUID
 
 from sqlalchemy.orm import query
@@ -31,4 +31,7 @@ class OrganizationMemberRepository(BaseRepository):
                 )
         )
         result = await self.session.execute(query)
-        return result.scalar_or_none()
+        return result.scalar_one_or_none()
+
+
+

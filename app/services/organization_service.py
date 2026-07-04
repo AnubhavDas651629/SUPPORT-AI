@@ -2,8 +2,9 @@ from slugify import slugify
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 
-from app.exceptions.organization import OrganizationNotFoundException
-from app.models import Organization, organization
+from app.exceptions.organization import OrganizationAlreadyExistsException, OrganizationNotFoundException
+from app.exceptions.auth import AlreadyOrganizationMemberException, UserNotFoundException, PermissionDeniedException 
+from app.models import Organization
 from app.models.organization_member import OrganizationRole
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
@@ -19,10 +20,16 @@ class OrganizationService:
     async def create(self, *, current_user: User, name: str):
         slug = slugify(name)
 
+        existing = await self.organization_repository.get_by_slug(slug)
+
+        if existing is not None:
+            raise OrganizationAlreadyExistsException()
+
         organization = await self.organization_repository.create(
             name=name,
             slug=slug,
         )
+
         await self.membership_repository.create(
             organization_id=organization.id,
             user_id=current_user.id,

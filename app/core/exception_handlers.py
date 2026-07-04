@@ -8,7 +8,10 @@ from app.exceptions.auth import (
     UserNotFoundException,
     AlreadyOrganizationMemberException
 )
-from app.exceptions.organization import OrganizationNotFoundException
+from app.exceptions.organization import (
+    OrganizationNotFoundException,
+    OrganizationAlreadyExistsException
+)
 def register_exception_handlers(app: FastAPI):
 
     @app.exception_handler(UserAlreadyExistsException)
@@ -79,3 +82,15 @@ def register_exception_handlers(app: FastAPI):
                 "detail": str(exc),
             }
         ) 
+    
+    @app.exception_handler(OrganizationAlreadyExistsException)
+    async def organization_already_exists_handler(
+        request: Request,
+        exc: OrganizationAlreadyExistsException,
+    ):
+        return JSONResponse(
+            status_code=409,
+            content={
+                "detail": str(exc),
+            },
+        )
