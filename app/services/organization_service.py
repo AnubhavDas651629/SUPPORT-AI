@@ -6,6 +6,7 @@ from app.exceptions.organization import OrganizationNotFoundException
 from app.models import Organization, organization
 from app.models.organization_member import OrganizationRole
 from app.models.user import User
+from app.repositories import Organization_member_repository
 from app.repositories.organization_member_repository import OrganizationMemberRepository
 from app.repositories.organization_repository import OrganizationRepository
 
@@ -50,3 +51,13 @@ class OrganizationService:
             raise OrganizationNotFoundException()
 
         return organization
+
+    # which org should abc be added to, who is trying to invite abc, email of abc, what role should abc get
+    async def invite_member(self, *, organization_id: UUID, current_user: User, email:str, role: OrganizationRole):
+        organization = await self.organization_repository.get_by_id_for_user(
+            organization_id=organization_id,
+            user_id=current_user.user.id
+        )
+        if organization is None:
+            raise OrganizationNotFoundException()
+            

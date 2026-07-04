@@ -1,9 +1,13 @@
+import select
 from uuid import UUID
+
+from sqlalchemy.orm import query
 
 from app.models.organization_member import (
     OrganizationMember,
     OrganizationRole
 )
+from app.models.user import User
 from app.repositories.base import BaseRepository
 
 class OrganizationMemberRepository(BaseRepository):
@@ -16,3 +20,15 @@ class OrganizationMemberRepository(BaseRepository):
         self.session.add(membership)
         await self.session.flush()
         return membership
+    
+    #Does user belongs to this , if yes then it can invite others
+    async def get_membership(self, *, organization_id: UUID, user_id: UUID) -> OrganizationMember:
+        query = (
+            select(OrganizationMember)
+            .where(
+                OrganizationMember.organization_id == organization_id,
+                OrganizationMember.user_id == user_id,
+                )
+        )
+        result = await self.session.execute(query)
+        return result.scalar_or_none()
