@@ -1,5 +1,4 @@
-from unittest import result
-from sqlalchemy import delete, select
+from sqlalchemy import select
 from uuid import UUID
 
 from sqlalchemy.orm import query
