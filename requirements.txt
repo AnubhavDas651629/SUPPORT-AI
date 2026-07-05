@@ -17,3 +17,5 @@ alembic
 psycopg2-binary
 pwdlib
 python-jose[cryptography]
+slugify
+python-multipart

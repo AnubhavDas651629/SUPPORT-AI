@@ -32,4 +32,5 @@ class OrganizationMember(Base, TimestampMixin):
     organization: Mapped["Organization"] = relationship(
         back_populates="member",
     )
+    
 

@@ -1,16 +1,16 @@
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.models import organization
 
 class KnowledgeBaseCreate(BaseModel):
-    name: str
+    name: str = Field(min_length=1)
     description: str | None = None
 
 class KnowledgeBaseUpdate(BaseModel):
     name:str | None = None
-    Description: str | None = None
+    description: str | None = None
 
 class KnowledgeBaseResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
