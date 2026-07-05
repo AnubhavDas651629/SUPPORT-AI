@@ -5,7 +5,7 @@ from uuid import UUID
 from app.exceptions.organization import OrganizationAlreadyExistsException, OrganizationNotFoundException
 from app.exceptions.auth import AlreadyOrganizationMemberException, UserNotFoundException, PermissionDeniedException 
 from app.models import Organization, organization
-from app.models.organization_member import OrganizationRole
+from app.models.organization_member import OrganizationMember, OrganizationRole
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
 from app.repositories.organization_member_repository import OrganizationMemberRepository
@@ -58,22 +58,10 @@ class OrganizationService:
 
     # which org should abc be added to, who is trying to invite abc, email of abc, what role should abc get
     async def invite_member(self, *, organization_id: UUID, current_user: User, email:str, role: OrganizationRole):
-        organization = await self.organization_repository.get_by_id_for_user(
-            organization_id=organization_id,
-            user_id=current_user.id
+        await self._require_owner(
+        organization_id=organization_id,
+        current_user=current_user,
         )
-        if organization is None:
-            raise OrganizationNotFoundException()
-
-        # if this function returns org this means we have identified the org and the current user is a part of the org, now in order to invite, next step is to check the role of the current user, that decides he they can invite a person
-        #the purpose of defining membership is just because the return of this will have the role attribute which we need
-        membership = await self.membership_repository.get_membership(
-            organization_id=organization_id,
-            user_id=current_user.id,
-        )
-        if (membership is None or membership.role != OrganizationRole.OWNER):
-            raise PermissionDeniedException()
-
         #if till here this means the inviter is the owner
         #now we check is the invited user has registered or not
         invited_user = await self.user_repository.get_by_email(
@@ -122,19 +110,10 @@ class OrganizationService:
         ]
 
     async def update_member_role(self, *, organization_id: UUID, target_user_id: UUID, current_user: User, role: OrganizationRole):
-        organization = await self.organization_repository.get_by_id_for_user(
+        await self._require_owner(
             organization_id=organization_id,
-            user_id=current_user.id
+            current_user=current_user,
         )
-        if organization is None:
-            raise OrganizationNotFoundException()
-
-        membership = await self.membership_repository.get_membership(
-            organization_id=organization_id,
-            user_id=current_user.id
-        )
-        if(membership is None or membership.role != OrganizationRole.OWNER):
-            raise PermissionDeniedException()
         
         target_membership = await self.membership_repository.get_membership(
             organization_id=organization_id,
@@ -156,19 +135,10 @@ class OrganizationService:
 
     #an owner(only) can remove a member
     async def remove_member(self, *, organization_id:UUID, target_user_id:UUID, current_user: User):
-        organization = await self.organization_repository.get_by_id_for_user(
+        await self._require_owner(
             organization_id=organization_id,
-            user_id=current_user.id
+            current_user=current_user,
         )
-        if organization is None:
-            raise OrganizationNotFoundException()
-
-        membership = await self.membership_repository.get_membership(
-            organization_id=organization_id,
-            user_id=current_user.id
-        )
-        if(membership is None or membership.role != OrganizationRole.OWNER):
-            raise PermissionDeniedException()
 
         target_membership = await self.membership_repository.get_membership(
             organization_id=organization_id,
@@ -186,6 +156,22 @@ class OrganizationService:
         await self.membership_repository.delete(target_membership)
         await self.session.commit()
 
+    async def _require_owner(self, *, organization_id:UUID, current_user: User) -> OrganizationMember:
+        organization = await self.organization_repository.get_by_id_for_user(
+            organization_id=organization_id,
+            user_id=current_user.id
+        )
+        if organization is None:
+            raise OrganizationNotFoundException()
+
+        # if this function returns org this means we have identified the org and the current user is a part of the org, now in order to invite, next step is to check the role of the current user, that decides he they can invite a person
+        #the purpose of defining membership is just because the return of this will have the role attribute which we need
+        membership = await self.membership_repository.get_membership(
+            organization_id=organization_id,
+            user_id=current_user.id,
+        )
+        if (membership is None or membership.role != OrganizationRole.OWNER):
+            raise PermissionDeniedException()
 
 
 
