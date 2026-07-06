@@ -27,6 +27,7 @@ class Document(Base, UUIDMixin, TimestampMixin):
     mime_type: Mapped[str] = mapped_column(String(255), nullable=False) 
     size: Mapped[int] = mapped_column(Integer, nullable=False)
     status: Mapped[DocumentStatus] = mapped_column(SQLEnum(DocumentStatus), default=DocumentStatus.UPLOADING, nullable=False)
+    extension: Mapped[str] = mapped_column(String(255), nullable=False)
 
     knowledge_base: Mapped["KnowledgeBase"] = relationship(back_populates="documents" )
 
