@@ -1,6 +1,6 @@
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.models import organization
+from app.models import document, organization
 from app.models.mixins import UUIDMixin, TimestampMixin
 from app.db.base import Base
 from uuid import UUID
@@ -9,6 +9,9 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app.models.organization import Organization
+    
+if TYPE_CHECKING:
+    from app.models.document import Document
 
 class KnowledgeBase(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "knowledge_bases"
@@ -16,3 +19,4 @@ class KnowledgeBase(Base, UUIDMixin, TimestampMixin):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=False)
     organization: Mapped["Organization"] = relationship(back_populates="knowledge_bases")
+    documents: Mapped[list["Document"]] = relationship(back_populates="knowledge_base", cascade="all, delete-orphan")
