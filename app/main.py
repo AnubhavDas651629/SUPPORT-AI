@@ -2,6 +2,7 @@ from unittest import result
 from fastapi import FastAPI
 from sqlalchemy import text
 from app.db.dependencies import get_db
+from app.api.v1 import documents
 from app.api.v1.auth import router as auth_router
 from app.api.v1 import knowledge_bases
 from app.api.v1.users import router as users_router
@@ -23,6 +24,7 @@ app.include_router(auth_router,prefix="/api/v1")
 app.include_router(users_router,prefix="/api/v1",)
 app.include_router(organization_router,prefix="/api/v1",)
 app.include_router(knowledge_bases.router)
+app.include_router(documents.router)
 
 @app.get("/")
 async def root():
