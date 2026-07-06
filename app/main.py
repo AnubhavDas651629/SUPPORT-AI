@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from sqlalchemy import text
 from app.db.dependencies import get_db
 from app.api.v1.auth import router as auth_router
+from app.api.v1 import knowledge_bases
 from app.api.v1.users import router as users_router
 from app.api.v1.organization_member import router as organization_member_router
 from app.api.v1.organizations import router as organization_router
@@ -21,6 +22,7 @@ app.include_router(organization_member_router, prefix="/api/v1")
 app.include_router(auth_router,prefix="/api/v1")
 app.include_router(users_router,prefix="/api/v1",)
 app.include_router(organization_router,prefix="/api/v1",)
+app.include_router(knowledge_bases.router)
 
 @app.get("/")
 async def root():

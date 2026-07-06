@@ -81,7 +81,7 @@ class KnowledgeBaseService:
     async def list_for_organization(self, *, organization_id: UUID,current_user:User) -> list[KnowledgeBase]:
         await self._require_member(
             organization_id=organization_id,
-            current_user=current_user.id
+            current_user=current_user
         )
         return await self.knowledge_base_repository.list_for_organization(
             organization_id=organization_id
@@ -109,7 +109,7 @@ class KnowledgeBaseService:
         knowledge_base = (
             await self.knowledge_base_repository.get_by_id_for_organization(
             organization_id = organization_id,
-            current_user=current_user,
+            knowledge_base_id=knowledge_base_id,
             )
         )
         if knowledge_base is None:
@@ -117,7 +117,7 @@ class KnowledgeBaseService:
 
         existing = await self.knowledge_base_repository.get_by_name_for_organization(
             organization_id=organization_id,
-            name=name,
+            knowledge_base_name=name,
         )
 
         if existing is not None and existing.id != knowledge_base.id:

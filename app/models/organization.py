@@ -1,11 +1,13 @@
-from sqlalchemy import String, null
+from sqlalchemy import String
+from typing import TYPE_CHECKING
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.models.knowledge_base import KnowledgeBase
 from app.models.organization_member import OrganizationMember
-
+if TYPE_CHECKING:
+    from app.models.knowledge_base import KnowledgeBase
 
 from app.db.base import Base
 from app.models.mixins import TimestampMixin, UUIDMixin
+
 
 class Organization(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "organizations"

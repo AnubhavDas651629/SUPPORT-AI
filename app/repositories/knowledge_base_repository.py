@@ -1,11 +1,5 @@
-
-
-import select
 from uuid import UUID
-
-from sqlalchemy import Uuid, delete
-from sqlalchemy.orm import query
-from app.models import knowledge_base
+from sqlalchemy import select
 from app.models.organization import Organization
 from app.repositories.base import BaseRepository
 from app.models.knowledge_base import KnowledgeBase
