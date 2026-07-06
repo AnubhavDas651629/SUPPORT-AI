@@ -2,7 +2,11 @@ from slugify import slugify
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 
-from app.exceptions.organization import OrganizationAlreadyExistsException, OrganizationNotFoundException
+from app.exceptions.organization import (
+    OrganizationAlreadyExistsException,
+    OrganizationNotFoundException,
+    MemberNotFoundException,
+)
 from app.exceptions.auth import AlreadyOrganizationMemberException, UserNotFoundException, PermissionDeniedException 
 from app.models import Organization, organization
 from app.models.organization_member import OrganizationMember, OrganizationRole
@@ -129,7 +133,7 @@ class OrganizationService(BaseService):
         
         # Owner cannot demote themselves
         if target_user_id == current_user.id:
-            raise PermissionDeniedException
+            raise PermissionDeniedException()
 
         target_membership.role = role
         await self.session.commit()

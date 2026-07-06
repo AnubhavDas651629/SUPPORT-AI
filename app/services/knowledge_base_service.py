@@ -3,7 +3,11 @@ from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.functions import current_user
 from app.exceptions.auth import PermissionDeniedException
-from app.exceptions.organization import OrganizationNotFoundException
+from app.exceptions.organization import (
+    OrganizationNotFoundException,
+    KnowledgeBaseNotFoundException,
+    KnowledgeBaseAlreadyExistsException,
+)
 from app.models import knowledge_base
 from app.models.knowledge_base import KnowledgeBase
 from app.models.user import User

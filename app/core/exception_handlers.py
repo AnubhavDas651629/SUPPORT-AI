@@ -10,7 +10,14 @@ from app.exceptions.auth import (
 )
 from app.exceptions.organization import (
     OrganizationNotFoundException,
-    OrganizationAlreadyExistsException
+    OrganizationAlreadyExistsException,
+    MemberNotFoundException,
+    KnowledgeBaseNotFoundException,
+    KnowledgeBaseAlreadyExistsException,
+)
+from app.exceptions.document import (
+    DocumentNotFoundException,
+    DocumentAlreadyExistsException,
 )
 def register_exception_handlers(app: FastAPI):
 
@@ -87,6 +94,66 @@ def register_exception_handlers(app: FastAPI):
     async def organization_already_exists_handler(
         request: Request,
         exc: OrganizationAlreadyExistsException,
+    ):
+        return JSONResponse(
+            status_code=409,
+            content={
+                "detail": str(exc),
+            },
+        )
+
+    @app.exception_handler(MemberNotFoundException)
+    async def member_not_found_handler(
+        request: Request,
+        exc: MemberNotFoundException,
+    ):
+        return JSONResponse(
+            status_code=404,
+            content={
+                "detail": str(exc),
+            },
+        )
+
+    @app.exception_handler(KnowledgeBaseNotFoundException)
+    async def knowledge_base_not_found_handler(
+        request: Request,
+        exc: KnowledgeBaseNotFoundException,
+    ):
+        return JSONResponse(
+            status_code=404,
+            content={
+                "detail": str(exc),
+            },
+        )
+
+    @app.exception_handler(KnowledgeBaseAlreadyExistsException)
+    async def knowledge_base_already_exists_handler(
+        request: Request,
+        exc: KnowledgeBaseAlreadyExistsException,
+    ):
+        return JSONResponse(
+            status_code=409,
+            content={
+                "detail": str(exc),
+            },
+        )
+
+    @app.exception_handler(DocumentNotFoundException)
+    async def document_not_found_handler(
+        request: Request,
+        exc: DocumentNotFoundException,
+    ):
+        return JSONResponse(
+            status_code=404,
+            content={
+                "detail": str(exc),
+            },
+        )
+
+    @app.exception_handler(DocumentAlreadyExistsException)
+    async def document_already_exists_handler(
+        request: Request,
+        exc: DocumentAlreadyExistsException,
     ):
         return JSONResponse(
             status_code=409,
