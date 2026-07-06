@@ -9,7 +9,7 @@ class KnowledgeBaseCreate(BaseModel):
     description: str | None = None
 
 class KnowledgeBaseUpdate(BaseModel):
-    name:str | None = None
+    name:str 
     description: str | None = None
 
 class KnowledgeBaseResponse(BaseModel):
