@@ -13,6 +13,9 @@ from sqlalchemy import String
 if TYPE_CHECKING:
     from app.models.knowledge_base import KnowledgeBase
 
+if TYPE_CHECKING:
+    from app.models.document_chunk import DocumentChunk
+
 class DocumentStatus(str, Enum):
     UPLOADING = "UPLOADING"
     PROCESSING = "PROCESSING"
@@ -28,4 +31,4 @@ class Document(Base, UUIDMixin, TimestampMixin):
     size: Mapped[int] = mapped_column(Integer, nullable=False)
     status: Mapped[DocumentStatus] = mapped_column(SQLEnum(DocumentStatus), default=DocumentStatus.READY, nullable=False)
     knowledge_base: Mapped["KnowledgeBase"] = relationship(back_populates="documents" )
-
+    chunks: Mapped["DocumentChunk"] = relationship(back_populates="document")
