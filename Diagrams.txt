@@ -1,0 +1,30 @@
+User uploads document ->
+
+POST /documents
+        │
+        ▼
+Upload File
+        │
+        ▼
+Local Storage
+        │
+        ▼
+Document Row
+        │
+        ▼
+Commit
+        │
+        ▼
+DocumentProcessor
+        │
+        ▼
+Parser
+        │
+        ▼
+Chunker
+        │
+        ▼
+DocumentChunk rows
+        │
+        ▼
+READY

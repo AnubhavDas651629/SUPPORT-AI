@@ -16,6 +16,7 @@ from app.repositories.document_repository import DocumentRepository
 from app.repositories.knowledge_base_repository import (
     KnowledgeBaseRepository,
 )
+from app.processing.processor import DocumentProcessor
 from app.services.base import BaseService
 from app.services.storage import LocalStorageService
 
@@ -77,10 +78,18 @@ class DocumentService(BaseService):
             storage_key=storage_key,
             mime_type=file.content_type or "application/octet-stream",
             size=len(content),
-            status=DocumentStatus.READY,
+            status=DocumentStatus.PROCESSING,
         )
 
         await self.session.commit()
+
+        processor = DocumentProcessor(
+            self.session
+        )
+
+        await processor.process(
+            document=document
+        )
 
         return document
 
