@@ -1,12 +1,13 @@
 from .pdf import PDFParser
 from .txt import TXTParser
 from .markdown import MarkdownParser
+from .base import DocumentParser
 
-class ParseFactory:
+class ParserFactory:
     @staticmethod
     def get_parser(
         mime_type: str
-    ):
+    ) -> DocumentParser:
         if mime_type == "application/pdf":
             return PDFParser()
 
