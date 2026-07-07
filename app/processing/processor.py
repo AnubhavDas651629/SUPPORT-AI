@@ -40,6 +40,22 @@ class DocumentProcessor:
 #         ▼
 # Commit
 
+# one embedding per chunk
+# Chunk 1
+#       │
+#       ▼
+# Embedding
+
+# Chunk 2
+#       │
+#       ▼
+# Embedding
+
+# Chunk 3
+#       │
+#       ▼
+# Embedding
+
     async def process(self, *, document: Document) -> None:
         try:
             # Locate file on disk -> stored files are on Storage folder so file path basically storage/documents/a8f31c2.pdf with a8f31c2 beinf the storage key of the file 
