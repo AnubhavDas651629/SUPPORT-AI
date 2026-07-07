@@ -31,4 +31,4 @@ class Document(Base, UUIDMixin, TimestampMixin):
     size: Mapped[int] = mapped_column(Integer, nullable=False)
     status: Mapped[DocumentStatus] = mapped_column(SQLEnum(DocumentStatus), default=DocumentStatus.READY, nullable=False)
     knowledge_base: Mapped["KnowledgeBase"] = relationship(back_populates="documents" )
-    chunks: Mapped["DocumentChunk"] = relationship(back_populates="document")
+    chunks: Mapped[list["DocumentChunk"]] = relationship(back_populates="document")
