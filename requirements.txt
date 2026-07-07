@@ -20,3 +20,5 @@ python-jose[cryptography]
 slugify
 python-multipart
 pypdf
+pgvector -> brew install pgvector -> brew services restart postgresql ->psql -d support_ai -> CREATE EXTENSION IF NOT EXISTS vector; -> CREATE EXTENSION (expected output)
+Openai

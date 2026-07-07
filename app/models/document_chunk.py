@@ -1,11 +1,13 @@
 from uuid import UUID
 from typing import TYPE_CHECKING
 
+from pgvector.sqlalchemy import Vector
 from sqlalchemy import ForeignKey, Integer, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.models.mixins import UUIDMixin, TimestampMixin
+from app.processing import embeddings
 
 if TYPE_CHECKING:
     from app.models.document import Document
@@ -30,6 +32,13 @@ class DocumentChunk(Base, UUIDMixin, TimestampMixin):
         nullable=False,
     )
 
+    embedding: Mapped[list[float]] = mapped_column(
+        Vector(1536),
+        nullable=False,
+    )
+
     document: Mapped["Document"] = relationship(
         back_populates="chunks",
     )
+
+    
