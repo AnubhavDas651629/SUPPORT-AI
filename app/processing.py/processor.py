@@ -78,7 +78,7 @@ class DocumentProcessor:
             await self.session.commit()
         
         except Exception:
-            await self.session.rollback() #to ensure if it fails in between for a specifc chunk then it stops and then rollsback to start from the beginning
+            await self.session.rollback() #to ensure if it fails in between for a specifc chunk then it stops and then rollsback to start and then shows FAILED, none of the previous successfully chunked texts are stored
             document.status = DocumentStatus.FAILED
             await self.session.commit()
             raise
