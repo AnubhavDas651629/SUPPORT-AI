@@ -95,3 +95,16 @@ class DocumentRepository(BaseRepository):
     ) -> None:
 
         await self.session.delete(document)
+
+
+    async def get_by_id(self, *, document_id:UUID,) -> Document | None:
+        query = (
+        select(Document)
+        .where(
+            Document.id == document_id
+        )
+        )
+
+        result = await self.session.execute(query)
+
+        return result.scalar_one_or_none()

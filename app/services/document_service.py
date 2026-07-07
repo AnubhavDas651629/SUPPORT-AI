@@ -80,17 +80,7 @@ class DocumentService(BaseService):
             size=len(content),
             status=DocumentStatus.PROCESSING,
         )
-
         await self.session.commit()
-
-        processor = DocumentProcessor(
-            self.session
-        )
-
-        await processor.process(
-            document=document
-        )
-
         return document
 
     async def list_for_knowledge_base(

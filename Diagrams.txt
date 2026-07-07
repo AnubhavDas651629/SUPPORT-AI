@@ -28,3 +28,21 @@ DocumentChunk rows
         │
         ▼
 READY
+
+How things are working ->
+
+Router
+   │
+   ├──────────────┐
+   ▼              ▼
+Service      Background Task
+                    │
+                    ▼
+             DocumentProcessor
+                    │
+        ┌───────────┴───────────┐
+        ▼                       ▼
+   ParserFactory           TextChunker
+                    │
+                    ▼
+           ChunkRepository

@@ -13,8 +13,7 @@ class DocumentProcessor:
     def __init__(self, session: AsyncSession):
         self.session = session
         self.chunker = TextChunker()
-        self.chunk_repository = DocumentChunkRepository()
-
+        self.chunk_repository = DocumentChunkRepository(session)
 # Receive Document
 #         │
 #         ▼
