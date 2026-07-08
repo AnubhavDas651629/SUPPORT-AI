@@ -1,5 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.orm import query
+from app.models import knowledge_base
+from app.models.document import Document
 from app.models.document_chunk import DocumentChunk
 from app.repositories.base import BaseRepository
 from uuid import UUID
@@ -23,7 +25,25 @@ class DocumentChunkRepository(BaseRepository):
         )
         result = await self.session.execute(query)
         return list(result.scalars().all())
-        
+
+    # after embedding, we are comparing the best k embeddings chunks with respect to the user chunks
+    async def search_similar(self, *, knowledge_base_id: UUID,embedding: list[float], limit: int =5) -> list[DocumentChunk]:
+        query = (
+            select(DocumentChunk)
+            .join(Document)
+            .where(
+                Document.knowledge_base_id == knowledge_base_id,
+                DocumentChunk.embedding.is_not(None), # Suppose a document failed processing and somehow embedding = NULL, so this would filter them out
+            )
+            .order_by(
+                DocumentChunk.embedding.cosine_distance(
+                    embedding
+                )
+            )
+            .limit(limit)
+        )
+        result = await self.session.execute(query)
+        return result.scalars().all()        
 
 
 
