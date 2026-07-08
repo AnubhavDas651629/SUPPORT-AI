@@ -1,9 +1,12 @@
 #this will do the main architecture of the processing
 # given document -> find the file -> extract text -> chunk text -> store chunks -> update document status
+from openai import embeddings
+from openai.types import embedding
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.document import Document, DocumentStatus
 from app.models.document_chunk import DocumentChunk
+from app.processing.embeddings.factory import EmbeddingFactory
 from app.repositories.document_chunk_repository import DocumentChunkRepository
 from .chunker import TextChunker
 from pathlib import Path
@@ -14,6 +17,7 @@ class DocumentProcessor:
         self.session = session
         self.chunker = TextChunker()
         self.chunk_repository = DocumentChunkRepository(session)
+        self.embedding_provider = EmbeddingFactory.get_provider()
 # Receive Document
 #         │
 #         ▼
@@ -74,14 +78,21 @@ class DocumentProcessor:
             chunks = self.chunker.split(text)
             #now we have list[str] but repository wants the format list[DocumentChunk]
 
+            embeddings = await self.embedding_provider.embed(
+                texts=chunks
+            )
+
             document_chunks = [
                 DocumentChunk(
                     document_id=document.id,
                     chunk_index=index,
                     content = chunk,
-                    token_count=len(chunk.split())
+                    token_count=len(chunk.split()),
+                    embedding=embedding
                 )
-                for index, chunk in enumerate(chunks)
+                for index, (chunk, embedding) in enumerate(
+                    zip(chunks, embeddings)
+                )
             ]
 
             #bulk insert
