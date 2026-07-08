@@ -16,7 +16,6 @@ async def main():
             ),
             question="Where has he done his intern?",
         )
-
         print(answer)
 
 
