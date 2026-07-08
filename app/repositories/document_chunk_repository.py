@@ -28,6 +28,7 @@ class DocumentChunkRepository(BaseRepository):
 
     # after embedding, we are comparing the best k embeddings chunks with respect to the user chunks
     async def search_similar(self, *, knowledge_base_id: UUID,embedding: list[float], limit: int =5) -> list[DocumentChunk]:
+
         query = (
             select(DocumentChunk)
             .join(Document)
@@ -43,7 +44,8 @@ class DocumentChunkRepository(BaseRepository):
             .limit(limit)
         )
         result = await self.session.execute(query)
-        return result.scalars().all()        
+        return result.scalars().all()      
+          
 
 
 
