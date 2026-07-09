@@ -19,6 +19,9 @@ from app.repositories.base import BaseService
 from app.services.retrieval_service import RetrievalService
 from app.utils.prompt_loader import load_prompt
 from collections.abc import AsyncGenerator
+from app.processing.llms.factory import LLMFactory
+from collections.abc import AsyncGenerator
+
 
 class ChatService(BaseService):
     def __init__(self, session: AsyncSession):
@@ -27,6 +30,7 @@ class ChatService(BaseService):
         self.retrieval_service = RetrievalService(
             session=session,
         )
+        self.llm_provider = LLMFactory.get_provider()
 
     async def _build_messages(
         self,
@@ -86,37 +90,26 @@ class ChatService(BaseService):
             limit=limit,
         )
 
-        response = await client.chat.completions.create(
-            model="gpt-4.1-mini",
-            messages=messages,
-            temperature=0,
+        return await self.llm_provider.complete(
+            messages=messages
         )
 
-        return response.choices[0].message.content or ""
-
-    from collections.abc import AsyncGenerator
 
 
-async def stream_answer(
-    self,
-    *,
-    knowledge_base_id: UUID,
-    question: str,
-    limit: int = 5,
-) -> AsyncGenerator[str, None]:
+    async def stream_answer(
+        self,
+        *,
+        knowledge_base_id: UUID,
+        question: str,
+        limit: int = 5,
+    ) -> AsyncGenerator[str, None]:
 
-    messages = await self._build_messages(
-        knowledge_base_id=knowledge_base_id,
-        question=question,
-        limit=limit,
-    )
+        messages = await self._build_messages(
+            knowledge_base_id=knowledge_base_id,
+            question=question,
+            limit=limit,
+        )
 
-    stream = await client.chat.completions.create(
-        model="gpt-4.1-mini",
-        messages=messages,
-        temperature=0,
-        stream=True,
-    )
-
-    async for chunk in stream:
-        ...
+        return await self.llm_provider.stream(
+            messages=messages
+        )
