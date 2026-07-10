@@ -1,3 +1,7 @@
+Conversation History:
+
+{history}
+
 Context:
 
 {context}
