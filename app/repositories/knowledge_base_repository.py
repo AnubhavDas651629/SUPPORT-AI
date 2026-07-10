@@ -27,6 +27,18 @@ class KnowledgeBaseRepository(BaseRepository):
 
         return list(result.scalars().all())
 
+    async def get_by_id(self,*,knowledge_base_id: UUID) -> KnowledgeBase | None:
+        query = (
+            select(KnowledgeBase)
+            .where(
+                KnowledgeBase.id == knowledge_base_id
+            )
+        )
+
+        result = await self.session.execute(query)
+
+        return result.scalar_one_or_none()
+
     async def get_by_id_for_organization(self, *, organization_id:UUID, knowledge_base_id: UUID) -> KnowledgeBase | None:
         query = (
             select(KnowledgeBase)
@@ -51,3 +63,5 @@ class KnowledgeBaseRepository(BaseRepository):
 
     async def delete(self, knowledge_base: KnowledgeBase) -> None:
             await self.session.delete(knowledge_base)
+
+

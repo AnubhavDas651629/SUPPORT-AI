@@ -128,6 +128,21 @@ class KnowledgeBaseService(BaseService):
 
             await self.knowledge_base_repository.delete(knowledge_base)
 
-            await self.session.commit()        
+            await self.session.commit()   
+
+    async def get_knowledge_base(
+    self,
+    *,
+    knowledge_base_id: UUID,
+) -> KnowledgeBase:
+
+        knowledge_base = await self.knowledge_base_repository.get_by_id(
+            knowledge_base_id=knowledge_base_id,
+        )
+
+        if knowledge_base is None:
+            raise KnowledgeBaseNotFoundException()
+
+        return knowledge_base     
 
 

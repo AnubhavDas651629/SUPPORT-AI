@@ -12,6 +12,7 @@ from uuid import UUID
 
 from alembic.command import history
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.dto.chat import ChatResult
 from app.models import conversation
 from app.models.message import Message, MessageRole
 from app.repositories.base import BaseService
@@ -22,6 +23,7 @@ from app.processing.llms.factory import LLMFactory
 from collections.abc import AsyncGenerator
 from app.models.document_chunk import DocumentChunk
 from app.utils.prompt_loader import load_prompt
+from app.services.knowledge_base_service import KnowledgeBaseService
 
 
 class ChatService(BaseService):
@@ -31,6 +33,7 @@ class ChatService(BaseService):
         self.retrieval_service = RetrievalService(session=session)
         self.llm_provider = LLMFactory.get_provider()
         self.conversational_service = ConversationService(session=session)
+        self.knowledge_base_service = KnowledgeBaseService(session=session)
 
     def _build_messages(self, *, history: list[Message], chunks:list[DocumentChunk], question:str) -> list[str]:
         history_text = "\n\n".join(
@@ -131,7 +134,7 @@ class ChatService(BaseService):
         )
 
         chunks = await self.retrieval_service.retrieve(
-           knowledge_base_id=conversation.knowledge_base_id,
+            knowledge_base_id=conversation.knowledge_base_id,
             question=question,
             limit=limit,
         )
@@ -155,3 +158,27 @@ class ChatService(BaseService):
             role=MessageRole.ASSISTANT,
             content=full_answer,
         )
+
+    async def chat(self, *, conversation_id:UUID | None, knowledge_base_id:UUID | None, question: str) -> ChatResult:
+        if conversation_id is None:
+
+            knowledge_base = await self.knowledge_base_service.get_knowledge_base(
+            knowledge_base_id=knowledge_base_id,
+            )
+            conversation = await self.conversational_service.create_conversation(
+                organization_id=knowledge_base.organization_id,
+                knowledge_base_id=knowledge_base_id
+            )
+
+        else:
+            conversation = await self.conversational_service.get_conversation(
+                conversation_id=conversation_id
+            )
+            answer = await self.answer(
+                conversation_id=conversation.id,
+                question=question
+            )
+            return ChatResult(
+                conversation_id=conversation.id,
+                answer=answer
+            )
