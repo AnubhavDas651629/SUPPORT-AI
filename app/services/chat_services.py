@@ -110,6 +110,8 @@ class ChatService(BaseService):
             limit=limit,
         )
 
-        return await self.llm_provider.stream(
+        async for token in self.llm_provider.stream(
             messages=messages
-        )
+        ):
+            yield token
+            
