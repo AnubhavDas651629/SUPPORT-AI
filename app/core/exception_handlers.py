@@ -19,6 +19,7 @@ from app.exceptions.document import (
     DocumentNotFoundException,
     DocumentAlreadyExistsException,
 )
+from app.exceptions.conversation import ConversationNotFoundException
 def register_exception_handlers(app: FastAPI):
 
     @app.exception_handler(UserAlreadyExistsException)
@@ -157,6 +158,18 @@ def register_exception_handlers(app: FastAPI):
     ):
         return JSONResponse(
             status_code=409,
+            content={
+                "detail": str(exc),
+            },
+        )
+
+    @app.exception_handler(ConversationNotFoundException)
+    async def conversation_not_found_handler(
+        request: Request,
+        exc: ConversationNotFoundException,
+    ):
+        return JSONResponse(
+            status_code=404,
             content={
                 "detail": str(exc),
             },

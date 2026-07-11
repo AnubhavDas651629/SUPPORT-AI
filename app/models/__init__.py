@@ -4,3 +4,5 @@ from .organization_member import OrganizationMember
 from .knowledge_base import KnowledgeBase
 from .document import Document
 from .document_chunk import DocumentChunk
+from .conversation import Conversation
+from .message import Message

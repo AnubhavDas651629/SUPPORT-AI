@@ -19,4 +19,4 @@ class Organization(Base, UUIDMixin, TimestampMixin):
     slug: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     member: Mapped[list["OrganizationMember"]] = relationship(back_populates="organization")
     knowledge_bases: Mapped[list["KnowledgeBase"]] = relationship(back_populates="organization", cascade="all, delete-orphan")
-    Conversations: Mapped[list["Conversation"]] = relationship(back_populates="organization")
+    conversations: Mapped[list["Conversation"]] = relationship(back_populates="organization")

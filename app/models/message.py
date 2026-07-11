@@ -5,7 +5,8 @@ from app.models.mixins import TimestampMixin, UUIDMixin
 from app.db.base import Base
 from sqlalchemy.orm import Mapped,mapped_column, relationship
 from uuid import UUID
-from sqlalchemy import Text, Enum
+from sqlalchemy import Text
+from enum import Enum
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:

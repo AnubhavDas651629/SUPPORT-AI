@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.dto.chat import ChatResult
 from app.models import conversation
 from app.models.message import Message, MessageRole
-from app.repositories.base import BaseService
+from app.services.base import BaseService
 from app.services.conversation_services import ConversationService
 from app.services.retrieval_service import RetrievalService
 from collections.abc import AsyncGenerator
@@ -32,7 +32,7 @@ class ChatService(BaseService):
 
         self.retrieval_service = RetrievalService(session=session)
         self.llm_provider = LLMFactory.get_provider()
-        self.conversational_service = ConversationService(session=session)
+        self.conversation_service = ConversationService(session=session)
         self.knowledge_base_service = KnowledgeBaseService(session=session)
 
     def _build_messages(self, *, history: list[Message], chunks:list[DocumentChunk], question:str) -> list[str]:
@@ -74,16 +74,16 @@ class ChatService(BaseService):
 
     #API calls need direct answer, they donnot want streaming answer but users like streaming answer 
     async def answer(self, *, conversation_id: UUID, question:str, limit: int =5) -> str:
-        conversation = await self.conversational_service.get_conversation(
+        conversation = await self.conversation_service.get_conversation(
             conversation_id=conversation_id
         )
-        await self.conversational_service.create_message(
+        await self.conversation_service.create_message(
             conversation_id=conversation_id,
             role=MessageRole.USER,
             content=question
         )
 
-        history = await self.conversational_service.list_messages(
+        history = await self.conversation_service.list_messages(
             conversation_id=conversation.id
         )
 
@@ -102,7 +102,7 @@ class ChatService(BaseService):
             messages=messages
         )
 
-        await self.conversational_service.create_message(
+        await self.conversation_service.create_message(
             conversation_id=conversation.id,
             role=MessageRole.ASSISTANT,
             content=answer
@@ -161,24 +161,24 @@ class ChatService(BaseService):
 
     async def chat(self, *, conversation_id:UUID | None, knowledge_base_id:UUID | None, question: str) -> ChatResult:
         if conversation_id is None:
-
             knowledge_base = await self.knowledge_base_service.get_knowledge_base(
-            knowledge_base_id=knowledge_base_id,
+                knowledge_base_id=knowledge_base_id,
             )
-            conversation = await self.conversational_service.create_conversation(
+            conversation = await self.conversation_service.create_conversation(
                 organization_id=knowledge_base.organization_id,
-                knowledge_base_id=knowledge_base_id
+                knowledge_base_id=knowledge_base_id,
+                title=question[:100]
             )
-
         else:
-            conversation = await self.conversational_service.get_conversation(
+            conversation = await self.conversation_service.get_conversation(
                 conversation_id=conversation_id
             )
-            answer = await self.answer(
-                conversation_id=conversation.id,
-                question=question
-            )
-            return ChatResult(
-                conversation_id=conversation.id,
-                answer=answer
-            )
+
+        answer = await self.answer(
+            conversation_id=conversation.id,
+            question=question
+        )
+        return ChatResult(
+            conversation_id=conversation.id,
+            answer=answer
+        )

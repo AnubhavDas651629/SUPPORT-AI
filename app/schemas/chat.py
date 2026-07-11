@@ -18,6 +18,7 @@ class ChatRequest(BaseModel):
             raise ValueError(
                 "Either conversation_id or knowledge_base_id must be provided"
             )
+        return self
 
 class ChatResponse(BaseModel):
     conversation_id:UUID
