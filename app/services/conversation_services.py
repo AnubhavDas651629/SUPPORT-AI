@@ -48,3 +48,16 @@ class ConversationService(BaseService):
             conversation_id=conversation_id
         )
         
+
+    async def update_title(self, *, conversation: Conversation, title: str | None) -> str:
+        conversation.title = title
+        await self.session.flush()
+        await self.session.commit()
+        return title or ""
+
+
+    async def list_conversations():
+        pass
+
+    async def get_conversation_detail():
+        pass

@@ -1,0 +1,13 @@
+Generate a short conversation title.
+
+Rules:
+
+- Maximum 6 words.
+- No quotation marks.
+- No punctuation at the end.
+- Use title case.
+- Return ONLY the title.
+
+Conversation:
+
+{conversation}

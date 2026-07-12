@@ -42,3 +42,7 @@ class ConversationRepository(BaseRepository):
 
     async def delete(self, *, conversation: Conversation) -> None:
         await self.session.delete(conversation)
+
+    async def update_title(self, *, conversation: Conversation, title: str) -> None:
+        conversation.title = title
+        await self.session.flush()

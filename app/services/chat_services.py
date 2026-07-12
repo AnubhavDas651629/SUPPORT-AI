@@ -74,8 +74,33 @@ class ChatService(BaseService):
         ]
 
 
+    async def _generate_title(self, *, conversation: str) -> str:
+        system_prompt = load_prompt(
+            "conversation/title"
+        )
+        prompt = system_prompt.format(
+            conversation=conversation,
+        )
+
+        messages = [
+            {
+                "role": "user",
+                "content": prompt,
+            }
+        ]
+
+        title = await self.llm_provider.complete(
+            messages=messages
+        )
+        return title.strip()
+
+    def _build_title_context(self,*,question: str,answer: str) -> str:
+        return f"""USER:{question}
+                ASSISTANT:{answer}
+                """
+
     #API calls need direct answer, they donnot want streaming answer but users like streaming answer 
-    async def answer(self, *, conversation_id: UUID, question:str, limit: int =5) -> tuple[str, list[Citation]]:
+    async def answer(self, *, conversation_id: UUID, question:str, limit: int =5) -> tuple[str, list[Citation], str]:
         conversation = await self.conversation_service.get_conversation(
             conversation_id=conversation_id
         )
@@ -118,7 +143,17 @@ class ChatService(BaseService):
             role=MessageRole.ASSISTANT,
             content=answer
         )
-        return answer, citations
+        title = await self._generate_title(
+            conversation=self._build_title_context(
+                question=question,
+                answer=answer,
+            )
+        )
+        await self.conversation_service.update_title(
+            conversation=conversation,
+            title=title
+        )
+        return answer, citations, title
 
 
     async def stream_answer(
@@ -184,7 +219,7 @@ class ChatService(BaseService):
                 conversation_id=conversation_id
             )
 
-        answer, citations = await self.answer(
+        answer, citations, title = await self.answer(
             conversation_id=conversation.id,
             question=question
         )
@@ -212,3 +247,6 @@ class ChatService(BaseService):
             question=question
         ):
             yield token
+
+
+    
