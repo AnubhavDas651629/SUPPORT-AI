@@ -5,9 +5,11 @@
 from dataclasses import dataclass
 from uuid import UUID
 
+from app.dto.citation import Citation
 from app.models import conversation
 
 @dataclass
 class ChatResult:
     conversation_id:UUID
     answer: str
+    citations: list[Citation]

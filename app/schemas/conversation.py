@@ -1,6 +1,7 @@
 from datetime import datetime
 from email import message
 from mailbox import Message
+from turtle import title
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -25,6 +26,16 @@ class MessageResponse(BaseModel):
     role: MessageRole
     content: str
     created_at: datetime
+
+class ConversationDetailResponse(BaseModel):
+    id: UUID
+    title: str | None
+    messages: list[MessageResponse]
+
+class ConversationSummaryResponse(BaseModel):
+    id:UUID
+    title: str | None
+    updated_at: datetime
 
 class ConversationDetailResponse(BaseModel):
     id: UUID

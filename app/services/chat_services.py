@@ -8,10 +8,12 @@
 # ↓
 # Return Answer
 
+import chunk
 from uuid import UUID
 
 from alembic.command import history
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.dto import citation
 from app.dto.chat import ChatResult
 from app.models import conversation
 from app.models.message import Message, MessageRole
@@ -24,7 +26,7 @@ from collections.abc import AsyncGenerator
 from app.models.document_chunk import DocumentChunk
 from app.utils.prompt_loader import load_prompt
 from app.services.knowledge_base_service import KnowledgeBaseService
-
+from app.dto.citation import Citation
 
 class ChatService(BaseService):
     def __init__(self, session: AsyncSession):
@@ -73,7 +75,7 @@ class ChatService(BaseService):
 
 
     #API calls need direct answer, they donnot want streaming answer but users like streaming answer 
-    async def answer(self, *, conversation_id: UUID, question:str, limit: int =5) -> str:
+    async def answer(self, *, conversation_id: UUID, question:str, limit: int =5) -> tuple[str, list[Citation]]:
         conversation = await self.conversation_service.get_conversation(
             conversation_id=conversation_id
         )
@@ -93,6 +95,15 @@ class ChatService(BaseService):
             limit=limit
         )
 
+        citations = [
+            Citation(
+                document_id=chunk.document_id,
+                filename=chunk.document.original_filename,
+                chunk_index=chunk.chunk_index
+            )
+            for chunk in chunks
+        ]
+
         messages = self._build_messages(
             history=history,
             chunks=chunks,
@@ -107,8 +118,7 @@ class ChatService(BaseService):
             role=MessageRole.ASSISTANT,
             content=answer
         )
-        return answer
-
+        return answer, citations
 
 
     async def stream_answer(
@@ -174,13 +184,14 @@ class ChatService(BaseService):
                 conversation_id=conversation_id
             )
 
-        answer = await self.answer(
+        answer, citations = await self.answer(
             conversation_id=conversation.id,
             question=question
         )
         return ChatResult(
             conversation_id=conversation.id,
-            answer=answer
+            answer=answer,
+            citations=citations
         )
 
     async def stream_chat(self, *, conversation_id: UUID | None, knowledge_base_id:UUID | None, question: str) -> AsyncGenerator[str, None]:

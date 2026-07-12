@@ -5,6 +5,7 @@ from app.models.document import Document
 from app.models.document_chunk import DocumentChunk
 from app.repositories.base import BaseRepository
 from uuid import UUID
+from sqlalchemy.orm import selectinload
 
 
 class DocumentChunkRepository(BaseRepository):
@@ -31,10 +32,12 @@ class DocumentChunkRepository(BaseRepository):
 
         query = (
             select(DocumentChunk)
+            .options(
+                selectinload(DocumentChunk.document)
+            )
             .join(Document)
             .where(
                 Document.knowledge_base_id == knowledge_base_id,
-                DocumentChunk.embedding.is_not(None), # Suppose a document failed processing and somehow embedding = NULL, so this would filter them out
             )
             .order_by(
                 DocumentChunk.embedding.cosine_distance(

@@ -1,7 +1,9 @@
 from uuid import UUID 
 from pydantic import BaseModel, model_validator
+from sqlalchemy import Uuid
 
-from app.models import conversation, knowledge_base
+from app.dto import citation
+from app.models import conversation, document, knowledge_base
 
 class ChatRequest(BaseModel):
     #if a user blindly joins and in goes to chat then there is not conversation_id yet, it will be created, but when a person joins a chat again, no knowledge_base_id would be requuried as it alr knows from first chat which knowledge base to search for
@@ -20,6 +22,12 @@ class ChatRequest(BaseModel):
             )
         return self
 
+class CitationResponse(BaseModel):
+    document_id: UUID
+    filename: str
+    chunk_index: int
+
 class ChatResponse(BaseModel):
     conversation_id:UUID
     answer: str
+    citations: list[CitationResponse]
