@@ -182,3 +182,22 @@ class ChatService(BaseService):
             conversation_id=conversation.id,
             answer=answer
         )
+
+    async def stream_chat(self, *, conversation_id: UUID | None, knowledge_base_id:UUID | None, question: str) -> AsyncGenerator[str, None]:
+        if conversation_id is None:
+            knowledge_base = await self.knowledge_base_service.get_knowledge_base(
+                knowledge_base_id=knowledge_base_id
+            )
+            conversation = await self.conversation_service.create_conversation(
+                organization_id=knowledge_base.organization_id,
+                knowledge_base_id=knowledge_base.id
+            )
+        else:
+            conversation = await self.conversation_service.get_conversation(
+                conversation_id=conversation_id
+            )
+        async for token in self.stream_answer(
+            conversation_id=conversation.id,
+            question=question
+        ):
+            yield token
