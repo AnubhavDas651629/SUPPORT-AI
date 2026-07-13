@@ -1,9 +1,11 @@
+from openai import organization
 from openai.resources.conversations.conversations import Conversations
 from sqlalchemy import String
 from typing import TYPE_CHECKING
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models import conversation
 from app.models.organization_member import OrganizationMember
+from app.models.ticket import Ticket
 if TYPE_CHECKING:
     from app.models.knowledge_base import KnowledgeBase
 if TYPE_CHECKING:
@@ -20,3 +22,4 @@ class Organization(Base, UUIDMixin, TimestampMixin):
     member: Mapped[list["OrganizationMember"]] = relationship(back_populates="organization")
     knowledge_bases: Mapped[list["KnowledgeBase"]] = relationship(back_populates="organization", cascade="all, delete-orphan")
     conversations: Mapped[list["Conversation"]] = relationship(back_populates="organization")
+    tickets: Mapped[list["Ticket"]] = relationship(back_populates="organization", cascade="all, delete-orphan") 
