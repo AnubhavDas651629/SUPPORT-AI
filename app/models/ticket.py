@@ -3,9 +3,7 @@ from sqlalchemy import Boolean, String
 from uuid import UUID
 
 from typing import TYPE_CHECKING
-from fastapi import FastAPI, status
-from openai import organization
-from sqlalchemy import ForeignKey, null
+from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 from app.models.document import SQLEnum
@@ -35,7 +33,7 @@ class Ticket(Base,UUIDMixin, TimestampMixin):
     conversation_id: Mapped[UUID] = mapped_column(ForeignKey("conversations.id"),index = True, unique=True, nullable=False)
     organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), nullable=False, index=True)
     status: Mapped[TicketStatus] = mapped_column(SQLEnum(TicketStatus), nullable=False, default=TicketStatus.OPEN)
-    priority: Mapped[TicketPriority] = mapped_column(SQLEnum(TicketPriority), nullable=FastAPI, default=TicketPriority.MEDIUM)
+    priority: Mapped[TicketPriority] = mapped_column(SQLEnum(TicketPriority), nullable=False, default=TicketPriority.MEDIUM)
     subject: Mapped[str] = mapped_column(String(255), nullable=False)
     created_by_ai: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     conversation: Mapped["Conversation"] = relationship(back_populates="ticket")

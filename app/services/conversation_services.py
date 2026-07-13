@@ -50,7 +50,7 @@ class ConversationService(BaseService):
             conversation_id=conversation_id
         )
 
-    async def update_titlwe(self, *, conversation: Conversation, title: str) -> str:
+    async def update_title(self, *, conversation: Conversation, title: str) -> str:
         title = await self.conversation_repository.update_title(
             conversation=conversation,
             title=title
