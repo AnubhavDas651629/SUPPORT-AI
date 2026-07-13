@@ -15,7 +15,7 @@ class MessageFeedbackRepository(BaseRepository):
         await self.session.flush()
         return message_feedback
 
-    async def get_by_message(self, *, message_id: UUID) -> MessageFeedback | None:
+    async def get_by_message_id(self, *, message_id: UUID) -> MessageFeedback | None:
         query  = (
             select(MessageFeedback)
             .where(

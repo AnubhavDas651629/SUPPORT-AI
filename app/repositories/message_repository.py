@@ -30,6 +30,17 @@ class MessageRepository(BaseRepository):
         result = await self.session.execute(query)
         return result.scalars().all()
 
+    async def get_by_id(self, *, message_id: UUID) -> Message | None:
+        query = (
+            select(Message)
+            .where(
+                Message.id == message_id
+            )
+        )
+        self.session.execute(query)
+        result = await self.session.execute(query)
+        return result.scalar_one_or_none()
+
 
 
     async def delete(self, *, message: Message) -> None:
