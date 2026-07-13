@@ -14,7 +14,7 @@ class TicketRepository(BaseRepository):
             subject = subject,
             priority=priority,
             created_by_ai=created_by_ai
-        ),
+        )
         self.session.add(ticket)
         await self.session.flush()
         return ticket
@@ -59,13 +59,16 @@ class TicketRepository(BaseRepository):
     async def update_status(self, *, ticket: Ticket, status: TicketStatus) -> Ticket:
         ticket.status = status
         await self.session.flush()
+        await self.session.refresh(ticket)
         return ticket
 
 
     async def update_priority(self, *, ticket: Ticket, priority: TicketPriority) -> Ticket:
         ticket.priority = priority
         await self.session.flush()
+        await self.session.refresh(ticket)
         return ticket
 
     async def delete(self, *, ticket: Ticket) -> None:
         await self.session.delete(ticket)
+        await self.session.flush()

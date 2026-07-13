@@ -7,9 +7,10 @@ from app.services.base import BaseService
 from app.services.conversation_services import ConversationService
 from app.models.ticket import Ticket
 from app.models.ticket import TicketStatus
+from app.exceptions.ticket import TicketAlreadyExistsException, TicketNotFoundException
 
 class TicketService(BaseService):
-    def __init__(self, * session: AsyncSession):
+    def __init__(self, *, session: AsyncSession):
         super().__init__(session)
 
         self.ticket_repository = TicketRepository(session)
@@ -27,13 +28,15 @@ class TicketService(BaseService):
 
         subject = conversation.title or "Untitle Conversation"
 
-        return await self.ticket_repository.create(
+        ticket = await self.ticket_repository.create(
             conversation_id=conversation.id,
             organization_id=conversation.organization_id,
             subject=subject,
             priority=priority,
             created_by_ai=created_by_ai
         )
+        await self.session.commit()
+        return ticket
 
 
     async def get_ticket(self, *, ticket_id: UUID) -> Ticket:
@@ -56,10 +59,12 @@ class TicketService(BaseService):
             ticket_id=ticket_id,
         )
 
-        return await self.ticket_repository.update_status(
+        updated = await self.ticket_repository.update_status(
             ticket=ticket,
             status=status,
         )
+        await self.session.commit()
+        return updated
 
 
     async def update_priority(self,*,ticket_id: UUID,priority: TicketPriority,) -> Ticket:
@@ -67,10 +72,12 @@ class TicketService(BaseService):
             ticket_id=ticket_id,
         )
 
-        return await self.ticket_repository.update_priority(
+        updated = await self.ticket_repository.update_priority(
             ticket=ticket,
             priority=priority,
         )
+        await self.session.commit()
+        return updated
 
 
     async def delete_ticket(self,*,ticket_id: UUID,) -> None:
@@ -81,3 +88,4 @@ class TicketService(BaseService):
         await self.ticket_repository.delete(
             ticket=ticket,
         )
+        await self.session.commit()
