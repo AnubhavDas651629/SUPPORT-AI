@@ -37,7 +37,6 @@ class MessageRepository(BaseRepository):
                 Message.id == message_id
             )
         )
-        self.session.execute(query)
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 

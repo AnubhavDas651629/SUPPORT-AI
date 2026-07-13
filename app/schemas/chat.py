@@ -29,5 +29,6 @@ class CitationResponse(BaseModel):
 
 class ChatResponse(BaseModel):
     conversation_id:UUID
+    message_id: UUID
     answer: str
     citations: list[CitationResponse]

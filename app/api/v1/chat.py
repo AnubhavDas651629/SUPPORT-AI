@@ -66,6 +66,7 @@ async def chat(
 
     return ChatResponse(
     conversation_id=result.conversation_id,
+    message_id=result.message_id,
     answer=result.answer,
     citations=[
         CitationResponse(

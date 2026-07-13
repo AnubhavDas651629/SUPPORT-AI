@@ -4,6 +4,7 @@ from app.models.message_feedback import FeedbackType, MessageFeedback
 from app.repositories.message_feedback_repository import MessageFeedbackRepository
 from app.repositories.message_repository import MessageRepository
 from app.services.base import BaseService
+from app.exceptions.conversation import MessageNotFoundException
 
 
 class FeedbackService(BaseService):
@@ -24,11 +25,15 @@ class FeedbackService(BaseService):
             message_id=message_id
         )
         if existing_feedback is not None:
-            return await self.message_feedback_repository.update(
+            updated = await self.message_feedback_repository.update(
                 message_feedback=existing_feedback,
                 feedback=feedback
             )
-        return await self.message_feedback_repository.create(
+            await self.session.commit()
+            return updated
+        created = await self.message_feedback_repository.create(
             message_id=message_id,
             feedback=feedback
         )
+        await self.session.commit()
+        return created

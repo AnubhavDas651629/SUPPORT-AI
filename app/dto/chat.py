@@ -3,6 +3,7 @@
 # BECAUSE SERVICES SHOULD NOT KNOW ABOUT API SCHEMAS
 
 from dataclasses import dataclass
+from email import message
 from uuid import UUID
 
 from app.dto.citation import Citation
@@ -11,5 +12,6 @@ from app.models import conversation
 @dataclass
 class ChatResult:
     conversation_id:UUID
+    message_id: UUID
     answer: str
     citations: list[Citation]

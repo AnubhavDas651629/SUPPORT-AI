@@ -100,7 +100,7 @@ class ChatService(BaseService):
                 """
 
     #API calls need direct answer, they donnot want streaming answer but users like streaming answer 
-    async def answer(self, *, conversation_id: UUID, question:str, limit: int =5) -> tuple[str, list[Citation], str]:
+    async def answer(self, *, conversation_id: UUID, question:str, limit: int =5) -> tuple[str, list[Citation], str, Message]:
         conversation = await self.conversation_service.get_conversation(
             conversation_id=conversation_id
         )
@@ -138,7 +138,7 @@ class ChatService(BaseService):
             messages=messages
         )
 
-        await self.conversation_service.create_message(
+        assistant_message = await self.conversation_service.create_message(
             conversation_id=conversation.id,
             role=MessageRole.ASSISTANT,
             content=answer
@@ -153,7 +153,7 @@ class ChatService(BaseService):
             conversation=conversation,
             title=title
         )
-        return answer, citations, title
+        return answer, citations, title, assistant_message
 
 
     async def stream_answer(
@@ -219,12 +219,13 @@ class ChatService(BaseService):
                 conversation_id=conversation_id
             )
 
-        answer, citations, title = await self.answer(
+        answer, citations, title, assistant_message = await self.answer(
             conversation_id=conversation.id,
             question=question
         )
         return ChatResult(
             conversation_id=conversation.id,
+            message_id=assistant_message.id,
             answer=answer,
             citations=citations
         )
