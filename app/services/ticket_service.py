@@ -71,3 +71,13 @@ class TicketService(BaseService):
             ticket=ticket,
             priority=priority,
         )
+
+
+    async def delete_ticket(self,*,ticket_id: UUID,) -> None:
+        ticket = await self.get_ticket(
+            ticket_id=ticket_id,
+        )
+
+        await self.ticket_repository.delete(
+            ticket=ticket,
+        )
