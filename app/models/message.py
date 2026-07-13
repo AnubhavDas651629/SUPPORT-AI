@@ -11,6 +11,8 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app.models.conversation import Conversation
+if TYPE_CHECKING:
+    from app.models.message_feedback import MessageFeedback
 
 class MessageRole(str, Enum):
     USER = "USER"
@@ -24,4 +26,5 @@ class Message(Base, UUIDMixin, TimestampMixin):
     role: Mapped[MessageRole] = mapped_column(SQLEnum(MessageRole), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     conversation: Mapped[list["Conversation"]] = relationship(back_populates="messages")
+    feedback: Mapped[list["MessageFeedback"]] = relationship(back_populates="message", cascade="all, delete-orphan")
 
