@@ -1,8 +1,8 @@
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from app.models.conversation import Conversation
 from app.repositories.base import BaseRepository
 from uuid import UUID
-from app.models.conversation import Conversation
 
 
 class ConversationRepository(BaseRepository):
@@ -20,13 +20,16 @@ class ConversationRepository(BaseRepository):
         query = (
             select(Conversation)
             .where(
-                Conversation.id == conversation_id
+                Conversation.id == conversation_id,
+            )
+            .options(
+                selectinload(Conversation.messages)
             )
         )
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
-    async def list_for_organization(self, *, organization_id: UUID) -> list[Conversation]:
+    async def list_for_organization(self, *, organization_id: UUID, limit: int = 20, offset: int =0) -> list[Conversation]:
         query = (
             select(Conversation)
             .where(
@@ -35,6 +38,8 @@ class ConversationRepository(BaseRepository):
             .order_by(
                 Conversation.updated_at.desc()
             )
+            .limit(limit)
+            .offset(offset)
         )
         result = await self.session.execute(query)
 
@@ -42,6 +47,7 @@ class ConversationRepository(BaseRepository):
 
     async def delete(self, *, conversation: Conversation) -> None:
         await self.session.delete(conversation)
+        await self.session.flush()
 
     async def update_title(self, *, conversation: Conversation, title: str) -> None:
         conversation.title = title

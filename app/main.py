@@ -6,6 +6,7 @@ from app.api.v1 import documents
 from app.api.v1.auth import router as auth_router
 from app.api.v1 import chat
 from app.api.v1 import messages
+from app.api.v1 import conversations
 from app.api.v1 import knowledge_bases
 from app.api.v1.users import router as users_router
 from app.api.v1.organization_member import router as organization_member_router
@@ -29,6 +30,7 @@ app.include_router(knowledge_bases.router)
 app.include_router(documents.router)
 app.include_router(chat.router)
 app.include_router(messages.router)
+app.include_router(conversations.router)
 
 
 @app.get("/")

@@ -1,6 +1,8 @@
 from mailbox import Message
 from uuid import UUID
+from httpx import delete
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.models import conversation
 from app.models.conversation import Conversation
 from app.models.message import MessageRole
 from app.repositories.conversation_repository import ConversationRepository
@@ -26,7 +28,7 @@ class ConversationService(BaseService):
 
     async def get_conversation(self, *, conversation_id: UUID) -> Conversation:
         conversation = await self.conversation_repository.get_by_id(
-            conversation_id=conversation_id
+            conversation_id=conversation_id,
         )
         if conversation is None:
             raise ConversationNotFoundException()
@@ -47,17 +49,28 @@ class ConversationService(BaseService):
         return await self.message_repository.list_for_conversation(
             conversation_id=conversation_id
         )
+
+    async def update_titlwe(self, *, conversation: Conversation, title: str) -> str:
+        title = await self.conversation_repository.update_title(
+            conversation=conversation,
+            title=title
+        )
+        return title
         
 
-    async def update_title(self, *, conversation: Conversation, title: str | None) -> str:
-        conversation.title = title
-        await self.session.flush()
+    async def list_conversations(self, *, organization_id: UUID, limit: int = 20, offset: int = 0) -> list[Conversation]:
+        return await self.conversation_repository.list_for_organization(
+            organization_id=organization_id,
+            limit=limit,
+            offset=offset
+        )
+
+    async def delete_conversation(self, *, conversation_id: UUID) -> None:
+        conversation = await self.get_conversation(
+            conversation_id=conversation_id,
+        )
+
+        await self.conversation_repository.delete(
+            conversation=conversation,
+        )
         await self.session.commit()
-        return title or ""
-
-
-    async def list_conversations():
-        pass
-
-    async def get_conversation_detail():
-        pass

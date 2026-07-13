@@ -44,3 +44,4 @@ class MessageRepository(BaseRepository):
 
     async def delete(self, *, message: Message) -> None:
         await self.session.delete(message)
+        await self.session.flush()

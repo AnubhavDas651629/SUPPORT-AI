@@ -1,7 +1,5 @@
-from turtle import mode
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.models import conversation, document, organization
 from app.models.mixins import UUIDMixin, TimestampMixin
 from app.db.base import Base
 from uuid import UUID
