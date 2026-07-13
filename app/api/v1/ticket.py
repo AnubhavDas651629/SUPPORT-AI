@@ -1,10 +1,11 @@
 from uuid import UUID
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, status, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.dependencies import get_db
-from app.schemas.ticket import CreateTicketRequest, TicketResponse
+from app.schemas.ticket import CreateTicketRequest, TicketResponse, UpdateTicketPriorityRequest, UpdateTicketStatusRequest
 from app.services.ticket_service import TicketService
+
 
 router = APIRouter(
     prefix="/tickets",
