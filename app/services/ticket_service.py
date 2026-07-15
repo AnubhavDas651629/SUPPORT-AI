@@ -1,7 +1,10 @@
 from uuid import UUID
+from openai import PermissionDeniedError
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.exceptions.auth import UserNotFoundException
 from app.models import conversation
+from app.models.organization import Organization
+from app.models.organization_member import OrganizationRole
 from app.models.ticket import TicketPriority
 from app.repositories.ticket_repositories import TicketRepository
 from app.services.base import BaseService
@@ -11,6 +14,7 @@ from app.models.ticket import TicketStatus
 from app.repositories.user_repository import UserRepository
 from app.repositories.organization_member_repository import OrganizationMemberRepository
 from app.exceptions.ticket import TicketAlreadyExistsException, TicketNotFoundException
+from app.models.message import Message, MessageRole
 
 class TicketService(BaseService):
     def __init__(self, *, session: AsyncSession):
@@ -116,3 +120,29 @@ class TicketService(BaseService):
                 user_id=user.id
             )
         )
+
+        if membership is None:
+            raise PermissionDeniedError()
+
+        if membership.role != OrganizationRole.SUPPORT:
+            raise PermissionDeniedError()
+
+        return await self.ticket_repository.assign(
+            ticket=ticket,
+            user=user
+        )
+
+
+    async def reply_to_ticket(self, *, ticket_id:UUID, content:str) -> Message:
+        ticket = await self.get_ticket(
+            ticket_id=ticket_id
+        ) 
+
+        message = await self.conversation_service.create_conversation(
+            conversation_id = ticket.conversation_id,
+            role = MessageRole.SUPPORT,
+            content = content
+        )
+        return message
+
+    

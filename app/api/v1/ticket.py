@@ -1,8 +1,11 @@
+from mailbox import Message
 from uuid import UUID
 from fastapi import APIRouter, Depends, Query, status, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.dependencies import get_db
+from app.dto.message import SupportReplyRequest
+from app.schemas.conversation import MessageResponse
 from app.schemas.ticket import AssignTicketRequest, CreateTicketRequest, TicketResponse, UpdateTicketPriorityRequest, UpdateTicketStatusRequest
 from app.services.ticket_service import TicketService
 
@@ -128,5 +131,20 @@ async def assign_ticket(
     )
 
     return TicketResponse.model_validate(ticket)
+
+@router.post("/{ticket_id}/reply", response_model=MessageResponse)
+async def reply_to_ticket(
+    ticket_id: UUID,
+    request: SupportReplyRequest,
+    session: AsyncSession = Depends(get_db)
+):
+    service = TicketService(session=session)
+
+    message = await service.reply_to_ticket(
+        ticket_id=ticket_id,
+        content=request.content
+    )
+
+    return MessageResponse.model_validate(message)
 
 
