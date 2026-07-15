@@ -8,10 +8,7 @@
 # ↓
 # Return Answer
 
-import chunk
 from uuid import UUID
-
-from alembic.command import history
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.dto import citation
 from app.dto.chat import ChatResult
@@ -19,10 +16,10 @@ from app.models import conversation
 from app.models.message import Message, MessageRole
 from app.services.base import BaseService
 from app.services.conversation_services import ConversationService
+from app.services.escalation_service import EscalationService
 from app.services.retrieval_service import RetrievalService
 from collections.abc import AsyncGenerator
 from app.processing.llms.factory import LLMFactory
-from collections.abc import AsyncGenerator
 from app.models.document_chunk import DocumentChunk
 from app.utils.prompt_loader import load_prompt
 from app.services.knowledge_base_service import KnowledgeBaseService
@@ -34,8 +31,10 @@ class ChatService(BaseService):
 
         self.retrieval_service = RetrievalService(session=session)
         self.llm_provider = LLMFactory.get_provider()
+        self.escalation_service = EscalationService(session=session)
         self.conversation_service = ConversationService(session=session)
         self.knowledge_base_service = KnowledgeBaseService(session=session)
+
 
     def _build_messages(self, *, history: list[Message], chunks:list[DocumentChunk], question:str) -> list[str]:
         history_text = "\n\n".join(
@@ -134,26 +133,29 @@ class ChatService(BaseService):
             chunks=chunks,
             question=question
         )
-        answer = await self.llm_provider.complete(
-            messages=messages
+        result = await self.escalation_service.process(
+            conversation=conversation,
+            history=history,
+            chunks=chunks,
+            question=question,
         )
 
         assistant_message = await self.conversation_service.create_message(
             conversation_id=conversation.id,
             role=MessageRole.ASSISTANT,
-            content=answer
+            content=result.answer
         )
         title = await self._generate_title(
             conversation=self._build_title_context(
                 question=question,
-                answer=answer,
+                answer=result.answer,
             )
         )
         await self.conversation_service.update_title(
             conversation=conversation,
             title=title
         )
-        return answer, citations, title, assistant_message
+        return result.answer, citations, title, assistant_message
 
 
     async def stream_answer(
@@ -248,6 +250,9 @@ class ChatService(BaseService):
             question=question
         ):
             yield token
+
+
+
 
 
     
