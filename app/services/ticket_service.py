@@ -6,6 +6,7 @@ from app.models import conversation
 from app.models.organization import Organization
 from app.models.organization_member import OrganizationRole
 from app.models.ticket import TicketPriority
+from app.models.ticket_event import TicketEventType
 from app.repositories.ticket_repositories import TicketRepository
 from app.services.base import BaseService
 from app.services.conversation_services import ConversationService
@@ -15,6 +16,7 @@ from app.repositories.user_repository import UserRepository
 from app.repositories.organization_member_repository import OrganizationMemberRepository
 from app.exceptions.ticket import TicketAlreadyExistsException, TicketNotFoundException
 from app.models.message import Message, MessageRole
+from app.services.ticket_event_service import TicketEventService
 
 class TicketService(BaseService):
     def __init__(self, *, session: AsyncSession):
@@ -24,6 +26,7 @@ class TicketService(BaseService):
         self.conversation_service = ConversationService(session=session)
         self.user_repository = UserRepository(session)
         self.organization_member_repository = OrganizationMemberRepository(session)
+        self.ticket_event_service = TicketEventService(session=session)
 
 
     async def create_ticket(self, *, conversation_id: UUID, priority: TicketPriority = TicketPriority.MEDIUM,created_by_ai: bool = True) -> Ticket:
@@ -44,6 +47,13 @@ class TicketService(BaseService):
             subject=subject,
             priority=priority,
             created_by_ai=created_by_ai
+        )
+
+        await self.ticket_event_service.create_event(
+            ticket_id=ticket.id,
+            user_id=None,
+            event_type=TicketEventType.CREATED,
+            description="Ticket created by AI.",
         )
         await self.session.commit()
         return ticket
@@ -73,6 +83,12 @@ class TicketService(BaseService):
             ticket=ticket,
             status=status,
         )
+        await self.ticket_event_service.create_event(
+            ticket_id=ticket.id,
+            user_id=None,
+            event_type=TicketEventType.STATUS_CHANGED,
+            description=f"Status changed to {status.value}.",
+        )
         await self.session.commit()
         return updated
 
@@ -85,6 +101,12 @@ class TicketService(BaseService):
         updated = await self.ticket_repository.update_priority(
             ticket=ticket,
             priority=priority,
+        )
+        await self.ticket_event_service.create_event(
+            ticket_id=ticket.id,
+            user_id=None,
+            event_type=TicketEventType.PRIORITY_CHANGED,
+            description=f"Priority changed to {priority.value}.",
         )
         await self.session.commit()
         return updated
@@ -127,10 +149,19 @@ class TicketService(BaseService):
         if membership.role != OrganizationRole.SUPPORT:
             raise PermissionDeniedError()
 
-        return await self.ticket_repository.assign(
+        ticket =  await self.ticket_repository.assign(
             ticket=ticket,
             user=user
         )
+
+        await self.ticket_event_service.create_event(
+            ticket_id=ticket.id,
+            user_id=user.id,
+            event_type=TicketEventType.ASSIGNED,
+            description=f"Assigned to {user.full_name}.",
+        )
+
+        return ticket
 
 
     async def reply_to_ticket(self, *, ticket_id:UUID, content:str) -> Message:
@@ -142,6 +173,12 @@ class TicketService(BaseService):
             conversation_id = ticket.conversation_id,
             role = MessageRole.SUPPORT,
             content = content
+        )
+        await self.ticket_event_service.create_event(
+            ticket_id=ticket.id,
+            user_id=ticket.assigned_to_user_id,
+            event_type=TicketEventType.REPLIED,
+            description="Support agent replied.",
         )
         return message
 

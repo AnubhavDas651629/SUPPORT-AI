@@ -12,11 +12,10 @@ from app.models.mixins import TimestampMixin, UUIDMixin
 
 if TYPE_CHECKING:
     from app.models.conversation import Conversation
-if TYPE_CHECKING:
     from app.models.organization import Organization
-
-if TYPE_CHECKING:
     from app.models.user import User
+    from app.models.ticket_note import TicketNote
+    from app.models.ticket_event import TicketEvent
 
 class TicketStatus(str, Enum):
     OPEN = "OPEN"
@@ -43,3 +42,5 @@ class Ticket(Base,UUIDMixin, TimestampMixin):
     organization: Mapped["Organization"] = relationship(back_populates="tickets")
     assigned_to_user_id: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
     assigned_to: Mapped["User | None"] = relationship(back_populates="assigned_tickets")
+    notes: Mapped[list["TicketNote"]] = relationship(back_populates="ticket", cascade="all, delete-orphan")
+    events: Mapped[list["TicketEvent"]] = relationship(back_populates="ticket",cascade="all, delete-orphan",)

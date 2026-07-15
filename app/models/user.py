@@ -9,6 +9,8 @@ from app.models.mixins import TimestampMixin, UUIDMixin
 
 if TYPE_CHECKING:
     from app.models.ticket import Ticket
+    from app.models.ticket_note import TicketNote
+    from app.models.ticket_event import TicketEvent
 
 class User(Base, TimestampMixin,UUIDMixin):
     __tablename__ = "users"
@@ -20,3 +22,5 @@ class User(Base, TimestampMixin,UUIDMixin):
     is_verified: Mapped[bool] = mapped_column(Boolean,default=False, nullable=False)
     organization_member: Mapped[list["OrganizationMember"]] = relationship(back_populates="user")
     assigned_tickets: Mapped[list["Ticket"]] = relationship(back_populates="assigned_to")
+    ticket_notes: Mapped[list["TicketNote"]] = relationship(back_populates="author")
+    ticket_events: Mapped[list["TicketEvent"]] = relationship(back_populates="user")
