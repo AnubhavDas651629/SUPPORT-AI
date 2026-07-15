@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Query, status, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.dependencies import get_db
-from app.schemas.ticket import CreateTicketRequest, TicketResponse, UpdateTicketPriorityRequest, UpdateTicketStatusRequest
+from app.schemas.ticket import AssignTicketRequest, CreateTicketRequest, TicketResponse, UpdateTicketPriorityRequest, UpdateTicketStatusRequest
 from app.services.ticket_service import TicketService
 
 
@@ -61,10 +61,7 @@ async def get_ticket(
 
     return TicketResponse.model_validate(ticket)
 
-@router.patch(
-    "/{ticket_id}/status",
-    response_model=TicketResponse,
-)
+@router.patch("/{ticket_id}/status",response_model=TicketResponse)
 async def update_status(
     ticket_id: UUID,
     request: UpdateTicketStatusRequest,
@@ -100,10 +97,7 @@ async def update_priority(
     return TicketResponse.model_validate(ticket)
 
 
-@router.delete(
-    "/{ticket_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
-)
+@router.delete("/{ticket_id}",status_code=status.HTTP_204_NO_CONTENT,)
 async def delete_ticket(
     ticket_id: UUID,
     session: AsyncSession = Depends(get_db),
@@ -118,5 +112,21 @@ async def delete_ticket(
     return Response(
         status_code=status.HTTP_204_NO_CONTENT,
     )
+
+
+@router.patch("/{ticket_id}/assign", response_model=TicketResponse)
+async def assign_ticket(
+    ticket_id: UUID, 
+    request: AssignTicketRequest,
+    session: AsyncSession = Depends(get_db)
+):
+    service = TicketService(session=session)
+
+    ticket = await service.assign_ticket(
+        ticket_id=ticket_id,
+        user_id = request.user_id
+    )
+
+    return TicketResponse.model_validate(ticket)
 
 

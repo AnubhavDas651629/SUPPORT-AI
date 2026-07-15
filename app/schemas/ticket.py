@@ -18,6 +18,7 @@ class TicketResponse(BaseModel):
     created_by_ai: bool
     created_at: datetime
     updated_at: datetime
+    assigned_to_user: UUID | None
     model_config = ConfigDict(
         from_attributes=True
     )
@@ -27,3 +28,7 @@ class UpdateTicketStatusRequest(BaseModel):
 
 class UpdateTicketPriorityRequest(BaseModel):
     priority: TicketPriority
+
+
+class AssignTicketRequest(BaseModel):
+    user_id: UUID

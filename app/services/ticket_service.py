@@ -1,5 +1,6 @@
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.exceptions.auth import UserNotFoundException
 from app.models import conversation
 from app.models.ticket import TicketPriority
 from app.repositories.ticket_repositories import TicketRepository
@@ -7,6 +8,8 @@ from app.services.base import BaseService
 from app.services.conversation_services import ConversationService
 from app.models.ticket import Ticket
 from app.models.ticket import TicketStatus
+from app.repositories.user_repository import UserRepository
+from app.repositories.organization_member_repository import OrganizationMemberRepository
 from app.exceptions.ticket import TicketAlreadyExistsException, TicketNotFoundException
 
 class TicketService(BaseService):
@@ -15,6 +18,9 @@ class TicketService(BaseService):
 
         self.ticket_repository = TicketRepository(session)
         self.conversation_service = ConversationService(session=session)
+        self.user_repository = UserRepository(session)
+        self.organization_member_repository = OrganizationMemberRepository(session)
+
 
     async def create_ticket(self, *, conversation_id: UUID, priority: TicketPriority = TicketPriority.MEDIUM,created_by_ai: bool = True) -> Ticket:
         conversation = await self.conversation_service.get_conversation(
@@ -89,3 +95,24 @@ class TicketService(BaseService):
             ticket=ticket,
         )
         await self.session.commit()
+
+
+
+    async def assign_ticket(self, *, ticket_id: UUID, user_id: UUID) -> Ticket:
+        ticket = await self.get_ticket(
+            ticket_id=ticket_id
+        )
+
+        user = await self.user_repository.get_by_id(
+            user_id=user_id
+        )
+
+        if user is None:
+            raise UserNotFoundException()
+
+        membership = (
+            await self.organization_member_repository.get_membership(
+                organization_id=ticket.organization_id,
+                user_id=user.id
+            )
+        )

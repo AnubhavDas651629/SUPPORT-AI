@@ -19,6 +19,7 @@ class OrganizationRole(str, Enum):
     OWNER = "owner"
     ADMIN = "admin"
     MEMBER = "member"
+    SUPPORT = "support"
 
 class OrganizationMember(Base, TimestampMixin):
     __tablename__ = "organization_members"

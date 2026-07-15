@@ -15,6 +15,9 @@ if TYPE_CHECKING:
 if TYPE_CHECKING:
     from app.models.organization import Organization
 
+if TYPE_CHECKING:
+    from app.models.user import User
+
 class TicketStatus(str, Enum):
     OPEN = "OPEN"
     IN_PROGRESS = "IN_PROGRESS"
@@ -38,3 +41,5 @@ class Ticket(Base,UUIDMixin, TimestampMixin):
     created_by_ai: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     conversation: Mapped["Conversation"] = relationship(back_populates="ticket")
     organization: Mapped["Organization"] = relationship(back_populates="tickets")
+    assigned_to_user_id: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
+    assigned_to: Mapped["User | None"] = relationship(back_populates="assigned_tickets")

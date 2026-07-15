@@ -22,7 +22,7 @@ class OrganizationMemberRepository(BaseRepository):
         return membership
     
     #Does user belongs to this , if yes then it can invite others
-    async def get_membership(self, *, organization_id: UUID, user_id: UUID) -> OrganizationMember:
+    async def get_membership(self, *, organization_id: UUID, user_id: UUID) -> OrganizationMember | None:
         query = (
             select(OrganizationMember)
             .where(
@@ -50,4 +50,6 @@ class OrganizationMemberRepository(BaseRepository):
 
     async def delete(self, membership: OrganizationMember,) -> None:
         await self.session.delete(membership)
+
+
 

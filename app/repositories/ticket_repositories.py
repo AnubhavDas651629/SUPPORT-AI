@@ -4,7 +4,7 @@ from httpx import delete
 from sqlalchemy import select
 from app.models.ticket import Ticket, TicketPriority, TicketStatus
 from app.repositories.base import BaseRepository
-
+from app.models.user import User
 
 class TicketRepository(BaseRepository):
     async def create(self, *, conversation_id:UUID, organization_id: UUID, subject: str, priority: TicketPriority = TicketPriority.MEDIUM, created_by_ai: bool = True) -> Ticket:
@@ -72,3 +72,12 @@ class TicketRepository(BaseRepository):
     async def delete(self, *, ticket: Ticket) -> None:
         await self.session.delete(ticket)
         await self.session.flush()
+
+
+
+    async def assign(self, *, ticket: Ticket, user: User) -> Ticket:
+        ticket.assigned_to = user
+        await self.session.flush()
+        return ticket
+
+        
