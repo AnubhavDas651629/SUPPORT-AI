@@ -56,6 +56,7 @@ class TicketService(BaseService):
             description="Ticket created by AI.",
         )
         await self.session.commit()
+        await self.session.refresh(ticket)
         return ticket
 
 
@@ -90,6 +91,7 @@ class TicketService(BaseService):
             description=f"Status changed to {status.value}.",
         )
         await self.session.commit()
+        await self.session.refresh(updated)
         return updated
 
 
@@ -109,6 +111,7 @@ class TicketService(BaseService):
             description=f"Priority changed to {priority.value}.",
         )
         await self.session.commit()
+        await self.session.refresh(updated)
         return updated
 
 
@@ -161,6 +164,8 @@ class TicketService(BaseService):
             description=f"Assigned to {user.full_name}.",
         )
 
+        await self.session.commit()
+        await self.session.refresh(ticket)
         return ticket
 
 
@@ -169,7 +174,7 @@ class TicketService(BaseService):
             ticket_id=ticket_id
         ) 
 
-        message = await self.conversation_service.create_conversation(
+        message = await self.conversation_service.create_message(
             conversation_id = ticket.conversation_id,
             role = MessageRole.SUPPORT,
             content = content
@@ -180,6 +185,8 @@ class TicketService(BaseService):
             event_type=TicketEventType.REPLIED,
             description="Support agent replied.",
         )
+        await self.session.commit()
+        await self.session.refresh(message)
         return message
 
     

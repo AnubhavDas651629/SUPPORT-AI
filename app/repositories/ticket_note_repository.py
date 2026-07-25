@@ -19,7 +19,7 @@ class TicketNoteRepository(BaseRepository):
         return ticket_note
 
 
-    async def list_for_tickets(self, *, ticket_id: UUID) -> list[TicketNote]:
+    async def list_for_ticket(self, *, ticket_id: UUID) -> list[TicketNote]:
         query =(
             select(TicketNote)
             .where(

@@ -42,6 +42,7 @@ class ConversationService(BaseService):
             content=content
         )
         await self.session.commit()
+        await self.session.refresh(message)
         return message
 
     

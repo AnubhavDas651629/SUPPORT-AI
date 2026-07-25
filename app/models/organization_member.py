@@ -16,10 +16,10 @@ from app.models.mixins import TimestampMixin
 
 
 class OrganizationRole(str, Enum):
-    OWNER = "owner"
-    ADMIN = "admin"
-    MEMBER = "member"
-    SUPPORT = "support"
+    OWNER = "OWNER"
+    ADMIN = "ADMIN"
+    MEMBER = "MEMBER"
+    SUPPORT = "SUPPORT"
 
 class OrganizationMember(Base, TimestampMixin):
     __tablename__ = "organization_members"

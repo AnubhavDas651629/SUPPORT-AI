@@ -3,11 +3,10 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.exceptions.ticket import TicketNotFoundException
-from app.exceptions.ticket_note import TicketNoteNotFoundException
 from app.models.ticket_note import TicketNote
 from app.models.ticket_event import TicketEventType
 from app.repositories.ticket_note_repository import TicketNoteRepository
-from app.repositories.ticket_repository import TicketRepository
+from app.repositories.ticket_repositories import TicketRepository
 from app.services.base import BaseService
 from app.services.ticket_event_service import TicketEventService
 

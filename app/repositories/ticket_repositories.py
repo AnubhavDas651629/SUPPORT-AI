@@ -17,6 +17,7 @@ class TicketRepository(BaseRepository):
         )
         self.session.add(ticket)
         await self.session.flush()
+        await self.session.refresh(ticket)
         return ticket
 
 
@@ -78,6 +79,7 @@ class TicketRepository(BaseRepository):
     async def assign(self, *, ticket: Ticket, user: User) -> Ticket:
         ticket.assigned_to = user
         await self.session.flush()
+        await self.session.refresh(ticket)
         return ticket
 
         
