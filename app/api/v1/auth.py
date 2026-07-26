@@ -6,6 +6,7 @@ from app.db.dependencies import get_db
 from app.schemas.auth import TokenResponse
 from app.schemas.user import UserCreate, UserResponse
 from app.services.auth_service import AuthService
+from app.schemas.auth import RefreshTokenRequest
 
 
 router = APIRouter(
@@ -43,5 +44,14 @@ async def login(
         password=form_data.password,
     )
 
-    
+@router.post("/refresh", response_model=TokenResponse)
+async def refresh(
+    request: RefreshTokenRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    service = AuthService(db)
+
+    return await service.refresh(
+        refresh_token=request.refresh_token
+    )
 

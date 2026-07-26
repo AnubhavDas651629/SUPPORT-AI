@@ -46,3 +46,29 @@ Service      Background Task
                     │
                     ▼
            ChunkRepository
+
+
+
+Login
+
+↓
+
+Access Token
++
+Refresh Token
+
+↓
+
+Access Token expires
+
+↓
+
+POST /auth/refresh
+
+↓
+
+New Access Token
+
+↓
+
+Continue using the application ✅
