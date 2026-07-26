@@ -17,6 +17,7 @@ from app.repositories.organization_member_repository import OrganizationMemberRe
 from app.exceptions.ticket import TicketAlreadyExistsException, TicketNotFoundException
 from app.models.message import Message, MessageRole
 from app.services.ticket_event_service import TicketEventService
+from app.workers.tasks import send_ticket_create_email
 
 class TicketService(BaseService):
     def __init__(self, *, session: AsyncSession):
@@ -54,6 +55,10 @@ class TicketService(BaseService):
             user_id=None,
             event_type=TicketEventType.CREATED,
             description="Ticket created by AI.",
+        )
+
+        send_ticket_create_email.delay(
+            str(ticket.id)
         )
         await self.session.commit()
         await self.session.refresh(ticket)

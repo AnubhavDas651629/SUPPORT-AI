@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from app.api.v1.auth import router
-from app.workers.tasks import say_hello
+from app.workers.tasks import send_ticket_create_email
 
 router = APIRouter(
     prefix="/text",
@@ -9,7 +9,7 @@ router = APIRouter(
 
 @router.post("/celery")
 async def test_celery():
-    say_hello.delay()
+    send_ticket_create_email.delay("test-ticket-id")
 
     return{
         "message": "Task queued successfully"
