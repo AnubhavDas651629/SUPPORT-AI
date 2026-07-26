@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Header
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,6 +9,9 @@ from app.core.security import decode_access_token
 from app.db.dependencies import get_db
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
+from collections.abc import Callable
+from app.models.organization_member import OrganizationMember
+from app.repositories.organization_member_repository import OrganizationMemberRepository
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="/api/v1/auth/login"
@@ -40,3 +43,21 @@ async def get_current_user(
         )
 
     return user
+
+async def get_current_membership(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    organization_id: UUID = Header(
+        alias = "X-Organization-ID"
+    ),
+) -> OrganizationMember:
+    repository = OrganizationMemberRepository(db)
+
+    membership = await repository.get_membership(
+        user_id=current_user.id,
+        organization_id=organization_id
+    )
+    if membership is None:
+        raise ForbiddenException()
+
+    return membership

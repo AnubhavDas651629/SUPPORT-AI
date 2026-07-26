@@ -39,6 +39,29 @@ class AuthService:
 
         return user
 
+
+
+    async def _create_user_session(self, *, user_id:str) -> str:
+        refresh_token = generate_refresh_token()
+
+        refresh_token_hash = hash_refresh_token(
+            refresh_token
+        )
+
+        expires_at = datetime.now(UTC) + timedelta(
+            days=settings.refresh_token_expire_days
+        )
+
+        await self.user_session_repository.create(
+            user_id=user_id,
+            refresh_token_hash=refresh_token_hash,
+            expires_at=expires_at,
+        )
+
+        return refresh_token
+
+
+
     async def login(self, *, email: str, password: str):
         user = await self.user_repository.get_by_email(email)
 
@@ -48,28 +71,23 @@ class AuthService:
         if not verify_password(password, user.hashed_password):
             raise InvalidCredentialsException()
 
-        refresh_token = generate_refresh_token()
-        refresh_token_hash = hash_refresh_token(refresh_token)
-
-        expires_at = datetime.now(UTC) + timedelta(
-            days=settings.refresh_token_expire_days
-        )
-
-        await self.user_session_repository.create(
+        refresh_token = await self._create_user_session(
             user_id=user.id,
-            refresh_token_hash=refresh_token_hash,
-            expires_at=expires_at,
         )
 
         await self.session.commit()
 
-        access_token = create_access_token(str(user.id))
+        access_token = create_access_token(
+            str(user.id),
+        )
 
         return TokenResponse(
             access_token=access_token,
             refresh_token=refresh_token,
         )
 
+
+    #not using helper function in this 
     async def refresh(self, *, refresh_token: str) -> TokenResponse:
         # hash incoming token
         refresh_token_hash = hash_refresh_token(

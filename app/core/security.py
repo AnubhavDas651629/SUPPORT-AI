@@ -30,7 +30,8 @@ def create_access_token(user_id:str) -> str:
 
     payload = {
         "sub": str(user_id),
-        "exp": expire
+        "exp": expire,
+        "type": "access",
     }
 
     return jwt.encode(
