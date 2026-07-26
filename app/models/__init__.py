@@ -10,3 +10,4 @@ from .message_feedback import MessageFeedback
 from .ticket import Ticket
 from .ticket_note import TicketNote
 from .ticket_event import TicketEvent
+from .user_session import UserSession

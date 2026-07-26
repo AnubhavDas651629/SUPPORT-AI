@@ -4,7 +4,18 @@ from jose import JWTError, jwt
 
 from app.core.config import settings
 
+import secrets
+import hashlib
+
 password_hash = PasswordHash.recommended()
+
+def generate_refresh_token() -> str:
+    return secrets.token_urlsafe(64)
+
+def hash_refresh_token(token:str) -> str:
+    return hashlib.sha256(
+        token.encode()
+    ).hexdigest()
 
 def hash_password(password:str) -> str :
     return password_hash.hash(password)
@@ -18,7 +29,7 @@ def create_access_token(user_id:str) -> str:
     )
 
     payload = {
-        "sub": user_id,
+        "sub": str(user_id),
         "exp": expire
     }
 

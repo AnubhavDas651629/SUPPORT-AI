@@ -1,16 +1,27 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import UTC, datetime, timedelta
+
+from app.core.config import settings
+from app.core.security import (
+    create_access_token,
+    generate_refresh_token,
+    hash_password,
+    hash_refresh_token,
+    verify_password,
+)
+from app.exceptions.auth import InvalidCredentialsException, UserAlreadyExistsException
 from app.repositories.user_repository import UserRepository
-from app.core.security import create_access_token, hash_password, verify_password
-from app.exceptions.auth import UserAlreadyExistsException
+from app.repositories.user_session_repository import UserSessionRepository
 from app.schemas.auth import TokenResponse
-from app.exceptions.auth import InvalidCredentialsException
+
 
 class AuthService:
     def __init__(self, session: AsyncSession):
         self.session = session
         self.user_repository = UserRepository(session)
+        self.user_session_repository = UserSessionRepository(session)
 
-    async def register(self, *, email:str, password:str, full_name:str):
+    async def register(self, *, email: str, password: str, full_name: str):
         existing_user = await self.user_repository.get_by_email(email)
         if existing_user:
             raise UserAlreadyExistsException()
@@ -27,23 +38,34 @@ class AuthService:
 
         return user
 
-    async def login(self, *, email:str, password: str):
+    async def login(self, *, email: str, password: str):
         user = await self.user_repository.get_by_email(email)
 
         if not user:
             raise InvalidCredentialsException()
 
-        if not verify_password(
-            password, 
-            user.hashed_password
-        ): 
+        if not verify_password(password, user.hashed_password):
             raise InvalidCredentialsException()
 
-        token = create_access_token(
-            str(user.id),
+        refresh_token = generate_refresh_token()
+        refresh_token_hash = hash_refresh_token(refresh_token)
+
+        expires_at = datetime.now(UTC) + timedelta(
+            days=settings.refresh_token_expire_days
         )
 
+        await self.user_session_repository.create(
+            user_id=user.id,
+            refresh_token_hash=refresh_token_hash,
+            expires_at=expires_at,
+        )
+
+        await self.session.commit()
+
+        access_token = create_access_token(str(user.id))
+
         return TokenResponse(
-            access_token=token,
+            access_token=access_token,
+            refresh_token=refresh_token,
         )
 

@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 from app.models.organization_member import OrganizationMember
 from app.models.mixins import TimestampMixin, UUIDMixin
+from app.models.user_session import UserSession
 
 if TYPE_CHECKING:
     from app.models.ticket import Ticket
@@ -24,3 +25,4 @@ class User(Base, TimestampMixin,UUIDMixin):
     assigned_tickets: Mapped[list["Ticket"]] = relationship(back_populates="assigned_to")
     ticket_notes: Mapped[list["TicketNote"]] = relationship(back_populates="author")
     ticket_events: Mapped[list["TicketEvent"]] = relationship(back_populates="user")
+    sessions: Mapped[list["UserSession"]] = relationship(back_populates="user", cascade="all, delete-orphan")
