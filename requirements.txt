@@ -22,3 +22,11 @@ python-multipart
 pypdf
 pgvector -> brew install pgvector -> brew services restart postgresql ->psql -d support_ai -> CREATE EXTENSION IF NOT EXISTS vector; -> CREATE EXTENSION (expected output)
 Openai
+celery
+a)brew services start rabbitmq
+b)brew services list (rabbitmq to be green)
+celery -A app.workers.celery_app worker --loglevel=info
+in work -> 
+terminal 1 -> follow a and b 
+terminal 2 -> celery -A app.workers.celery_app worker --loglevel=info
+terminal 3 -> uv run fastapi dev app/main.py
