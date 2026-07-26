@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import Depends, HTTPException, Header
+from fastapi import Depends, HTTPException, Header, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,6 +12,7 @@ from app.repositories.user_repository import UserRepository
 from collections.abc import Callable
 from app.models.organization_member import OrganizationMember
 from app.repositories.organization_member_repository import OrganizationMemberRepository
+from app.exceptions.auth import ForbiddenException
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="/api/v1/auth/login"

@@ -1,7 +1,6 @@
 from uuid import UUID
-from openai import PermissionDeniedError
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.exceptions.auth import UserNotFoundException
+from app.exceptions.auth import PermissionDeniedException, UserNotFoundException
 from app.models import conversation
 from app.models.organization import Organization
 from app.models.organization_member import OrganizationRole
@@ -152,10 +151,10 @@ class TicketService(BaseService):
         )
 
         if membership is None:
-            raise PermissionDeniedError()
+            raise PermissionDeniedException()
 
         if membership.role != OrganizationRole.SUPPORT:
-            raise PermissionDeniedError()
+            raise PermissionDeniedException()
 
         ticket =  await self.ticket_repository.assign(
             ticket=ticket,

@@ -2,7 +2,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.exceptions.ticket import TicketNotFoundException
+from app.exceptions.ticket import TicketNotFoundException, TicketNoteNotFoundException
 from app.models.ticket_note import TicketNote
 from app.models.ticket_event import TicketEventType
 from app.repositories.ticket_note_repository import TicketNoteRepository

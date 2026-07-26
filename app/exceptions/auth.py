@@ -18,3 +18,8 @@ class UserNotFoundException(Exception):
 class AlreadyOrganizationMemberException(Exception):
     def __init__(self):
         super().__init__("User is already a member of this organization.")
+
+
+class ForbiddenException(Exception):
+    def __init__(self):
+        super().__init__("You do not have permission to access this resource.")

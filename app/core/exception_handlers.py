@@ -6,7 +6,8 @@ from app.exceptions.auth import (
     InvalidCredentialsException,
     PermissionDeniedException,
     UserNotFoundException,
-    AlreadyOrganizationMemberException
+    AlreadyOrganizationMemberException,
+    ForbiddenException,
 )
 from app.exceptions.organization import (
     OrganizationNotFoundException,
@@ -26,6 +27,7 @@ from app.exceptions.conversation import (
 from app.exceptions.ticket import (
     TicketNotFoundException,
     TicketAlreadyExistsException,
+    TicketNoteNotFoundException,
 )
 def register_exception_handlers(app: FastAPI):
 
@@ -213,6 +215,30 @@ def register_exception_handlers(app: FastAPI):
     ):
         return JSONResponse(
             status_code=409,
+            content={
+                "detail": str(exc),
+            },
+        )
+
+    @app.exception_handler(ForbiddenException)
+    async def forbidden_handler(
+        request: Request,
+        exc: ForbiddenException,
+    ):
+        return JSONResponse(
+            status_code=403,
+            content={
+                "detail": str(exc),
+            },
+        )
+
+    @app.exception_handler(TicketNoteNotFoundException)
+    async def ticket_note_not_found_handler(
+        request: Request,
+        exc: TicketNoteNotFoundException,
+    ):
+        return JSONResponse(
+            status_code=404,
             content={
                 "detail": str(exc),
             },

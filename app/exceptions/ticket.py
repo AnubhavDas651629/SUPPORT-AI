@@ -6,3 +6,8 @@ class TicketNotFoundException(Exception):
 class TicketAlreadyExistsException(Exception):
     def __init__(self):
         super().__init__("Ticket already exists.")
+
+
+class TicketNoteNotFoundException(Exception):
+    def __init__(self):
+        super().__init__("Ticket note not found.")
