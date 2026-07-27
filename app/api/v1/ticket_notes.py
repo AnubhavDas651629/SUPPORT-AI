@@ -4,6 +4,8 @@ from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.dependencies import get_db
+from app.dependencies.auth import get_current_user
+from app.models.user import User
 from app.schemas.ticket_note import (
     CreateTicketNoteRequest,
     TicketNoteResponse,
@@ -24,14 +26,16 @@ async def create_note(
     ticket_id: UUID,
     request: CreateTicketNoteRequest,
     session: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
 
     service = TicketNoteService(session=session)
 
     note = await service.create_note(
         ticket_id=ticket_id,
-        author_id=request.author_id,
+        author_id=current_user.id,
         content=request.content,
+        current_user=current_user,
     )
 
     await session.commit()
@@ -46,12 +50,14 @@ async def create_note(
 async def list_notes(
     ticket_id: UUID,
     session: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
 
     service = TicketNoteService(session=session)
 
     notes = await service.list_notes(
         ticket_id=ticket_id,
+        current_user=current_user,
     )
 
     return [
@@ -67,12 +73,14 @@ async def list_notes(
 async def delete_note(
     note_id: UUID,
     session: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
 
     service = TicketNoteService(session=session)
 
     await service.delete_note(
         note_id=note_id,
+        current_user=current_user,
     )
 
     await session.commit()

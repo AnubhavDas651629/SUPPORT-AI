@@ -15,6 +15,7 @@ from app.repositories.user_repository import UserRepository
 from app.repositories.organization_member_repository import OrganizationMemberRepository
 from app.exceptions.ticket import TicketAlreadyExistsException, TicketNotFoundException
 from app.models.message import Message, MessageRole
+from app.models.user import User
 from app.services.ticket_event_service import TicketEventService
 from app.workers.tasks import send_ticket_create_email
 
@@ -29,9 +30,10 @@ class TicketService(BaseService):
         self.ticket_event_service = TicketEventService(session=session)
 
 
-    async def create_ticket(self, *, conversation_id: UUID, priority: TicketPriority = TicketPriority.MEDIUM,created_by_ai: bool = True) -> Ticket:
+    async def create_ticket(self, *, conversation_id: UUID, priority: TicketPriority = TicketPriority.MEDIUM, created_by_ai: bool = True, current_user: User | None = None) -> Ticket:
         conversation = await self.conversation_service.get_conversation(
             conversation_id=conversation_id,
+            current_user=current_user,
         )
         existing_ticket = await self.ticket_repository.get_by_conversation(
             conversation_id=conversation_id
@@ -64,24 +66,36 @@ class TicketService(BaseService):
         return ticket
 
 
-    async def get_ticket(self, *, ticket_id: UUID) -> Ticket:
+    async def get_ticket(self, *, ticket_id: UUID, current_user: User | None = None) -> Ticket:
         ticket = await self.ticket_repository.get_by_id(
             ticket_id=ticket_id,
         )
         if ticket is None:
             raise TicketNotFoundException()
+
+        if current_user is not None:
+            await self._require_member(
+                organization_id=ticket.organization_id,
+                current_user=current_user,
+            )
+
         return ticket
 
-    async def list_tickets(self,*,organization_id: UUID,limit: int = 20,offset: int = 0) -> list[Ticket]:
+    async def list_tickets(self, *, organization_id: UUID, current_user: User, limit: int = 20, offset: int = 0) -> list[Ticket]:
+        await self._require_member(
+            organization_id=organization_id,
+            current_user=current_user,
+        )
         return await self.ticket_repository.list_for_organization(
             organization_id=organization_id,
             limit=limit,
             offset=offset,
         )
 
-    async def update_status(self,*,ticket_id: UUID,status: TicketStatus) -> Ticket:
+    async def update_status(self, *, ticket_id: UUID, status: TicketStatus, current_user: User) -> Ticket:
         ticket = await self.get_ticket(
             ticket_id=ticket_id,
+            current_user=current_user,
         )
 
         updated = await self.ticket_repository.update_status(
@@ -99,9 +113,10 @@ class TicketService(BaseService):
         return updated
 
 
-    async def update_priority(self,*,ticket_id: UUID,priority: TicketPriority,) -> Ticket:
+    async def update_priority(self, *, ticket_id: UUID, priority: TicketPriority, current_user: User) -> Ticket:
         ticket = await self.get_ticket(
             ticket_id=ticket_id,
+            current_user=current_user,
         )
 
         updated = await self.ticket_repository.update_priority(
@@ -119,9 +134,10 @@ class TicketService(BaseService):
         return updated
 
 
-    async def delete_ticket(self,*,ticket_id: UUID,) -> None:
+    async def delete_ticket(self, *, ticket_id: UUID, current_user: User) -> None:
         ticket = await self.get_ticket(
             ticket_id=ticket_id,
+            current_user=current_user,
         )
 
         await self.ticket_repository.delete(
@@ -131,9 +147,10 @@ class TicketService(BaseService):
 
 
 
-    async def assign_ticket(self, *, ticket_id: UUID, user_id: UUID) -> Ticket:
+    async def assign_ticket(self, *, ticket_id: UUID, user_id: UUID, current_user: User) -> Ticket:
         ticket = await self.get_ticket(
-            ticket_id=ticket_id
+            ticket_id=ticket_id,
+            current_user=current_user,
         )
 
         user = await self.user_repository.get_by_id(
@@ -173,9 +190,10 @@ class TicketService(BaseService):
         return ticket
 
 
-    async def reply_to_ticket(self, *, ticket_id:UUID, content:str) -> Message:
+    async def reply_to_ticket(self, *, ticket_id: UUID, content: str, current_user: User) -> Message:
         ticket = await self.get_ticket(
-            ticket_id=ticket_id
+            ticket_id=ticket_id,
+            current_user=current_user,
         ) 
 
         message = await self.conversation_service.create_message(

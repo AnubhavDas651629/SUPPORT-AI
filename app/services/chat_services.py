@@ -22,7 +22,8 @@ from collections.abc import AsyncGenerator
 from app.processing.llms.factory import LLMFactory
 from app.models.document_chunk import DocumentChunk
 from app.utils.prompt_loader import load_prompt
-from app.services.knowledge_base_service import KnowledgeBaseService
+from app.repositories.knowledge_base_repository import KnowledgeBaseRepository
+from app.models.user import User
 from app.dto.citation import Citation
 
 class ChatService(BaseService):
@@ -33,7 +34,7 @@ class ChatService(BaseService):
         self.llm_provider = LLMFactory.get_provider()
         self.escalation_service = EscalationService(session=session)
         self.conversation_service = ConversationService(session=session)
-        self.knowledge_base_service = KnowledgeBaseService(session=session)
+        self.knowledge_base_repository = KnowledgeBaseRepository(session=session)
 
 
     def _build_messages(self, *, history: list[Message], chunks:list[DocumentChunk], question:str) -> list[str]:
@@ -206,11 +207,17 @@ class ChatService(BaseService):
             content=full_answer,
         )
 
-    async def chat(self, *, conversation_id:UUID | None, knowledge_base_id:UUID | None, question: str) -> ChatResult:
+    async def chat(self, *, conversation_id: UUID | None, knowledge_base_id: UUID | None, question: str, current_user: User | None = None) -> ChatResult:
         if conversation_id is None:
-            knowledge_base = await self.knowledge_base_service.get_knowledge_base(
+
+            knowledge_base = await self.knowledge_base_repository.get_by_id(
                 knowledge_base_id=knowledge_base_id,
             )
+            if current_user is not None:
+                await self._require_member(
+                    organization_id=knowledge_base.organization_id,
+                    current_user=current_user,
+                )
             conversation = await self.conversation_service.create_conversation(
                 organization_id=knowledge_base.organization_id,
                 knowledge_base_id=knowledge_base_id,
@@ -218,7 +225,8 @@ class ChatService(BaseService):
             )
         else:
             conversation = await self.conversation_service.get_conversation(
-                conversation_id=conversation_id
+                conversation_id=conversation_id,
+                current_user=current_user,
             )
 
         answer, citations, title, assistant_message = await self.answer(
@@ -232,18 +240,24 @@ class ChatService(BaseService):
             citations=citations
         )
 
-    async def stream_chat(self, *, conversation_id: UUID | None, knowledge_base_id:UUID | None, question: str) -> AsyncGenerator[str, None]:
+    async def stream_chat(self, *, conversation_id: UUID | None, knowledge_base_id: UUID | None, question: str, current_user: User | None = None) -> AsyncGenerator[str, None]:
         if conversation_id is None:
-            knowledge_base = await self.knowledge_base_service.get_knowledge_base(
+            knowledge_base = await self.knowledge_base_repository.get_by_id(
                 knowledge_base_id=knowledge_base_id
             )
+            if current_user is not None:
+                await self._require_member(
+                    organization_id=knowledge_base.organization_id,
+                    current_user=current_user,
+                )
             conversation = await self.conversation_service.create_conversation(
                 organization_id=knowledge_base.organization_id,
                 knowledge_base_id=knowledge_base.id
             )
         else:
             conversation = await self.conversation_service.get_conversation(
-                conversation_id=conversation_id
+                conversation_id=conversation_id,
+                current_user=current_user,
             )
         async for token in self.stream_answer(
             conversation_id=conversation.id,

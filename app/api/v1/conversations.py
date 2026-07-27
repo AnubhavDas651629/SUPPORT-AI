@@ -4,29 +4,34 @@ from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.dependencies import get_db
+from app.dependencies.auth import get_current_user
+from app.models.user import User
 from app.schemas.conversation import (
     ConversationSummaryResponse,
     ConversationDetailResponse,
 )
 from app.services.conversation_services import ConversationService
+
 router = APIRouter(
     prefix="/conversations",
     tags=["Conversations"],
 )
 
 
-@router.get("",response_model=list[ConversationSummaryResponse])
+@router.get("", response_model=list[ConversationSummaryResponse])
 async def list_conversations(
     organization_id: UUID = Query(...),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
     session: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
 
     service = ConversationService(session=session)
 
     conversations = await service.list_conversations(
         organization_id=organization_id,
+        current_user=current_user,
         limit=limit,
         offset=offset,
     )
@@ -37,16 +42,18 @@ async def list_conversations(
     ]
 
 
-@router.get("/{conversation_id}",response_model=ConversationDetailResponse)
+@router.get("/{conversation_id}", response_model=ConversationDetailResponse)
 async def get_conversation(
     conversation_id: UUID,
     session: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
 
     service = ConversationService(session=session)
 
     conversation = await service.get_conversation(
         conversation_id=conversation_id,
+        current_user=current_user,
     )
 
     return ConversationDetailResponse.model_validate(
@@ -61,12 +68,14 @@ async def get_conversation(
 async def delete_conversation(
     conversation_id: UUID,
     session: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
 
     service = ConversationService(session=session)
 
     await service.delete_conversation(
         conversation_id=conversation_id,
+        current_user=current_user,
     )
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)

@@ -4,7 +4,6 @@ from datetime import datetime
 
 
 class CreateTicketNoteRequest(BaseModel):
-    author_id: UUID
     content: str
 
 

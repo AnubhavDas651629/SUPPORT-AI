@@ -1,10 +1,8 @@
-from mailbox import Message
 from uuid import UUID
-from httpx import delete
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models import conversation
 from app.models.conversation import Conversation
-from app.models.message import MessageRole
+from app.models.message import Message, MessageRole
+from app.models.user import User
 from app.repositories.conversation_repository import ConversationRepository
 from app.repositories.message_repository import MessageRepository
 from app.services.base import BaseService
@@ -26,12 +24,18 @@ class ConversationService(BaseService):
         await self.session.commit()
         return conversation
 
-    async def get_conversation(self, *, conversation_id: UUID) -> Conversation:
+    async def get_conversation(self, *, conversation_id: UUID, current_user: User | None = None) -> Conversation:
         conversation = await self.conversation_repository.get_by_id(
             conversation_id=conversation_id,
         )
         if conversation is None:
             raise ConversationNotFoundException()
+
+        if current_user is not None:
+            await self._require_member(
+                organization_id=conversation.organization_id,
+                current_user=current_user,
+            )
 
         return conversation
 
@@ -59,16 +63,21 @@ class ConversationService(BaseService):
         return title
         
 
-    async def list_conversations(self, *, organization_id: UUID, limit: int = 20, offset: int = 0) -> list[Conversation]:
+    async def list_conversations(self, *, organization_id: UUID, current_user: User, limit: int = 20, offset: int = 0) -> list[Conversation]:
+        await self._require_member(
+            organization_id=organization_id,
+            current_user=current_user,
+        )
         return await self.conversation_repository.list_for_organization(
             organization_id=organization_id,
             limit=limit,
             offset=offset
         )
 
-    async def delete_conversation(self, *, conversation_id: UUID) -> None:
+    async def delete_conversation(self, *, conversation_id: UUID, current_user: User) -> None:
         conversation = await self.get_conversation(
             conversation_id=conversation_id,
+            current_user=current_user,
         )
 
         await self.conversation_repository.delete(

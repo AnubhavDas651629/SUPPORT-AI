@@ -1,10 +1,12 @@
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.message_feedback import FeedbackType, MessageFeedback
+from app.models.user import User
 from app.repositories.message_feedback_repository import MessageFeedbackRepository
 from app.repositories.message_repository import MessageRepository
+from app.repositories.conversation_repository import ConversationRepository
 from app.services.base import BaseService
-from app.exceptions.conversation import MessageNotFoundException
+from app.exceptions.conversation import MessageNotFoundException, ConversationNotFoundException
 
 
 class FeedbackService(BaseService):
@@ -13,13 +15,25 @@ class FeedbackService(BaseService):
 
         self.message_repository = MessageRepository(session)
         self.message_feedback_repository = MessageFeedbackRepository(session)
+        self.conversation_repository = ConversationRepository(session)
 
-    async def submit_feedback(self, *, message_id:UUID, feedback:FeedbackType) -> MessageFeedback:
+    async def submit_feedback(self, *, message_id: UUID, feedback: FeedbackType, current_user: User) -> MessageFeedback:
         message = await self.message_repository.get_by_id(
             message_id=message_id
         )
         if message is None:
             raise MessageNotFoundException()
+
+        conversation = await self.conversation_repository.get_by_id(
+            conversation_id=message.conversation_id
+        )
+        if conversation is None:
+            raise ConversationNotFoundException()
+
+        await self._require_member(
+            organization_id=conversation.organization_id,
+            current_user=current_user,
+        )
 
         existing_feedback = await self.message_feedback_repository.get_by_message_id(
             message_id=message_id

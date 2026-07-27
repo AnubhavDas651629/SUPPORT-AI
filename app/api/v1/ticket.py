@@ -1,10 +1,11 @@
-from mailbox import Message
 from uuid import UUID
 from fastapi import APIRouter, Depends, Query, status, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.dependencies import get_db
+from app.dependencies.auth import get_current_user
 from app.dto.message import SupportReplyRequest
+from app.models.user import User
 from app.schemas.conversation import MessageResponse
 from app.schemas.ticket import AssignTicketRequest, CreateTicketRequest, TicketResponse, UpdateTicketPriorityRequest, UpdateTicketStatusRequest
 from app.services.ticket_service import TicketService
@@ -18,13 +19,15 @@ router = APIRouter(
 @router.post("", response_model=TicketResponse, status_code=status.HTTP_201_CREATED)
 async def create_ticket(
     request: CreateTicketRequest,
-    session: AsyncSession = Depends(get_db)
+    session: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     service = TicketService(session=session)
 
     ticket = await service.create_ticket(
         conversation_id=request.conversation_id,
-        priority=request.priority
+        priority=request.priority,
+        current_user=current_user,
     )
     return TicketResponse.model_validate(ticket)
 
@@ -34,12 +37,14 @@ async def list_tickets(
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
     session: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
 
     service = TicketService(session=session)
 
     tickets = await service.list_tickets(
         organization_id=organization_id,
+        current_user=current_user,
         limit=limit,
         offset=offset,
     )
@@ -50,25 +55,28 @@ async def list_tickets(
     ]
 
 
-@router.get("/{ticket_id}",response_model=TicketResponse,)
+@router.get("/{ticket_id}", response_model=TicketResponse)
 async def get_ticket(
     ticket_id: UUID,
     session: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
 
     service = TicketService(session=session)
 
     ticket = await service.get_ticket(
         ticket_id=ticket_id,
+        current_user=current_user,
     )
 
     return TicketResponse.model_validate(ticket)
 
-@router.patch("/{ticket_id}/status",response_model=TicketResponse)
+@router.patch("/{ticket_id}/status", response_model=TicketResponse)
 async def update_status(
     ticket_id: UUID,
     request: UpdateTicketStatusRequest,
     session: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
 
     service = TicketService(session=session)
@@ -76,6 +84,7 @@ async def update_status(
     ticket = await service.update_status(
         ticket_id=ticket_id,
         status=request.status,
+        current_user=current_user,
     )
 
     return TicketResponse.model_validate(ticket)
@@ -88,6 +97,7 @@ async def update_priority(
     ticket_id: UUID,
     request: UpdateTicketPriorityRequest,
     session: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
 
     service = TicketService(session=session)
@@ -95,21 +105,24 @@ async def update_priority(
     ticket = await service.update_priority(
         ticket_id=ticket_id,
         priority=request.priority,
+        current_user=current_user,
     )
 
     return TicketResponse.model_validate(ticket)
 
 
-@router.delete("/{ticket_id}",status_code=status.HTTP_204_NO_CONTENT,)
+@router.delete("/{ticket_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_ticket(
     ticket_id: UUID,
     session: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
 
     service = TicketService(session=session)
 
     await service.delete_ticket(
         ticket_id=ticket_id,
+        current_user=current_user,
     )
 
     return Response(
@@ -121,13 +134,15 @@ async def delete_ticket(
 async def assign_ticket(
     ticket_id: UUID, 
     request: AssignTicketRequest,
-    session: AsyncSession = Depends(get_db)
+    session: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     service = TicketService(session=session)
 
     ticket = await service.assign_ticket(
         ticket_id=ticket_id,
-        user_id = request.user_id
+        user_id=request.user_id,
+        current_user=current_user,
     )
 
     return TicketResponse.model_validate(ticket)
@@ -136,13 +151,15 @@ async def assign_ticket(
 async def reply_to_ticket(
     ticket_id: UUID,
     request: SupportReplyRequest,
-    session: AsyncSession = Depends(get_db)
+    session: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     service = TicketService(session=session)
 
     message = await service.reply_to_ticket(
         ticket_id=ticket_id,
-        content=request.content
+        content=request.content,
+        current_user=current_user,
     )
 
     return MessageResponse.model_validate(message)
