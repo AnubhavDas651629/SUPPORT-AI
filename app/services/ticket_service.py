@@ -104,7 +104,7 @@ class TicketService(BaseService):
         )
         await self.ticket_event_service.create_event(
             ticket_id=ticket.id,
-            user_id=None,
+            user_id=current_user.id if current_user else None,
             event_type=TicketEventType.STATUS_CHANGED,
             description=f"Status changed to {status.value}.",
         )
@@ -125,7 +125,7 @@ class TicketService(BaseService):
         )
         await self.ticket_event_service.create_event(
             ticket_id=ticket.id,
-            user_id=None,
+            user_id=current_user.id if current_user else None,
             event_type=TicketEventType.PRIORITY_CHANGED,
             description=f"Priority changed to {priority.value}.",
         )
@@ -180,7 +180,7 @@ class TicketService(BaseService):
 
         await self.ticket_event_service.create_event(
             ticket_id=ticket.id,
-            user_id=user.id,
+            user_id=current_user.id if current_user else user.id,
             event_type=TicketEventType.ASSIGNED,
             description=f"Assigned to {user.full_name}.",
         )
@@ -203,7 +203,7 @@ class TicketService(BaseService):
         )
         await self.ticket_event_service.create_event(
             ticket_id=ticket.id,
-            user_id=ticket.assigned_to_user_id,
+            user_id=current_user.id if current_user else ticket.assigned_to_user_id,
             event_type=TicketEventType.REPLIED,
             description="Support agent replied.",
         )
