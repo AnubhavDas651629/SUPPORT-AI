@@ -10,7 +10,7 @@ from app.db.dependencies import get_db
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
 from collections.abc import Callable
-from app.models.organization_member import OrganizationMember
+from app.models.organization_member import OrganizationMember, OrganizationRole
 from app.repositories.organization_member_repository import OrganizationMemberRepository
 from app.exceptions.auth import ForbiddenException
 
@@ -62,3 +62,38 @@ async def get_current_membership(
         raise ForbiddenException()
 
     return membership
+
+
+def require_roles(*allowed_roles: OrganizationRole) -> Callable:
+    async def dependency(
+        membership: OrganizationMember = Depends(
+            get_current_membership
+            )
+        ) -> OrganizationMember:
+        if membership.role not in allowed_roles:
+            raise ForbiddenException()
+        return membership
+    return dependency
+
+
+require_member = require_roles(
+    OrganizationRole.MEMBER,
+    OrganizationRole.SUPPORT,
+    OrganizationRole.ADMIN,
+    OrganizationRole.OWNER
+)
+
+require_support = require_roles(
+    OrganizationRole.SUPPORT,
+    OrganizationRole.ADMIN,
+    OrganizationRole.OWNER
+)
+
+require_admin = require_roles(
+    OrganizationRole.ADMIN,
+    OrganizationRole.OWNER,
+)
+
+require_owner = require_roles(
+    OrganizationRole.OWNER,
+)
