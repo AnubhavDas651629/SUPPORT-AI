@@ -10,18 +10,21 @@ from app.api.v1 import ticket_events
 from app.api.v1 import ticket
 from app.api.v1 import ticket_notes
 from app.api.v1 import test
+from app.api.v1 import redis_test
 from app.api.v1 import conversations
 from app.api.v1 import knowledge_bases
 from app.api.v1.users import router as users_router
 from app.api.v1.organization_member import router as organization_member_router
 from app.api.v1.organizations import router as organization_router
 from app.core.exception_handlers import (register_exception_handlers)
+from app.core.lifespan import lifespan
 
 
 app = FastAPI(
     title="SupportAI",
     description="AI-powered customer support platform",
     version="0.1.0",
+    lifespan=lifespan
 )
 
 register_exception_handlers(app)
@@ -35,6 +38,7 @@ app.include_router(documents.router)
 app.include_router(chat.router)
 app.include_router(messages.router)
 app.include_router(test.router)
+app.include_router(redis_test.router)
 app.include_router(conversations.router)
 app.include_router(ticket.router)
 app.include_router(ticket_events.router)
