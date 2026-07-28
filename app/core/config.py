@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     redis_port: int = 6379
     redis_db: int = 0
 
+    otp_expiry_seconds: int = 300
+    otp_length:int = 6
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
