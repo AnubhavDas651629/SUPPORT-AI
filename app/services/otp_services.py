@@ -1,4 +1,3 @@
-import re
 from redis.asyncio import Redis
 
 from app.core.config import settings
@@ -10,21 +9,23 @@ class OTPService(BaseService):
     def __init__(self, redis: Redis):
         self.redis = redis
 
-        async def generate_email_otp(self, email:str) -> str:
-            """
-            Generate an OTP, store it in reids and return it
-            """
+    async def generate_email_otp(self, email:str) -> str:
+        """
+        Generate an OTP, store it in reids and return it
+        """
 
-            otp = generate_otp(settings.otp_length)
+        otp = generate_otp(settings.otp_length)
 
-            await self.redis.set(
-                RedisKeys.email_otp(email),
-                otp,
-                ex=settings.otp_expiry_seconds
-            )
+        await self.redis.set(
+            RedisKeys.email_otp(email),
+            otp,
+            ex=settings.otp_expiry_seconds
+        )
 
-            return otp
-        async def verify_email_otp(self,*, email:str, otp:str) -> bool:
+        return otp
+
+
+    async def verify_email_otp(self,*, email:str, otp:str) -> bool:
             stored_otp = await self.redis.get(
                 RedisKeys.email_otp(email)
             )
@@ -41,7 +42,7 @@ class OTPService(BaseService):
             return True
 
 
-        async def delete_email_otp(self, *, email:str) -> None:
+    async def delete_email_otp(self, *, email:str) -> None:
             await self.redis.delete(
                 RedisKeys.email_otp(email)
             )

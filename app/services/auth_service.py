@@ -13,14 +13,18 @@ from app.db import session
 from app.exceptions.auth import InvalidCredentialsException, UserAlreadyExistsException
 from app.repositories.user_repository import UserRepository
 from app.repositories.user_session_repository import UserSessionRepository
-from app.schemas.auth import TokenResponse
+from app.schemas.auth import TokenResponse, LoginResponse
+from redis.asyncio import Redis
+from app.services.otp_services import OTPService
 
 
 class AuthService:
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession, redis: Redis):
         self.session = session
+        self.redis = redis
         self.user_repository = UserRepository(session)
         self.user_session_repository = UserSessionRepository(session)
+        self.otp_service = OTPService(redis)
 
     async def register(self, *, email: str, password: str, full_name: str):
         existing_user = await self.user_repository.get_by_email(email)
@@ -71,19 +75,42 @@ class AuthService:
         if not verify_password(password, user.hashed_password):
             raise InvalidCredentialsException()
 
+        otp = await self.otp_service.generate_email_otp(
+        email=email,
+    )
+
+        # TODO:
+        # Queue email using EmailService
+        print(f"OTP for {email}: {otp}")
+
+        return LoginResponse(
+            message="OTP sent successfully"
+        )
+
+    async def verify_login_otp(self, *, email: str, otp:str) -> TokenResponse:
+        user = await self.user_repository.get_by_email(email)
+        if not user:
+            raise InvalidCredentialsException()
+
+        verified = await self.otp_service.verify_email_otp(
+            email=email,
+            otp=otp
+        )
+    
+        if not verified:
+            raise InvalidCredentialsException()
+
         refresh_token = await self._create_user_session(
-            user_id=user.id,
+            user_id=user.id
         )
 
         await self.session.commit()
-
         access_token = create_access_token(
-            str(user.id),
+            str(user.id)
         )
-
         return TokenResponse(
             access_token=access_token,
-            refresh_token=refresh_token,
+            refresh_token=refresh_token
         )
 
 
