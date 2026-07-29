@@ -8,23 +8,30 @@ from app.core.security import (
     hash_password,
     hash_refresh_token,
     verify_password,
+    create_reset_token,
+    decode_reset_token,
 )
 from app.db import session
-from app.exceptions.auth import InvalidCredentialsException, UserAlreadyExistsException
+from app.exceptions.auth import (
+    InvalidCredentialsException,
+    UserAlreadyExistsException,
+    UserNotFoundException,
+    InvalidOTPException,
+)
 from app.repositories.user_repository import UserRepository
 from app.repositories.user_session_repository import UserSessionRepository
-from app.schemas.auth import TokenResponse, LoginResponse
+from app.schemas.auth import TokenResponse, GenericMessageResponse, VerifyOTPResponse
 from redis.asyncio import Redis
 from app.services.otp_services import OTPService
 
 
 class AuthService:
-    def __init__(self, session: AsyncSession, redis: Redis):
+    def __init__(self, session: AsyncSession, redis: Redis | None = None):
         self.session = session
         self.redis = redis
         self.user_repository = UserRepository(session)
         self.user_session_repository = UserSessionRepository(session)
-        self.otp_service = OTPService(redis)
+        self.otp_service = OTPService(redis) if redis is not None else None
 
     async def register(self, *, email: str, password: str, full_name: str):
         existing_user = await self.user_repository.get_by_email(email)
@@ -43,9 +50,7 @@ class AuthService:
 
         return user
 
-
-
-    async def _create_user_session(self, *, user_id:str) -> str:
+    async def _create_user_session(self, *, user_id: str) -> str:
         refresh_token = generate_refresh_token()
 
         refresh_token_hash = hash_refresh_token(
@@ -64,40 +69,13 @@ class AuthService:
 
         return refresh_token
 
-
-
-    async def login(self, *, email: str, password: str):
+    async def login(self, *, email: str, password: str) -> TokenResponse:
         user = await self.user_repository.get_by_email(email)
 
         if not user:
             raise InvalidCredentialsException()
 
         if not verify_password(password, user.hashed_password):
-            raise InvalidCredentialsException()
-
-        otp = await self.otp_service.generate_email_otp(
-        email=email,
-    )
-
-        # TODO:
-        # Queue email using EmailService
-        print(f"OTP for {email}: {otp}")
-
-        return LoginResponse(
-            message="OTP sent successfully"
-        )
-
-    async def verify_login_otp(self, *, email: str, otp:str) -> TokenResponse:
-        user = await self.user_repository.get_by_email(email)
-        if not user:
-            raise InvalidCredentialsException()
-
-        verified = await self.otp_service.verify_email_otp(
-            email=email,
-            otp=otp
-        )
-    
-        if not verified:
             raise InvalidCredentialsException()
 
         refresh_token = await self._create_user_session(
@@ -111,6 +89,58 @@ class AuthService:
         return TokenResponse(
             access_token=access_token,
             refresh_token=refresh_token
+        )
+
+    async def forgot_password(self, *, email: str) -> GenericMessageResponse:
+        user = await self.user_repository.get_by_email(email)
+
+        if user and self.otp_service:
+            otp = await self.otp_service.generate_email_otp(email=email)
+            print(f"Forgot Password OTP for {email}: {otp}")
+
+        return GenericMessageResponse(
+            message="If an account exists, an OTP has been sent."
+        )
+
+    async def verify_forgot_password_otp(self, *, email: str, otp: str) -> VerifyOTPResponse:
+        if not self.otp_service:
+            raise InvalidOTPException()
+
+        verified = await self.otp_service.verify_email_otp(
+            email=email,
+            otp=otp,
+            delete_on_verify=True,
+        )
+
+        if not verified:
+            raise InvalidOTPException()
+
+        user = await self.user_repository.get_by_email(email)
+        if not user:
+            raise UserNotFoundException()
+
+        reset_token = create_reset_token(str(user.id))
+
+        return VerifyOTPResponse(
+            reset_token=reset_token
+        )
+
+    async def reset_password(self, *, reset_token: str, new_password: str) -> GenericMessageResponse:
+        try:
+            payload = decode_reset_token(reset_token)
+            user_id = payload.get("sub")
+        except Exception:
+            raise InvalidCredentialsException()
+
+        user = await self.user_repository.get_by_id(user_id=user_id)
+        if not user:
+            raise UserNotFoundException()
+
+        user.hashed_password = hash_password(new_password)
+        await self.session.commit()
+
+        return GenericMessageResponse(
+            message="Password reset successfully."
         )
 
 

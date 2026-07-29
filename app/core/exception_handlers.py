@@ -243,3 +243,17 @@ def register_exception_handlers(app: FastAPI):
                 "detail": str(exc),
             },
         )
+
+    from app.exceptions.auth import InvalidOTPException
+
+    @app.exception_handler(InvalidOTPException)
+    async def invalid_otp_handler(
+        request: Request,
+        exc: InvalidOTPException,
+    ):
+        return JSONResponse(
+            status_code=400,
+            content={
+                "detail": str(exc),
+            },
+        )

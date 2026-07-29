@@ -25,21 +25,22 @@ class OTPService(BaseService):
         return otp
 
 
-    async def verify_email_otp(self,*, email:str, otp:str) -> bool:
-            stored_otp = await self.redis.get(
-                RedisKeys.email_otp(email)
-            )
-            if stored_otp is None:
-                return False
+    async def verify_email_otp(self, *, email: str, otp: str, delete_on_verify: bool = True) -> bool:
+        stored_otp = await self.redis.get(
+            RedisKeys.email_otp(email)
+        )
+        if stored_otp is None:
+            return False
 
-            if stored_otp != otp:
-                return False
+        if stored_otp != otp:
+            return False
 
+        if delete_on_verify:
             await self.redis.delete(
                 RedisKeys.email_otp(email)
             )
 
-            return True
+        return True
 
 
     async def delete_email_otp(self, *, email:str) -> None:

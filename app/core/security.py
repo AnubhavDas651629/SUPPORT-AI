@@ -48,3 +48,28 @@ def decode_access_token(token: str) -> dict:
         algorithms=[settings.jwt_algorithm],
     )
 
+
+def create_reset_token(user_id: str) -> str:
+    expire = datetime.now(UTC) + timedelta(minutes=10)
+    payload = {
+        "sub": str(user_id),
+        "exp": expire,
+        "type": "password_reset",
+    }
+    return jwt.encode(
+        payload,
+        settings.jwt_secret,
+        algorithm=settings.jwt_algorithm,
+    )
+
+
+def decode_reset_token(token: str) -> dict:
+    payload = jwt.decode(
+        token,
+        settings.jwt_secret,
+        algorithms=[settings.jwt_algorithm],
+    )
+    if payload.get("type") != "password_reset":
+        raise JWTError("Invalid token type")
+    return payload
+

@@ -23,3 +23,8 @@ class AlreadyOrganizationMemberException(Exception):
 class ForbiddenException(Exception):
     def __init__(self):
         super().__init__("You do not have permission to access this resource.")
+
+
+class InvalidOTPException(Exception):
+    def __init__(self):
+        super().__init__("Invalid or expired OTP.")
