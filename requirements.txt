@@ -32,3 +32,4 @@ terminal 2 -> celery -A app.workers.celery_app worker --loglevel=info
 terminal 3 -> uv run fastapi dev app/main.py
 redis
 to start -> redis-server
+google-auth

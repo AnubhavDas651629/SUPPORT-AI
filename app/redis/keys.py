@@ -20,9 +20,9 @@ class RedisKeys:
         return f"password_reset:{token}"
 
     @staticmethod
-    def rate_limit(user_id: str) -> str:
-        return f"rate_limit:user:{user_id}"
+    def rate_limit_ip(ip: str, path: str) -> str:
+        return f"rate_limit:ip:{ip}:{path}"
 
     @staticmethod
-    def rate_limit_user(user_id:str, path:str) -> str:
-        return f"rate_limit:{user_id}:{path}"
+    def rate_limit_user(user_id: str, path: str) -> str:
+        return f"rate_limit:user:{user_id}:{path}"
