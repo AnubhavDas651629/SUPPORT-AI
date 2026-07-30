@@ -1,3 +1,4 @@
+from time import time
 from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,6 +17,7 @@ from app.schemas.auth import (
 )
 from app.schemas.user import UserCreate, UserResponse
 from app.services.auth_service import AuthService
+from app.dependencies.rate_limit import rate_limit_ip
 
 
 router = APIRouter(
@@ -39,7 +41,7 @@ async def register(
     return UserResponse.model_validate(created_user)
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login", response_model=TokenResponse, dependencies=[Depends(rate_limit_ip(times=5, seconds=60))])
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(get_db),
@@ -52,7 +54,7 @@ async def login(
     )
 
 
-@router.post("/forgot-password", response_model=GenericMessageResponse)
+@router.post("/forgot-password", response_model=GenericMessageResponse,dependencies=[Depends(rate_limit_ip(times=5, seconds=60))])
 async def forgot_password(
     request: ForgotPasswordRequest,
     db: AsyncSession = Depends(get_db),
@@ -63,7 +65,7 @@ async def forgot_password(
     return await service.forgot_password(email=request.email)
 
 
-@router.post("/verify-forgot-password-otp", response_model=VerifyOTPResponse)
+@router.post("/verify-forgot-password-otp", response_model=VerifyOTPResponse, dependencies=[Depends(rate_limit_ip(times=5, seconds=60))])
 async def verify_forgot_password_otp(
     request: VerifyForgotPasswordOTPRequest,
     db: AsyncSession = Depends(get_db),
@@ -100,4 +102,6 @@ async def refresh(
     return await service.refresh(
         refresh_token=request.refresh_token,
     )
+
+
 
