@@ -25,6 +25,9 @@ from redis.asyncio import Redis
 from app.services.otp_services import OTPService
 from app.workers.tasks import send_otp_email_task
 
+from google.oauth2 import id_token as google_id_token
+from google.auth.transport import Request as google_requests
+
 
 class AuthService:
     def __init__(self, session: AsyncSession, redis: Redis | None = None):
@@ -76,6 +79,10 @@ class AuthService:
         if not user:
             raise InvalidCredentialsException()
 
+        #reject login if user registered via google
+        if not user.hashed_password:
+            raise InvalidCredentialsException()
+
         if not verify_password(password, user.hashed_password):
             raise InvalidCredentialsException()
 
@@ -90,6 +97,46 @@ class AuthService:
         return TokenResponse(
             access_token=access_token,
             refresh_token=refresh_token
+        )
+
+    async def google_login(self, *, token: str) -> TokenResponse:
+        try:
+            payload = google_id_token.verify_oauth2_token(
+                token, 
+                google_requests.Request(),
+                audience=settings.google_client_id if settings.google_client_id else None
+            )
+        except Exception:
+            raise InvalidCredentialsException()
+
+        google_sub = payload.get("sub")
+        email = payload.get("email")
+        full_name = payload.get("name") or email.split("@")[0]
+
+        if not google_sub or not email:
+            raise InvalidCredentialsException()
+
+        user = await self.user_repository.get_by_google_sub_or_email(
+            google_sub=google_sub,
+            email=email
+        )
+
+        if not user:
+            user = await self.user_repository.create_google_user(
+                email=email,
+                full_name=full_name,
+                google_sub=google_sub
+            )
+        else:
+            if not user.google_sub:
+                user.google_sub = google_sub
+
+        refresh_token = await self._create_user_session(user_id=user.id)
+        await self.session.commit()
+        access_token = create_access_token(str(user.id))
+        return TokenResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
         )
 
     async def forgot_password(self, *, email: str) -> GenericMessageResponse:
@@ -205,6 +252,9 @@ class AuthService:
             access_token=access_token,
             refresh_token=new_refresh_token
         )
+
+
+
 
 
 

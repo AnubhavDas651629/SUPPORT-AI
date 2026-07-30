@@ -103,5 +103,20 @@ async def refresh(
         refresh_token=request.refresh_token,
     )
 
+from app.schemas.auth import GoogleLoginRequest
+
+@router.post(
+    "/google",
+    response_model=TokenResponse,
+    dependencies=[Depends(rate_limit_ip(times=5, seconds=60))],
+)
+async def google_login(
+    request: GoogleLoginRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    service = AuthService(session=db)
+    return await service.google_login(token=request.id_token)
+
+
 
 

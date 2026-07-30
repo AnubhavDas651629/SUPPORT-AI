@@ -1,10 +1,8 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from uuid import UUID
 
 from app.db.dependencies import get_db
 from app.dependencies.auth import get_current_user
-from app.models import organization
 from app.models.user import User
 from app.schemas.organization import (
     OrganizationCreate,
@@ -34,7 +32,10 @@ async def create_organization(
     )
     return OrganizationResponse.model_validate(created)
 
-@router.get("", response_model=list[OrganizationResponse],)
+@router.get(
+    "",
+    response_model=list[OrganizationResponse],
+)
 async def list_organizations(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -50,21 +51,3 @@ async def list_organizations(
         OrganizationResponse.model_validate(org)
         for org in organizations
     ]
-
-@router.get("/{organization_id}",response_model=OrganizationResponse)
-async def get_organization(
-    organization_id: UUID,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-
-    service = OrganizationService(db)
-
-    organization = await service.get_organization(
-        organization_id=organization_id,
-        current_user=current_user,
-    )
-
-    return OrganizationResponse.model_validate(
-        organization
-    )
