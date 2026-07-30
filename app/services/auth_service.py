@@ -23,6 +23,7 @@ from app.repositories.user_session_repository import UserSessionRepository
 from app.schemas.auth import TokenResponse, GenericMessageResponse, VerifyOTPResponse
 from redis.asyncio import Redis
 from app.services.otp_services import OTPService
+from app.workers.tasks import send_otp_email_task
 
 
 class AuthService:
@@ -96,11 +97,14 @@ class AuthService:
 
         if user and self.otp_service:
             otp = await self.otp_service.generate_email_otp(email=email)
-            print(f"Forgot Password OTP for {email}: {otp}")
 
+            #background email worker
+            send_otp_email_task.delay(email, otp)
+            print(f"Dispatched OTP email for {email}")
         return GenericMessageResponse(
-            message="If an account exists, an OTP has been sent."
+            message="If an account exists, an OTP has been sent"
         )
+
 
     async def verify_forgot_password_otp(self, *, email: str, otp: str) -> VerifyOTPResponse:
         if not self.otp_service:
