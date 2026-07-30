@@ -11,7 +11,7 @@ class OTPService(BaseService):
 
     async def generate_email_otp(self, email:str) -> str:
         """
-        Generate an OTP, store it in reids and return it
+        Generate an OTP, store it in redis and return it
         """
 
         otp = generate_otp(settings.otp_length)

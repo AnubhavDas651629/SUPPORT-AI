@@ -1,5 +1,5 @@
-from unittest import result
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from app.db.dependencies import get_db
 from app.api.v1 import documents
@@ -16,15 +16,22 @@ from app.api.v1 import knowledge_bases
 from app.api.v1.users import router as users_router
 from app.api.v1.organization_member import router as organization_member_router
 from app.api.v1.organizations import router as organization_router
-from app.core.exception_handlers import (register_exception_handlers)
+from app.core.exception_handlers import register_exception_handlers
 from app.core.lifespan import lifespan
-
 
 app = FastAPI(
     title="SupportAI",
     description="AI-powered customer support platform",
     version="0.1.0",
     lifespan=lifespan
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 register_exception_handlers(app)

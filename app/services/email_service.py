@@ -1,4 +1,4 @@
-from email_validator import deliverability
+import smtplib
 from email.message import EmailMessage
 import logging
 from app.services.base import BaseService
@@ -13,7 +13,7 @@ class EmailService(BaseService):
         super().__init__(session)
         self.session = session
 
-    def _send_smtp_email(self, *, str, subject: str, body_text: str, body_html: str | None = None) -> None:
+    def _send_smtp_email(self, *, to_email: str, subject: str, body_text: str, body_html: str | None = None) -> None:
         msg = EmailMessage()
         msg["Subject"] = subject
         msg["From"] = f"{settings.emails_from_name}<{settings.emails_from_email}>"

@@ -24,11 +24,19 @@ class Settings(BaseSettings):
     redis_db: int = 0
 
     otp_expiry_seconds: int = 300
-    otp_length:int = 6
+    otp_length: int = 6
+
+    smtp_host: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    smtp_user: str = "anubhavdas651@gmail.com"
+    smtp_password: str = ""
+    emails_from_email: str = "anubhavdas651@gmail.com"
+    emails_from_name: str = "Support AI Team"
 
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
+        extra="ignore",
     )
 
 
