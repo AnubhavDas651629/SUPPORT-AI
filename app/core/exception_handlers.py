@@ -8,6 +8,7 @@ from app.exceptions.auth import (
     UserNotFoundException,
     AlreadyOrganizationMemberException,
     ForbiddenException,
+    RateLimitExceededException
 )
 from app.exceptions.organization import (
     OrganizationNotFoundException,
@@ -255,5 +256,23 @@ def register_exception_handlers(app: FastAPI):
             status_code=400,
             content={
                 "detail": str(exc),
+            },
+        )
+
+
+    @app.exception_handler(RateLimitExceededException)
+    async def rate_limit_exceeded_handler(
+        request: Request,
+        exc: RateLimitExceededException,
+    ):
+        return JSONResponse(
+            status_code=429,
+            content={
+                "detail": str(exc),
+            },
+            headers={
+                "Retry-After": str(exc.retry_after),
+                "X-RateLimit-Limit": str(exc.limit),
+                "X-RateLimit-Remaining": "0",
             },
         )

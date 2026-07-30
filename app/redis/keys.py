@@ -22,3 +22,7 @@ class RedisKeys:
     @staticmethod
     def rate_limit(user_id: str) -> str:
         return f"rate_limit:user:{user_id}"
+
+    @staticmethod
+    def rate_limit_user(user_id:str, path:str) -> str:
+        return f"rate_limit:{user_id}:{path}"
