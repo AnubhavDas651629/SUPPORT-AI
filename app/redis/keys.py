@@ -26,3 +26,20 @@ class RedisKeys:
     @staticmethod
     def rate_limit_user(user_id: str, path: str) -> str:
         return f"rate_limit:user:{user_id}:{path}"
+
+
+    @staticmethod
+    def cache_org(org_id:str) -> str:
+        return f"cache:org:{org_id}"
+
+    @staticmethod
+    def cache_user(user_id: str) -> str:
+        return f"cache:user:{user_id}"
+    
+    @staticmethod
+    def cache_kb(kb_id: str) -> str:
+        return f"cache:kb:{kb_id}"
+
+    @staticmethod
+    def cache_member(org_id: str, user_id:str) -> str:
+        return f" cache:member:{org_id}:{user_id}"
