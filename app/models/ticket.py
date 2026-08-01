@@ -1,3 +1,4 @@
+from sqlalchemy import Index
 from enum import Enum
 from sqlalchemy import Boolean, String
 from uuid import UUID
@@ -32,6 +33,11 @@ class TicketPriority(str, Enum):
 
 class Ticket(Base,UUIDMixin, TimestampMixin):
     __tablename__ = "tickets"
+    # adding composite index (first sorting by organization id with various ticket status and then tickets os organization based on priority)
+    __table_args__ = (
+        Index("ix_tickets_org_status", "organization_id", "status"),
+        Index("ix_ticktes_org_priority", "organization_id", "priority")
+    )
     conversation_id: Mapped[UUID] = mapped_column(ForeignKey("conversations.id"),index = True, unique=True, nullable=False)
     organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), nullable=False, index=True)
     status: Mapped[TicketStatus] = mapped_column(SQLEnum(TicketStatus), nullable=False, default=TicketStatus.OPEN)

@@ -1,4 +1,4 @@
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, Index
 from app.models import conversation
 from app.models.document import SQLEnum
 from app.models.mixins import TimestampMixin, UUIDMixin
@@ -23,6 +23,9 @@ class MessageRole(str, Enum):
 
 class Message(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "messages"
+    __table_args__=(
+        Index("ix_messages_conv_created", "conversation_id", "created_at")
+    )
     conversation_id: Mapped[UUID] = mapped_column(ForeignKey("conversations.id"), nullable=False, index=True)
     role: Mapped[MessageRole] = mapped_column(SQLEnum(MessageRole), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)

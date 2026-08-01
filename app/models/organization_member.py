@@ -1,3 +1,4 @@
+from sqlalchemy import Index
 from enum import Enum
 from uuid import UUID
 
@@ -23,7 +24,9 @@ class OrganizationRole(str, Enum):
 
 class OrganizationMember(Base, TimestampMixin):
     __tablename__ = "organization_members"
-
+    __table_args__(
+        Index("ix_org_members_org_role", "organization_id", "role")
+    )
     user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), primary_key=True)
     organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), primary_key=True)
     role: Mapped[OrganizationRole] = mapped_column(SQLEnum(OrganizationRole), default=OrganizationRole.MEMBER, nullable=False)
