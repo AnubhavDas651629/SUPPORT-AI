@@ -1,3 +1,7 @@
+from app.schemas.user import UserResponse
+from app.redis.keys import RedisKeys
+from app.redis.client import redis_client
+from app.redis.cache_services import RedisCacheService
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, Header, status
@@ -33,17 +37,43 @@ async def get_current_user(
             detail="Invalid authentication credentials",
         )
 
+    cache_service = RedisCacheService(redis_client)
+    cache_key = RedisKeys.cache_user(str(user_id))
+
+    # checking redis cache
+    cached_user = await cache_service.get_json(
+        key=cache_key,
+        schema_cls=UserResponse
+    )
+    if cached_user:
+        return User(
+            id=cached_user.id,
+            email= cached_user.email,
+            full_name=cached_user.full_name,
+            is_active=cached_user.is_active,
+            is_verified=cached_user.is_verified
+        )
+
+    # Cache miss
     repository = UserRepository(db)
-
-    user = await repository.get_by_id(user_id)
-
+    user = await repository.get_by_id(
+        user_id
+    )
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found",
+            detail="User not found"
         )
 
+    #save user to redis
+    await cache_service.set_json(
+        key=cache_key,
+        value=UserResponse.model_validate(user),
+        ttl=3600
+    )
     return user
+
+
 
 async def get_current_membership(
     current_user: User = Depends(get_current_user),

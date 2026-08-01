@@ -62,12 +62,34 @@ class KnowledgeBaseService(BaseService):
             organization_id=organization_id,
             current_user=current_user
         )
+        from app.redis.cache_services import RedisCacheService
+        from app.redis.keys import RedisKeys
+        from app.schemas.knowledge_base import KnowledgeBaseResponse
+
+        cache_service = RedisCacheService(self.redis)
+        cache_key = RedisKeys.cache_kb(str(knowledge_base_id))
+
+        cached_kb = await cache_service.get_json(key=cache_key, schema_cls=KnowledgeBaseResponse)
+        if cached_kb and cached_kb.organization_id == organization_id:
+            return KnowledgeBase(
+                id=cached_kb.id,
+                organization_id=cached_kb.organization_id,
+                name=cached_kb.name,
+                description=cached_kb.description,
+            )
+
         knowledge_base = await self.knowledge_base_repository.get_by_id_for_organization(
             organization_id=organization_id,
             knowledge_base_id=knowledge_base_id
         )
         if knowledge_base is None:
             raise KnowledgeBaseNotFoundException()
+
+        await cache_service.set_json(
+            key=cache_key,
+            value=KnowledgeBaseResponse.model_validate(knowledge_base),
+            ttl=3600,
+        )
         return knowledge_base
 
     async def update(self, *, organization_id: UUID, knowledge_base_id: UUID, current_user: User, name: str, description: str | None) -> KnowledgeBase:
@@ -97,6 +119,11 @@ class KnowledgeBaseService(BaseService):
         knowledge_base.description = description
 
         await self.session.commit()
+
+        # Evict Knowledge Base Cache
+        from app.redis.cache_services import RedisCacheService
+        from app.redis.keys import RedisKeys
+        await RedisCacheService(self.redis).delete(key=RedisKeys.cache_kb(str(knowledge_base_id)))
 
         return knowledge_base
 
@@ -130,11 +157,31 @@ class KnowledgeBaseService(BaseService):
 
             await self.session.commit()   
 
+            # Evict Knowledge Base Cache
+            from app.redis.cache_services import RedisCacheService
+            from app.redis.keys import RedisKeys
+            await RedisCacheService(self.redis).delete(key=RedisKeys.cache_kb(str(knowledge_base_id)))
+
     async def get_knowledge_base(
     self,
     *,
     knowledge_base_id: UUID,
 ) -> KnowledgeBase:
+        from app.redis.cache_services import RedisCacheService
+        from app.redis.keys import RedisKeys
+        from app.schemas.knowledge_base import KnowledgeBaseResponse
+
+        cache_service = RedisCacheService(self.redis)
+        cache_key = RedisKeys.cache_kb(str(knowledge_base_id))
+
+        cached_kb = await cache_service.get_json(key=cache_key, schema_cls=KnowledgeBaseResponse)
+        if cached_kb:
+            return KnowledgeBase(
+                id=cached_kb.id,
+                organization_id=cached_kb.organization_id,
+                name=cached_kb.name,
+                description=cached_kb.description,
+            )
 
         knowledge_base = await self.knowledge_base_repository.get_by_id(
             knowledge_base_id=knowledge_base_id,
@@ -143,6 +190,9 @@ class KnowledgeBaseService(BaseService):
         if knowledge_base is None:
             raise KnowledgeBaseNotFoundException()
 
-        return knowledge_base     
-
-
+        await cache_service.set_json(
+            key=cache_key,
+            value=KnowledgeBaseResponse.model_validate(knowledge_base),
+            ttl=3600,
+        )
+        return knowledge_base

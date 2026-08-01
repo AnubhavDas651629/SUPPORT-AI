@@ -56,38 +56,38 @@ class OrganizationService(BaseService):
             user_id=current_user.id
         )
 
-    async def get_organisation(self, *, Organization_id:UUID, current_user:User) -> Organization:
+    async def get_organization(self, *, organization_id: UUID, current_user: User) -> Organization:
         cache_service = RedisCacheService(self.redis)
-        cache_key = RedisKeys.cache_org(str(Organization_id))
+        cache_key = RedisKeys.cache_org(str(organization_id))
 
-        #try fetching from redis cache
+        # Try fetching from Redis Cache
         cached_org = await cache_service.get_json(key=cache_key, schema_cls=OrganizationResponse)
         if cached_org:
-            #verify membership
+            # Verify membership authorization
             await self._require_member(
-                organization_id=Organization_id,
+                organization_id=organization_id,
                 current_user=current_user
             )
             return Organization(
                 id=cached_org.id,
                 name=cached_org.name,
-                sluf=cached_org.slug
+                slug=cached_org.slug
             )
-        #2. Cache Miss -> Quer PostgresSQL DB
+
+        # Cache Miss -> Query PostgreSQL DB
         organization = (
             await self.organization_repository.get_by_id_for_user(
-                organization_id=Organization_id,
+                organization_id=organization_id,
                 user_id=current_user.id
             )
         )
         if organization is None:
             raise OrganizationNotFoundException()
 
-        
-        #3. store the result in ttl
+        # Store the result in Redis with 1 hour TTL
         await cache_service.set_json(
             key=cache_key,
-            value=OrganizationResponse.model_validate(Organization),
+            value=OrganizationResponse.model_validate(organization),
             ttl=3600
         )
         return organization

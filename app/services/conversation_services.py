@@ -25,6 +25,29 @@ class ConversationService(BaseService):
         return conversation
 
     async def get_conversation(self, *, conversation_id: UUID, current_user: User | None = None) -> Conversation:
+        from app.redis.cache_services import RedisCacheService
+        from app.redis.keys import RedisKeys
+        from app.schemas.conversation import ConversationResponse
+
+        cache_service = RedisCacheService(self.redis)
+        cache_key = RedisKeys.cache_conversation(str(conversation_id))
+
+        cached_conv = await cache_service.get_json(key=cache_key, schema_cls=ConversationResponse)
+        if cached_conv:
+            if current_user is not None:
+                await self._require_member(
+                    organization_id=cached_conv.organization_id,
+                    current_user=current_user,
+                )
+            return Conversation(
+                id=cached_conv.id,
+                organization_id=cached_conv.organization_id,
+                knowledge_base_id=cached_conv.knowledge_base_id,
+                title=cached_conv.title,
+                created_at=cached_conv.created_at,
+                updated_at=cached_conv.updated_at,
+            )
+
         conversation = await self.conversation_repository.get_by_id(
             conversation_id=conversation_id,
         )
@@ -37,6 +60,11 @@ class ConversationService(BaseService):
                 current_user=current_user,
             )
 
+        await cache_service.set_json(
+            key=cache_key,
+            value=ConversationResponse.model_validate(conversation),
+            ttl=3600,
+        )
         return conversation
 
     async def create_message(self,*, conversation_id: UUID, role: MessageRole, content: str) -> Message:
@@ -60,6 +88,9 @@ class ConversationService(BaseService):
             conversation=conversation,
             title=title
         )
+        from app.redis.cache_services import RedisCacheService
+        from app.redis.keys import RedisKeys
+        await RedisCacheService(self.redis).delete(key=RedisKeys.cache_conversation(str(conversation.id)))
         return title
         
 
@@ -84,3 +115,7 @@ class ConversationService(BaseService):
             conversation=conversation,
         )
         await self.session.commit()
+
+        from app.redis.cache_services import RedisCacheService
+        from app.redis.keys import RedisKeys
+        await RedisCacheService(self.redis).delete(key=RedisKeys.cache_conversation(str(conversation_id)))

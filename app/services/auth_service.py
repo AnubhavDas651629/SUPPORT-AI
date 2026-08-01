@@ -26,7 +26,7 @@ from app.services.otp_services import OTPService
 from app.workers.tasks import send_otp_email_task
 
 from google.oauth2 import id_token as google_id_token
-from google.auth.transport import Request as google_requests
+from google.auth.transport import requests as google_requests
 
 
 class AuthService:
