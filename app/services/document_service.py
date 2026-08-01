@@ -16,7 +16,7 @@ from app.repositories.document_repository import DocumentRepository
 from app.repositories.knowledge_base_repository import (
     KnowledgeBaseRepository,
 )
-from app.processing.processor import DocumentProcessor
+
 from app.services.base import BaseService
 from app.services.storage import LocalStorageService
 
@@ -80,7 +80,17 @@ class DocumentService(BaseService):
             size=len(content),
             status=DocumentStatus.PROCESSING,
         )
+
         await self.session.commit()
+        
+        processor = DocumentProcessor(
+            self.session
+        )
+
+        await processor.process(
+            document=document
+        )
+
         return document
 
     async def list_for_knowledge_base(

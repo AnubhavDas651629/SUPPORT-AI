@@ -20,8 +20,8 @@ class RedisCacheService:
         try:
             return schema_cls.model_validate_json(data)
         except Exception:
-            # If schema validation fails, evixt invalid cache
-            await self.delete(key)
+            # If schema validation fails, evict invalid cache
+            await self.delete(key=key)
             return None
 
     async def set_json(self,*, key: str, value: BaseModel, ttl: int = 3600) -> None:

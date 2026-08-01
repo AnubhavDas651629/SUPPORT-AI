@@ -42,4 +42,8 @@ class RedisKeys:
 
     @staticmethod
     def cache_member(org_id: str, user_id:str) -> str:
-        return f" cache:member:{org_id}:{user_id}"
+        return f"cache:member:{org_id}:{user_id}"
+
+    @staticmethod
+    def cache_conversation(conversation_id: str) -> str:
+        return f"cache:conversation:{conversation_id}"
