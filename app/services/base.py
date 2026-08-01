@@ -43,7 +43,8 @@ class BaseService:
         if organization is None:
             raise OrganizationNotFoundException()
 
-        # the purpose of defining membership is just because the return of this will have the role attribute which we need
+        # if this function returns org this means we have identified the org and the current user is a part of the org, now in order to invite, next step is to check the role of the current user, that decides he they can invite a person
+        #the purpose of defining membership is just because the return of this will have the role attribute which we need
         membership = await self.membership_repository.get_membership(
             organization_id=organization_id,
             user_id=current_user.id,

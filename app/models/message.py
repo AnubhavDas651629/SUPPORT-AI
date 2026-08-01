@@ -23,8 +23,8 @@ class MessageRole(str, Enum):
 
 class Message(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "messages"
-    __table_args__=(
-        Index("ix_messages_conv_created", "conversation_id", "created_at")
+    __table_args__ = (
+        Index("ix_messages_conv_created", "conversation_id", "created_at"),
     )
     conversation_id: Mapped[UUID] = mapped_column(ForeignKey("conversations.id"), nullable=False, index=True)
     role: Mapped[MessageRole] = mapped_column(SQLEnum(MessageRole), nullable=False)

@@ -24,8 +24,8 @@ class OrganizationRole(str, Enum):
 
 class OrganizationMember(Base, TimestampMixin):
     __tablename__ = "organization_members"
-    __table_args__(
-        Index("ix_org_members_org_role", "organization_id", "role")
+    __table_args__ = (
+        Index("ix_org_members_org_role", "organization_id", "role"),
     )
     user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), primary_key=True)
     organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), primary_key=True)

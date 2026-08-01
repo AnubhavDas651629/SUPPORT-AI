@@ -1,12 +1,10 @@
-from sqlalchemy.engine import result
-import select
 from uuid import UUID
-from httpx import delete
 from sqlalchemy import select
-from app.models.ticket import Ticket, TicketPriority, TicketStatus
-from app.repositories.base import BaseRepository
-from app.models.user import User
 from sqlalchemy.orm import selectinload
+
+from app.models.ticket import Ticket, TicketPriority, TicketStatus
+from app.models.user import User
+from app.repositories.base import BaseRepository
 
 class TicketRepository(BaseRepository):
     async def create(self, *, conversation_id:UUID, organization_id: UUID, subject: str, priority: TicketPriority = TicketPriority.MEDIUM, created_by_ai: bool = True) -> Ticket:
@@ -67,15 +65,15 @@ class TicketRepository(BaseRepository):
                 selectinload(Ticket.assigned_to),
                 selectinload(Ticket.organization)
             )
-            .where(Ticket.organization == organization_id)
+            .where(Ticket.organization_id == organization_id)
         )
         if status:
             stmt = stmt.where(Ticket.status == status)
             stmt = stmt.order_by(
                 Ticket.created_at.desc()
             ).limit(limit).offset(offset)
-            result = await self.session.execute(stmt)
-            return list(result.scalars().all())
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
 
     async def update_status(self, *, ticket: Ticket, status: TicketStatus) -> Ticket:
         ticket.status = status

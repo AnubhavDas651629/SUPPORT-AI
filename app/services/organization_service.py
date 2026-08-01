@@ -60,7 +60,7 @@ class OrganizationService(BaseService):
         cache_service = RedisCacheService(self.redis)
         cache_key = RedisKeys.cache_org(str(organization_id))
 
-        # Try fetching from Redis Cache
+        #try fetching from redis cache
         cached_org = await cache_service.get_json(key=cache_key, schema_cls=OrganizationResponse)
         if cached_org:
             # Verify membership authorization
