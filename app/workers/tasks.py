@@ -14,7 +14,7 @@ logger = get_task_logger(__name__)
     retry_backoff=True,
     retry_backoff_max=600,
     retry_jitter=True,
-    max_retries=True,
+    max_retries=5,
 )
 def send_ticket_create_email(ticket_id:str):
     logger.info(f"Excecuting send_ticket_create_email for ticket: {ticket_id}")
@@ -41,7 +41,7 @@ def send_otp_email_task(email: str, otp: str):
             service = EmailService(session=session)
             await service.send_otp_email(email=email, otp=otp)
     run(_send())
-    
+
 # 3. Scheduled Celery Beat Task: Expired User Session Cleanup
 @celery_app.task
 def cleanup_expired_sessions_task():
