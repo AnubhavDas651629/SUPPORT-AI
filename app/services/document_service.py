@@ -212,7 +212,7 @@ class DocumentService(BaseService):
 
         #checking permission
         await self._require_member(
-            organization_id=document.organization_id,
+            organization_id=document.organization_id, #Document  ──►  knowledge_base_id  ──►  KnowledgeBase  ──►  organization_id
             current_user=current_user
         )
         return await self.storage.generate_presigned_url(
