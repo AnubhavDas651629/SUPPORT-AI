@@ -22,3 +22,12 @@ class StorageService(ABC):
         Delete a stored file.
         """
         raise NotImplementedError
+
+    @abstractmethod
+    async def generate_presigned_url(
+        self, *, 
+        storage_key: str, # it is ht unique file path/label where an document is stored in s3
+        expires_in: int = 900 #15 mins
+    ) -> str:
+        """Generate a temporary presigned url for direct file access"""
+        raise NotImplementedError

@@ -46,3 +46,7 @@ class LocalStorageService(StorageService):
 
         if file_path.exists():
             file_path.unlink()
+
+    async def generate_presigned_url(self, *, storage_key: str, expires_in: int = 900) -> str:
+        """Return a local dev file URL"""
+        return f"/storage/{storage_key}"

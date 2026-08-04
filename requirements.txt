@@ -33,3 +33,4 @@ terminal 3 -> uv run fastapi dev app/main.py
 redis
 to start -> redis-server
 google-auth
+boto3

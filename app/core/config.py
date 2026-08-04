@@ -33,6 +33,13 @@ class Settings(BaseSettings):
     otp_expiry_seconds: int = 300
     otp_length:int = 6
 
+    #storage settings
+    storage_provider: str = "local" #set to s3 in production/local for dev
+    aws_access_key_id: str = ""
+    aws_secret_access_key: str = ""
+    aws_region: str = "us-east-1"
+    s3_bucket_name: str = "support-ai-documents"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
