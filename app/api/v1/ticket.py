@@ -1,3 +1,5 @@
+from sqlalchemy import desc
+from app.schemas.pagination import CursorPageResponse
 from uuid import UUID
 from fastapi import APIRouter, Depends, Query, status, Response
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,6 +11,7 @@ from app.models.user import User
 from app.schemas.conversation import MessageResponse
 from app.schemas.ticket import AssignTicketRequest, CreateTicketRequest, TicketResponse, UpdateTicketPriorityRequest, UpdateTicketStatusRequest
 from app.services.ticket_service import TicketService
+from app.models.ticket import TicketStatus, TicketPriority
 
 
 router = APIRouter(
@@ -31,28 +34,35 @@ async def create_ticket(
     )
     return TicketResponse.model_validate(ticket)
 
-@router.get("", response_model=list[TicketResponse])
+@router.get("", response_model=CursorPageResponse[TicketResponse])
 async def list_tickets(
     organization_id: UUID = Query(...),
-    limit: int = Query(20, ge=1, le=100),
-    offset: int = Query(0, ge=0),
+    status: TicketStatus | None = Query(None, description="Filter by status"),
+    priority: TicketPriority | None = Query(None, description="Filer by priority"),
+    search: str | None = Query(None, description="Search ticket subject"),
+    cursor: str | None = Query(None, description="Base64 pagination cursor"),
+    limit: int = Query(20, ge=1, le=100, description="Items per page"),
     session: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user)
 ):
-
     service = TicketService(session=session)
 
-    tickets = await service.list_tickets(
+    tickets, next_cursor, has_more = await service.list_tickets_paginated(
         organization_id=organization_id,
         current_user=current_user,
-        limit=limit,
-        offset=offset,
+        status=status,
+        priority=priority,
+        search=search,
+        cursor=cursor,
+        limit=limit
     )
 
-    return [
-        TicketResponse.model_validate(ticket)
-        for ticket in tickets
-    ]
+    items = [TicketResponse.model_validate(t) for t in tickets]
+    return CursorPageResponse[TicketResponse](
+        items=items,
+        next_cursor=next_cursor,
+        has_more=has_more,
+    )
 
 
 @router.get("/{ticket_id}", response_model=TicketResponse)

@@ -75,6 +75,7 @@ class TicketRepository(BaseRepository):
         1)Multi criteria filtering: filters by status(OPEN/RESOLVED), priority(HIGH/LOW) and case insensitive "search" keywords
         2) Fast cursor Pagination: uses base64 cursor to jump directly to the next page of tickets in < 1ms
         3)has_more detection
+        returns (tickets, has_more)
         """
 
         # we are using eager loading here(i.e fetching all related things at one trip only) to prevent N+1 query

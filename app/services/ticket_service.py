@@ -1,3 +1,4 @@
+from app.utils.cursor import encode_cursor
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.exceptions.auth import PermissionDeniedException, UserNotFoundException
@@ -91,6 +92,38 @@ class TicketService(BaseService):
             limit=limit,
             offset=offset,
         )
+
+    async def list_tickets_paginated(
+        self,
+        *,
+        organization_id: UUID,
+        current_user: User,
+        status: TicketStatus | None = None,
+        priority: TicketPriority | None = None,
+        search: str | None = None,
+        cursor: str | None = None,
+        limit: int = 20,
+    ) -> tuple[list[Ticket], str | None, bool]:
+        await self._require_member(
+            organization_id=organization_id,
+            current_user=current_user,
+        )
+        tickets, has_more = await self.ticket_repository.list_for_organization_paginated(
+            organization_id=organization_id,
+            status=status,
+            priority=priority,
+            search=search,
+            cursor=cursor,
+            limit=limit,
+        )
+
+        next_cursor = None
+        if has_more and tickets:
+            last_ticket = tickets[-1]
+            next_cursor = encode_cursor(last_ticket.created_at, last_ticket.id)
+
+        return tickets, next_cursor, has_more
+
 
     async def update_status(self, *, ticket_id: UUID, status: TicketStatus, current_user: User) -> Ticket:
         ticket = await self.get_ticket(
