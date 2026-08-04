@@ -18,6 +18,7 @@ from app.api.v1.organization_member import router as organization_member_router
 from app.api.v1.organizations import router as organization_router
 from app.core.exception_handlers import register_exception_handlers
 from app.core.lifespan import lifespan
+from app.api.v1 import subscription
 
 app = FastAPI(
     title="SupportAI",
@@ -50,6 +51,7 @@ app.include_router(conversations.router)
 app.include_router(ticket.router)
 app.include_router(ticket_events.router)
 app.include_router(ticket_notes.router)
+app.include_router(subscription.router)
 
 
 @app.get("/")

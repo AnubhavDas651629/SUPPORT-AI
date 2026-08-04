@@ -54,6 +54,7 @@ class SubscriptionServices(BaseService):
             tier, 
             PLAN_LIMITS[PlanTier.FREE]
         )
+        # quota key could be = "max_knowledge_base", "max_ai_responses_per_month"
         max_allowed = limits.get(quota_key, 0)
         if current_count >= max_allowed:
             raise PlanLimitExceededException(
