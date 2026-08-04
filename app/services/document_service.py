@@ -18,7 +18,8 @@ from app.repositories.knowledge_base_repository import (
 )
 
 from app.services.base import BaseService
-from app.services.storage import LocalStorageService
+from app.services.storage import get_storage_service
+from app.processing.processor import DocumentProcessor
 
 
 class DocumentService(BaseService):
@@ -28,8 +29,7 @@ class DocumentService(BaseService):
 
         self.document_repository = DocumentRepository(session)
         self.knowledge_base_repository = KnowledgeBaseRepository(session)
-
-        self.storage = LocalStorageService()
+        self.storage = get_storage_service()
 
     async def upload(
         self,

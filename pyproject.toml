@@ -25,6 +25,7 @@ dependencies = [
     "python-multipart>=0.0.32",
     "python-slugify>=8.0.4",
     "redis>=8.0.1",
+    "requests>=2.34.2",
     "sqlalchemy>=2.0.51",
     "structlog>=26.1.0",
     "uvicorn>=0.49.0",
