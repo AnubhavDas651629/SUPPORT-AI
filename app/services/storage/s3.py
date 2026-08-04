@@ -24,7 +24,7 @@ class S3StorageService(StorageService):
         self.s3_client.put_object(
             Bucket=self.bucket_name,
             Key=storage_key,
-            body=content
+            Body=content
         )
         return storage_key
 
@@ -32,7 +32,7 @@ class S3StorageService(StorageService):
         try:
             self.s3_client.delete_object(
                 Bucket=self.bucket_name,
-                key=storage_key
+                Key=storage_key
             )
         except ClientError:
             pass
@@ -47,7 +47,7 @@ class S3StorageService(StorageService):
             "get_object",
             Params={
                 "Bucket": self.bucket_name,
-                "key": storage_key
+                "Key": storage_key
             },
             ExpiresIn=expires_in
         )

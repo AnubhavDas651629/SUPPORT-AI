@@ -197,3 +197,25 @@ class DocumentService(BaseService):
         await self.document_repository.delete(document)
 
         await self.session.commit()
+
+
+    async def get_document_download_url(
+        self, *, 
+        document_id:UUID, 
+        current_user: User, 
+        expires_in: int = 900
+    ) -> str:
+        """Verify user permissions and generate temporary presigned download URL"""
+        document = await self.document_repository.get_by_id(document_id=document_id)
+        if not document:
+            raise DocumentNotFoundException()
+
+        #checking permission
+        await self._require_member(
+            organization_id=document.organization_id,
+            current_user=current_user
+        )
+        return await self.storage.generate_presigned_url(
+            storage_key=document.storage_key,
+            expires_in=expires_in
+        )
