@@ -11,4 +11,4 @@ from .ticket import Ticket
 from .ticket_note import TicketNote
 from .ticket_event import TicketEvent
 from .user_session import UserSession
-from .subscription import SubscriptionStatus
+from .subscription import OrganizationSubscription

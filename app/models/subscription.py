@@ -14,16 +14,17 @@ if TYPE_CHECKING:
 
 
 class OrganizationSubscription(Base, UUIDMixin, TimestampMixin):
-    __tablename__ = "organization_subscription"
+    __tablename__ = "organization_subscriptions"
 
-    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, unique=True),
-    plan_tier: Mapped[PlanTier] = mapped_column(SQLEnum(PlanTier), default = PlanTier.FREE, nullable=False)
+    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, unique=True)
+    plan_tier: Mapped[PlanTier] = mapped_column(SQLEnum(PlanTier), default=PlanTier.FREE, nullable=False)
     status: Mapped[SubscriptionStatus] = mapped_column(SQLEnum(SubscriptionStatus), default=SubscriptionStatus.ACTIVE, nullable=False)
-    current_preiod_start: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    current_period_start: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     current_period_end: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
-    #stripe indetifiers
-    stripe_customer_id: Mapped[str|None] = mapped_column(String(255), nullable=False)
-    stripe_subscription_id: Mapped[str|None] = mapped_column(String(255), nullable=False)
+    # Stripe identifiers
+    stripe_customer_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    stripe_subscription_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     organization: Mapped["Organization"] = relationship("Organization", backref="subscription")
+    
 
