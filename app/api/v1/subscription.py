@@ -1,4 +1,3 @@
-from openai.types.shared import responses_model
 from uuid import UUID
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,7 +5,7 @@ from app.db.dependencies import get_db
 from app.dependencies.auth import get_current_user
 from app.models.user import User
 from app.schemas.subscription import SubscriptionResponse, PlanLimitsResponse
-from app.services.subscription_service import SubscriptionService
+from app.services.subscription_service import SubscriptionServices
 from app.core.plan_config import PLAN_LIMITS, PlanTier
 
 
@@ -21,7 +20,7 @@ async def get_subscription(
     session: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    service = SubscriptionService(session=session)
+    service = SubscriptionServices(session=session)
     sub = await service.get_or_create_subscription(
         organization_id=organization_id
     )

@@ -48,6 +48,10 @@ class OrganizationService(BaseService):
             user_id=current_user.id,
             role=OrganizationRole.OWNER,
         )
+        from app.repositories.subsciption_repository import SubscriptionRepository
+        sub_repo = SubscriptionRepository(self.session)
+        await sub_repo.create_default_free_subscription(organization_id=organization.id)
+
         await self.session.commit()
         return organization
 

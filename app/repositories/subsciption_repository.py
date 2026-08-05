@@ -1,11 +1,9 @@
-from datetime import timedelta
-from app.core.plan_config import SubscriptionStatus
-from app.core.plan_config import PlanTier
-from datetime import UTC
-from datetime import datetime
-from numpy import select
-from app.models.subscription import OrganizationSubscription
+from datetime import timedelta, datetime, UTC
 from uuid import UUID
+from sqlalchemy import select
+
+from app.core.plan_config import SubscriptionStatus, PlanTier
+from app.models.subscription import OrganizationSubscription
 from app.repositories.base import BaseRepository
 class SubscriptionRepository(BaseRepository):
     async def get_by_organization_id(self, *, organization_id:UUID) -> OrganizationSubscription | None:
