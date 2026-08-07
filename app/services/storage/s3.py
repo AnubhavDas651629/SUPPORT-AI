@@ -1,4 +1,5 @@
-from kombu.asynchronous.http import Client
+import asyncio
+from functools import partial
 from pathlib import Path
 from app.core.config import settings
 import boto3
@@ -16,23 +17,33 @@ class S3StorageService(StorageService):
         )
         self.bucket_name=settings.s3_bucket_name
 
-    async def save (self, *, filename:str, content: bytes) -> str:
+    async def save(self, *, filename: str, content: bytes) -> str:
         extension = Path(filename).suffix
         unique_filename = f"{uuid.uuid4()}{extension}"
         storage_key = f"documents/{unique_filename}"
 
-        self.s3_client.put_object(
-            Bucket=self.bucket_name,
-            Key=storage_key,
-            Body=content
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(
+            None,
+            partial(
+                self.s3_client.put_object,
+                Bucket=self.bucket_name,
+                Key=storage_key,
+                Body=content,
+            ),
         )
         return storage_key
 
-    async def delete(self, *, storage_key:str) -> None:
+    async def delete(self, *, storage_key: str) -> None:
+        loop = asyncio.get_event_loop()
         try:
-            self.s3_client.delete_object(
-                Bucket=self.bucket_name,
-                Key=storage_key
+            await loop.run_in_executor(
+                None,
+                partial(
+                    self.s3_client.delete_object,
+                    Bucket=self.bucket_name,
+                    Key=storage_key,
+                ),
             )
         except ClientError:
             pass
@@ -42,14 +53,16 @@ class S3StorageService(StorageService):
         storage_key: str,
         expires_in: int = 900,
     ) -> str:
-        """Generate a 15 minute temporary presigned S3 download URL"""
-        url = self.s3_client.generate_presigned_url(
-            "get_object",
-            Params={
-                "Bucket": self.bucket_name,
-                "Key": storage_key
-            },
-            ExpiresIn=expires_in
+        """Generate a 15-minute temporary presigned S3 download URL."""
+        loop = asyncio.get_event_loop()
+        url = await loop.run_in_executor(
+            None,
+            partial(
+                self.s3_client.generate_presigned_url,
+                "get_object",
+                Params={"Bucket": self.bucket_name, "Key": storage_key},
+                ExpiresIn=expires_in,
+            ),
         )
         return url
 

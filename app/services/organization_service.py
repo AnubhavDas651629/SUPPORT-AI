@@ -19,6 +19,7 @@ from app.services.base import BaseService
 
 from app.redis.cache_services import RedisCacheService
 from app.redis.keys import RedisKeys
+from app.redis.client import redis_client
 from app.schemas.organization import OrganizationResponse
 
 class OrganizationService(BaseService):
@@ -155,7 +156,7 @@ class OrganizationService(BaseService):
             organization_id=organization_id,
             current_user=current_user,
         )
-        
+
         target_membership = await self.membership_repository.get_membership(
             organization_id=organization_id,
             user_id=target_user_id,
@@ -165,17 +166,21 @@ class OrganizationService(BaseService):
 
         if target_membership.role == OrganizationRole.OWNER:
             raise PermissionDeniedException()
-        
+
         # Owner cannot demote themselves
         if target_user_id == current_user.id:
             raise PermissionDeniedException()
 
         target_membership.role = role
+
+        # Invalidate cached role so the new role is enforced immediately
+        await redis_client.delete(RedisKeys.cache_member(str(organization_id), str(target_user_id)))
+
         await self.session.commit()
         return target_membership
 
-    #an owner(only) can remove a member
-    async def remove_member(self, *, organization_id:UUID, target_user_id:UUID, current_user: User):
+    # an owner(only) can remove a member
+    async def remove_member(self, *, organization_id: UUID, target_user_id: UUID, current_user: User):
         await self._require_owner(
             organization_id=organization_id,
             current_user=current_user,
@@ -195,6 +200,10 @@ class OrganizationService(BaseService):
             raise PermissionDeniedException()
 
         await self.membership_repository.delete(target_membership)
+
+        # Evict cached membership so removed member cannot pass auth checks via stale cache
+        await redis_client.delete(RedisKeys.cache_member(str(organization_id), str(target_user_id)))
+
         await self.session.commit()
 
     

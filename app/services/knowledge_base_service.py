@@ -17,6 +17,7 @@ from app.repositories.knowledge_base_repository import KnowledgeBaseRepository
 from app.repositories.organization_member_repository import OrganizationMemberRepository
 from app.repositories.organization_repository import OrganizationRepository
 from app.services.base import BaseService
+from app.services.subscription_service import SubscriptionServices
 
 
 class KnowledgeBaseService(BaseService):
@@ -26,6 +27,7 @@ class KnowledgeBaseService(BaseService):
         self.knowledge_base_repository = KnowledgeBaseRepository(session)
         self.organization_repository = OrganizationRepository(session)
         self.membership_repository = OrganizationMemberRepository(session)
+        self.sub_service = SubscriptionServices(session=self.session)
     
 
     async def create(self, *, organization_id: UUID, current_user: User, name: str, description: str | None ) -> KnowledgeBase:
@@ -33,20 +35,14 @@ class KnowledgeBaseService(BaseService):
             organization_id=organization_id,
             current_user=current_user
         )
-        existing = await self.knowledge_base_repository.get_by_name_for_organization(
-            organization_id=organization_id,
-            knowledge_base_name=name
+        current_kb_count = await self.knowledge_base_repository.count_for_organization(
+            organization_id=organization_id
         )
-        if existing is not None:
-            raise KnowledgeBaseAlreadyExistsException()
-
-        knowledge_base = await self.knowledge_base_repository.create(
-            organization_id=organization_id,
-            name=name,
-            description=description
-        )
-        await self.session.commit()
-        return knowledge_base
+        await self.sub_service.check_quota_limit(
+        organization_id=organization_id,
+        quota_key="max_knowledge_bases",
+        current_count=current_kb_count,
+    )
 
     async def list_for_organization(self, *, organization_id: UUID,current_user:User) -> list[KnowledgeBase]:
         await self._require_member(
@@ -196,3 +192,4 @@ class KnowledgeBaseService(BaseService):
             ttl=3600,
         )
         return knowledge_base
+

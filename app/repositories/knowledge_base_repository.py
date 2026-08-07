@@ -1,8 +1,10 @@
+from dns.e164 import query
 from uuid import UUID
 from sqlalchemy import select
 from app.models.organization import Organization
 from app.repositories.base import BaseRepository
 from app.models.knowledge_base import KnowledgeBase
+from sqlalchemy import func
 
 
 class KnowledgeBaseRepository(BaseRepository):
@@ -64,4 +66,14 @@ class KnowledgeBaseRepository(BaseRepository):
     async def delete(self, knowledge_base: KnowledgeBase) -> None:
             await self.session.delete(knowledge_base)
 
+
+    async def count_for_organization(self, *, organization_id:UUID) -> int:
+        query = (
+            select(func.count())
+            .select_from(KnowledgeBase())
+            .where(KnowledgeBase.organization_id == organization_id)
+        )
+        result = await self.session.execute(query)
+        return result.scalar_one()
+        
 

@@ -42,7 +42,7 @@ class TicketService(BaseService):
         if existing_ticket is not None:
             raise TicketAlreadyExistsException()
 
-        subject = conversation.title or "Untitle Conversation"
+        subject = conversation.title or "Untitled Conversation"
 
         ticket = await self.ticket_repository.create(
             conversation_id=conversation.id,
