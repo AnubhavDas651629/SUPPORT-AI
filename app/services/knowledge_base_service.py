@@ -42,7 +42,23 @@ class KnowledgeBaseService(BaseService):
         organization_id=organization_id,
         quota_key="max_knowledge_bases",
         current_count=current_kb_count,
-    )
+        )
+
+        exisisting = await self.knowledge_base_repository.get_by_name_for_organization(
+            organization_id=organization_id,
+            knowledge_base_name=name
+        )
+        if exisisting is not None:
+            raise KnowledgeBaseAlreadyExistsException()
+
+        knowledge_base = await self.knowledge_base_repository.create(
+            organization_id=organization_id,
+            name=name,
+            description=description
+        )
+        await self.session.commit()
+        return knowledge_base
+
 
     async def list_for_organization(self, *, organization_id: UUID,current_user:User) -> list[KnowledgeBase]:
         await self._require_member(
