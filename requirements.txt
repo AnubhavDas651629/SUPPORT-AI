@@ -34,3 +34,4 @@ redis
 to start -> redis-server
 google-auth
 boto3
+stripe
