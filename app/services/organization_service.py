@@ -21,6 +21,9 @@ from app.redis.cache_services import RedisCacheService
 from app.redis.keys import RedisKeys
 from app.redis.client import redis_client
 from app.schemas.organization import OrganizationResponse
+from app.services.subscription_service import SubscriptionServices
+from sqlalchemy import func
+from app.models.organization_member import OrganizationMember
 
 class OrganizationService(BaseService):
     def __init__(self, session: AsyncSession):
@@ -103,6 +106,16 @@ class OrganizationService(BaseService):
         await self._require_owner(
         organization_id=organization_id,
         current_user=current_user,
+        )
+
+        sub_service = SubscriptionServices(session=self.session)
+        current_member_count = await self.membership_repository.count_for_organization(
+            organization_id=organization_id
+        )
+        await sub_service.check_quota_limit(
+            organization_id=organization_id,
+            quota_key="max_members",
+            current_count=current_member_count
         )
         #if till here this means the inviter is the owner
         #now we check is the invited user has registered or not

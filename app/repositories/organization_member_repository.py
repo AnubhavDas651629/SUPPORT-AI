@@ -9,6 +9,7 @@ from app.models.organization_member import (
 )
 from app.models.user import User
 from app.repositories.base import BaseRepository
+from sqlalchemy import func
 
 class OrganizationMemberRepository(BaseRepository):
     async def create(self, *, organization_id: UUID, user_id: UUID, role: OrganizationRole) -> OrganizationMember:
@@ -50,6 +51,14 @@ class OrganizationMemberRepository(BaseRepository):
 
     async def delete(self, membership: OrganizationMember,) -> None:
         await self.session.delete(membership)
+
+    async def count_for_organization(self, *, organization_id:UUID) -> int:
+        query = (
+            select(func.count())
+            .select_from(OrganizationMember)
+            .where(OrganizationMember.organization_id == organization_id)
+        )
+        result = await self.session.execute(query)
 
 
 
