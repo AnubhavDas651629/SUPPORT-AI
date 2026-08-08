@@ -8,6 +8,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.base import BaseService
 from uuid import UUID
 from app.core.plan_config import PlanTier, PLAN_LIMITS
+import stripe
+from app.core.config import settings
+from app.core.plan_config import PlanTier, SubscriptionStatus
+
+stripe.api_key = settings.stripe_secret_key
 
 class SubscriptionServices(BaseService):
     def __init__(self, session: AsyncSession):
