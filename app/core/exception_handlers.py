@@ -25,12 +25,19 @@ from app.exceptions.conversation import (
     ConversationNotFoundException,
     MessageNotFoundException,
 )
-from app.exceptions.ticket import (
-    TicketNotFoundException,
-    TicketAlreadyExistsException,
-    TicketNoteNotFoundException,
-)
+from app.exceptions.ticket import TicketNotFoundException, TicketAlreadyExistsException, TicketNoteNotFoundException
+import stripe
+
 def register_exception_handlers(app: FastAPI):
+
+    @app.exception_handler(stripe.SignatureVerificationError)
+    async def stripe_signature_error_handler(request: Request, exc: stripe.SignatureVerificationError):
+        return JSONResponse(status_code=400, content={"detail": "Invalid Stripe webhook signature"})
+
+    @app.exception_handler(stripe.StripeError)
+    async def stripe_error_handler(request: Request, exc: stripe.StripeError):
+        return JSONResponse(status_code=502, content={"detail": f"Stripe error: {str(exc)}"})
+
 
     @app.exception_handler(UserAlreadyExistsException)
     async def user_exists_handler(

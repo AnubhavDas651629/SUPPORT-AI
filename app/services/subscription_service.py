@@ -162,7 +162,7 @@ class SubscriptionServices(BaseService):
         event = stripe.Webhook.construct_event(
             payload=payload, 
             sig_header=sig_header,
-            secret=settings.stripe_webhook_sercret
+            secret=settings.stripe_webhook_secret
         )
 
         event_type = event["type"]

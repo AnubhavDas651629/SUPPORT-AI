@@ -18,7 +18,7 @@ from app.api.v1.organization_member import router as organization_member_router
 from app.api.v1.organizations import router as organization_router
 from app.core.exception_handlers import register_exception_handlers
 from app.core.lifespan import lifespan
-from app.api.v1 import subscription
+from app.api.v1.subscription import router as subscription_router, webhook_router as stripe_webhook_router
 
 app = FastAPI(
     title="SupportAI",
@@ -51,7 +51,8 @@ app.include_router(conversations.router)
 app.include_router(ticket.router)
 app.include_router(ticket_events.router)
 app.include_router(ticket_notes.router)
-app.include_router(subscription.router)
+app.include_router(subscription_router, prefix="/api/v1")
+app.include_router(stripe_webhook_router, prefix="/api/v1")
 
 
 @app.get("/")
