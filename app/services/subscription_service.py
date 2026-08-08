@@ -79,6 +79,7 @@ class SubscriptionServices(BaseService):
         self, 
         *, 
         organization_id:UUID, 
+        current_user: User,
         price_id: str, 
         success_url:str,
         cancel_url:str
@@ -88,6 +89,11 @@ class SubscriptionServices(BaseService):
         there to enter their card details
         stripe will handle the rest, we will give it the price and redirect urls
         """
+        await self._require_owner(
+        organization_id=organization_id,
+        current_user=current_user,
+    )
+
         sub = await self.get_or_create_subscription(
             organization_id=organization_id
         )
@@ -106,7 +112,7 @@ class SubscriptionServices(BaseService):
         return session.url
 
     async def create_portal_session(
-        self, *, organization_id: UUID, return_url:str
+        self, *, organization_id: UUID, current_user: User,  return_url:str
     ) -> str:
         """
         Creates a stripe billing portal session and returns the URL
@@ -114,6 +120,10 @@ class SubscriptionServices(BaseService):
         requires the org to already have a stripe_customer_id
         ***Stripe id(both customer_id and subscription_id) id NULL until first checkout is done***
         """
+        await self._require_owner(
+        organization_id=organization_id,
+        current_user=current_user,
+    )
         sub = await self.get_or_create_subscription(
             organization_id=organization_id
         )
@@ -142,6 +152,13 @@ class SubscriptionServices(BaseService):
         NEVER trust payload without verifying the signature first
         If the signature check fails, stripe raises an exception, we let it propogate
         """
+
+        # 1 ->recompute the hash, if they match -> the genuinely came from stripe
+        # 2-> check the timestamp, it verifies if t= timestamp is recent
+        # 3-> if everything passes, it returns a python dict of events to use it:
+        # event["type"]              # "customer.subscription.updated"
+        # event["data"]["object"]    # the subscription object
+
         event = stripe.Webhook.construct_event(
             payload=payload, 
             sig_header=sig_header,
