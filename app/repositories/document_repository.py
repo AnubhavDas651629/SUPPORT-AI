@@ -1,9 +1,11 @@
+from celery import result
 from uuid import UUID
 
 from sqlalchemy import select
 
 from app.models.document import Document
 from app.repositories.base import BaseRepository
+from sqlalchemy import func
 
 
 class DocumentRepository(BaseRepository):
@@ -108,3 +110,14 @@ class DocumentRepository(BaseRepository):
         result = await self.session.execute(query)
 
         return result.scalar_one_or_none()
+
+
+    async def count_for_knowledge_base(self, *, knowledge_base_id:UUID)-> int:
+        query = (
+            select(func.count())
+            .select_from(Document)
+            .where(Document.knowledge_base_id == knowledge_base_id)
+        )
+        result = await self.session.execute(query)
+        return result.scalar_one()
+        

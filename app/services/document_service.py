@@ -20,6 +20,8 @@ from app.repositories.knowledge_base_repository import (
 from app.services.base import BaseService
 from app.services.storage import get_storage_service
 from app.processing.processor import DocumentProcessor
+from app.services.subscription_service import SubscriptionServices
+from app.repositories.document_repository import DocumentRepository as DocRepo
 
 
 class DocumentService(BaseService):
@@ -43,6 +45,15 @@ class DocumentService(BaseService):
         await self._require_owner(
             organization_id=organization_id,
             current_user=current_user,
+        )
+        sub_service = SubscriptionServices(session=self.session)
+        current_doc_count = await self.document_repository.count_for_knowledge_base(
+            knowledge_base_id=knowledge_base_id
+        )
+        await sub_service.check_quota_limit(
+            organization_id=organization_id,
+            quota_key="max_documents_per_kb",
+            current_count=current_doc_count
         )
 
         knowledge_base = (
