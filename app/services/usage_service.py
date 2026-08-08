@@ -50,3 +50,32 @@ class UsageService(BaseService):
         )
         tier = sub.plan_tier if sub else PlanTier.FREE
         return PLAN_LIMITS.get(tier, PLAN_LIMITS[PlanTier.FREE])
+
+
+# AI RESPONSES 
+    
+    async def check_ai_quota(self, *, organization_id:UUID) -> None:
+        usage = await self._get_or_create_usage(
+            organization_id=organization_id
+        )
+        limits = await self._get_plan_limits(
+            organization_id=organization_id
+        )
+        max_responses = limits.get("max_ai_reponses_per_month", 0)
+
+        if usage.ai_responses_used >= max_responses:
+            raise PlanLimitExceededException(
+                message=f"You have used all {max_responses} AI responses for this month. Please upgrade your plan"
+            )
+
+    async def record_ai_response(self, *, organization_id: UUID) -> None:
+        """Increment the AI response counter by 1 after a successful response."""
+        # 1. Guarantee the row exists in DB for this period
+        await self._get_or_create_usage(
+            organization_id=organization_id
+        )
+        # 2. Atomically increment in Postgres
+        await self.usage_repository.increment_ai_response(
+            organization_id=organization_id
+        )
+        await self.session.commit()
