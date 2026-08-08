@@ -21,3 +21,14 @@ class SubscriptionResponse(BaseModel):
     current_period_start: datetime
     current_period_end: datetime
     limits: PlanLimitsResponse
+
+class CheckoutRequest(BaseModel):
+    price_id: str
+    success_url: str
+    cancel_url: str
+
+class PortalRequest(BaseModel):
+    return_url: str # where to redirected after ther're done in the portal
+
+class CheckoutResponse(BaseModel):
+    checkout_url: str # stripe hosted - url frontend redirects user here
