@@ -1,4 +1,3 @@
-from celery import result
 from uuid import UUID
 
 from sqlalchemy import select

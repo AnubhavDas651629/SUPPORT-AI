@@ -22,8 +22,6 @@ from app.redis.keys import RedisKeys
 from app.redis.client import redis_client
 from app.schemas.organization import OrganizationResponse
 from app.services.subscription_service import SubscriptionServices
-from sqlalchemy import func
-from app.models.organization_member import OrganizationMember
 
 class OrganizationService(BaseService):
     def __init__(self, session: AsyncSession):

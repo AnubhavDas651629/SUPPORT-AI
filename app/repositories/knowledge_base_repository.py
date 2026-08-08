@@ -1,4 +1,3 @@
-from dns.e164 import query
 from uuid import UUID
 from sqlalchemy import select
 from app.models.organization import Organization
@@ -70,7 +69,7 @@ class KnowledgeBaseRepository(BaseRepository):
     async def count_for_organization(self, *, organization_id:UUID) -> int:
         query = (
             select(func.count())
-            .select_from(KnowledgeBase())
+            .select_from(KnowledgeBase)
             .where(KnowledgeBase.organization_id == organization_id)
         )
         result = await self.session.execute(query)

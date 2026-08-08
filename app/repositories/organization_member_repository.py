@@ -1,8 +1,6 @@
 from sqlalchemy import select
 from uuid import UUID
 
-from sqlalchemy.orm import query
-
 from app.models.organization_member import (
     OrganizationMember,
     OrganizationRole
@@ -59,6 +57,6 @@ class OrganizationMemberRepository(BaseRepository):
             .where(OrganizationMember.organization_id == organization_id)
         )
         result = await self.session.execute(query)
-
+        return result.scalar_one()
 
 

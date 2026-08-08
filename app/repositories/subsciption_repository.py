@@ -1,3 +1,4 @@
+from app.models import OrganizationMember
 from datetime import timedelta, datetime, UTC
 from uuid import UUID
 from sqlalchemy import select
@@ -28,3 +29,11 @@ class SubscriptionRepository(BaseRepository):
         self.session.add(subscription)
         await self.session.flush()
         return subscription
+
+    async def get_by_stripe_id(self, *, stripe_customer_id: str) -> OrganizationSubscription | None:
+        stmt = (
+            select(OrganizationSubscription)
+            .where(OrganizationSubscription.stripe_customer_id == stripe_customer_id)
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()

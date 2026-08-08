@@ -48,6 +48,11 @@ class Settings(BaseSettings):
     google_client_id: str = ""
     google_client_secret: str = ""
 
+    stripe_secret_key: str = ""
+    stripe_webhook_sercret: str = ""
+    stripe_pro_price_id: str = ""
+    stripe_enterprise_price_id: str = ""
+
 
 @lru_cache
 def get_settings():
