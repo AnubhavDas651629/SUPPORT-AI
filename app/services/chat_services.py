@@ -27,6 +27,7 @@ from app.repositories.knowledge_base_repository import KnowledgeBaseRepository
 from app.models.user import User
 from app.dto.citation import Citation
 from app.services.usage_service import UsageService
+from app.services.organization_settings_service import OrganizationSettingsService
 
 class ChatService(BaseService):
     def __init__(self, session: AsyncSession):
@@ -37,9 +38,17 @@ class ChatService(BaseService):
         self.escalation_service = EscalationService(session=session)
         self.conversation_service = ConversationService(session=session)
         self.knowledge_base_repository = KnowledgeBaseRepository(session=session)
+        self.settings_service = OrganizationSettingsService(session=session)
 
 
-    def _build_messages(self, *, history: list[Message], chunks:list[DocumentChunk], question:str) -> list[str]:
+    def _build_messages(
+        self,
+        *,
+        history: list[Message],
+        chunks: list[DocumentChunk],
+        question: str,
+        system_prompt_override: str | None = None,
+    ) -> list[dict]:
         history_text = "\n\n".join(
             f"{message.role.value}: {message.content}"
             for message in history
@@ -53,6 +62,8 @@ class ChatService(BaseService):
         system_prompt = load_prompt(
             "customer_support/system"
         )
+        if system_prompt_override:
+            system_prompt = f"{system_prompt_override}\n\n{system_prompt}"
 
         user_template = load_prompt(
             "customer_support/user"
@@ -131,16 +142,22 @@ class ChatService(BaseService):
             for chunk in chunks
         ]
 
-        messages = self._build_messages(
-            history=history,
-            chunks=chunks,
-            question=question
-        )
-
-        #usage check
+        # 1. Usage check
         usage_service = UsageService(session=self.session)
         await usage_service.check_ai_quota(
             organization_id=conversation.organization_id
+        )
+
+        # 2. Load org's custom AI configuration (tone & temperature)
+        org_settings = await self.settings_service.get_or_create_settings(
+            organization_id=conversation.organization_id
+        )
+
+        messages = self._build_messages(
+            history=history,
+            chunks=chunks,
+            question=question,
+            system_prompt_override=org_settings.system_prompt_override,
         )
 
         result = await self.escalation_service.process(
@@ -156,7 +173,7 @@ class ChatService(BaseService):
             content=result.answer
         )
 
-        #record usage
+        # 3. Record AI response usage
         await usage_service.record_ai_response(
             organization_id=conversation.organization_id
         )
@@ -202,16 +219,30 @@ class ChatService(BaseService):
             limit=limit,
         )
 
+        # 1. Usage check
+        usage_service = UsageService(session=self.session)
+        await usage_service.check_ai_quota(
+            organization_id=conversation.organization_id
+        )
+
+        # 2. Load org's custom AI configuration
+        org_settings = await self.settings_service.get_or_create_settings(
+            organization_id=conversation.organization_id
+        )
+
         messages = self._build_messages(
             history=history,
             chunks=chunks,
             question=question,
+            system_prompt_override=org_settings.system_prompt_override,
         )
 
         full_answer = ""
 
+        # 3. Pass custom temperature to the streaming LLM call
         async for token in self.llm_provider.stream(
             messages=messages,
+            temperature=org_settings.temperature,
         ):
             full_answer += token
             yield token
@@ -221,6 +252,12 @@ class ChatService(BaseService):
             role=MessageRole.ASSISTANT,
             content=full_answer,
         )
+
+        # 4. Record AI response usage
+        await usage_service.record_ai_response(
+            organization_id=conversation.organization_id
+        )
+
 
     async def chat(self, *, conversation_id: UUID | None, knowledge_base_id: UUID | None, question: str, current_user: User | None = None) -> ChatResult:
         if conversation_id is None:

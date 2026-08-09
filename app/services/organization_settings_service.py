@@ -16,7 +16,7 @@ class OrganizationSettingsService(BaseService):
         self.settings_repository = OrganizationSettingsRepository(session)
         self.subscription_service = SubscriptionServices(session)
 
-    async def _get_or_create_settings(self, *, organization_id:UUID) -> OrganizationSettings:
+    async def get_or_create_settings(self, *, organization_id:UUID) -> OrganizationSettings:
         """
         Gets the settings row for this org
         if for the first tiem creates the default row
@@ -40,7 +40,7 @@ class OrganizationSettingsService(BaseService):
             organization_id=organization_id,
             current_user=current_user
         )
-        return await self._get_or_create_settings(organization_id=organization_id)
+        return await self.get_or_create_settings(organization_id=organization_id)
 
     async def update_settings(self, *, organization_id:UUID, current_user:User, update_data:dict) -> OrganizationSettings:
         """

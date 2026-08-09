@@ -56,6 +56,7 @@ app.include_router(ticket_notes.router)
 app.include_router(subscription_router, prefix="/api/v1")
 app.include_router(stripe_webhook_router, prefix="/api/v1")
 app.include_router(usage.router, prefix="/api/v1")
+app.include_router(organization_settings.router, prefix="/api/v1")
 
 
 
