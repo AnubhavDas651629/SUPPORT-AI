@@ -11,6 +11,7 @@ from app.api.v1 import ticket
 from app.api.v1 import ticket_notes
 from app.api.v1 import test
 from app.api.v1 import redis_test
+from app.api.v1 import organization_settings
 from app.api.v1 import conversations
 from app.api.v1 import knowledge_bases
 from app.api.v1.users import router as users_router
