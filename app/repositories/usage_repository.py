@@ -1,6 +1,6 @@
 from datetime import datetime, UTC
 from uuid import UUID
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from app.models.organization_usage import OrganizationUsage
 from app.repositories.base import BaseRepository
 
@@ -34,7 +34,7 @@ class UsageRepository(BaseRepository):
             organization_id=organization_id,
             period_start=period_start,
             period_end=period_end,
-            ai_reponses_used=0,
+            ai_responses_used=0,
             storage_bytes_used=0,
             conversations_started=0
         )
@@ -62,7 +62,7 @@ class UsageRepository(BaseRepository):
         """
         Atomically add fiel size bytes to storage_bytes_used
         """
-        now = datetime.now()
+        now = datetime.now(UTC)
         await self.session.execute(
             update(OrganizationUsage)
             .where(
@@ -74,7 +74,7 @@ class UsageRepository(BaseRepository):
         )
 
     async def decrement_storage(self, *, organization_id:UUID, bytes_removed:int) -> None:
-        now = datetime.now()
+        now = datetime.now(UTC)
         await self.session.execute(
             update(OrganizationUsage)
             .where(
@@ -82,14 +82,13 @@ class UsageRepository(BaseRepository):
                 OrganizationUsage.period_start <= now,
                 OrganizationUsage.period_end > now
             )
-            .values(storage_bytes_used = OrganizationUsage.storage_bytes_used - bytes_removed)
-            .op("GREATEST")(0) #Postgres GREATEST(x,0) = clamp to 0
+            .values(storage_bytes_used=func.greatest(0, OrganizationUsage.storage_bytes_used - bytes_removed)) #Postgres GREATEST(x,0) = clamp to 0
         )
 
 
     async def increment_conversation(self, *, organization_id:UUID) -> None:
         """Atomically add 1 to connversations_started"""
-        now = datetime.now()
+        now = datetime.now(UTC)
         await self.session.execute(
             update(OrganizationUsage)
             .where(

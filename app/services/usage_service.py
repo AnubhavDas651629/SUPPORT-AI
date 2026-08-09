@@ -64,7 +64,7 @@ class UsageService(BaseService):
         limits = await self._get_plan_limits(
             organization_id=organization_id
         )
-        max_responses = limits.get("max_ai_reponses_per_month", 0)
+        max_responses = limits.get("max_ai_responses_per_month", 0)
 
         if usage.ai_responses_used >= max_responses:
             raise PlanLimitExceededException(

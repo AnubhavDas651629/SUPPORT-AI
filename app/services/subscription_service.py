@@ -203,16 +203,6 @@ class SubscriptionServices(BaseService):
             # this fires when a subscription is created OR when plan changes/ renews
             # This is where we actually update the plan tier
 
-            #reset usage for the new billing period
-            usage_service = UsageService(session=self.session)
-            new_period_start = datetime.fromtimestamp(data["current_period_start"], tz=UTC)
-            new_period_end = datetime.fromtimestamp(data["current_period_end"], tz=UTC)
-            await usage_service.reset_for_new_period(
-                organization_id=sub.organization.id,
-                period_start=new_period_start,
-                period_end=new_period_end,
-            )
-
             customer_id = data["customer"]
             price_id = data["items"]["data"][0]["price"]["id"]
             period_end = data["current_period_end"]
@@ -222,6 +212,16 @@ class SubscriptionServices(BaseService):
                 stripe_customer_id=customer_id,
             )
             if sub:
+                #reset usage for the new billing period
+                usage_service = UsageService(session=self.session)
+                new_period_start = datetime.fromtimestamp(data["current_period_start"], tz=UTC)
+                new_period_end = datetime.fromtimestamp(data["current_period_end"], tz=UTC)
+                await usage_service.reset_for_new_period(
+                    organization_id=sub.organization_id,
+                    period_start=new_period_start,
+                    period_end=new_period_end,
+                )
+
                 sub.plan_tier = STRIPE_PRICE_TO_PLAN.get(
                     price_id,
                     PlanTier.FREE
