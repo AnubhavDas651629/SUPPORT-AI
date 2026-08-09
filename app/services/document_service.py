@@ -1,3 +1,4 @@
+from app.services import usage_service
 from uuid import UUID
 
 from fastapi import UploadFile
@@ -22,7 +23,7 @@ from app.services.storage import get_storage_service
 from app.processing.processor import DocumentProcessor
 from app.services.subscription_service import SubscriptionServices
 from app.repositories.document_repository import DocumentRepository as DocRepo
-
+from app.services.usage_service import UsageService
 
 class DocumentService(BaseService):
 
@@ -78,6 +79,13 @@ class DocumentService(BaseService):
 
         content = await file.read()
 
+        #storage qoute check
+        usage_service = UsageService(session=self.session)
+        await usage_service.check_storage_quota(
+            organization_id=organization_id,
+            new_bytes=len(content)
+        )
+
         storage_key = await self.storage.save(
             filename=file.filename,
             content=content,
@@ -93,6 +101,11 @@ class DocumentService(BaseService):
         )
 
         await self.session.commit()
+
+        await usage_service.record_storage_added(
+            organization_id=organization_id,
+            bytes_added=len(content)
+        )
         
         processor = DocumentProcessor(
             self.session
@@ -208,6 +221,13 @@ class DocumentService(BaseService):
         await self.document_repository.delete(document)
 
         await self.session.commit()
+
+        usage_service = UsageService(session=self.session)
+        await usage_service.record_storage_removed(
+            organization_id=organization_id,
+            bytes_removed=document.size,
+        )
+
 
 
     async def get_document_download_url(
