@@ -1,3 +1,4 @@
+from app.exceptions.subscription import PlanLimitExceededException
 from app.core.plan_config import PLAN_LIMITS
 from app.core.plan_config import PlanTier
 from app.processing.tasks import document_tasks
@@ -23,7 +24,7 @@ class UsageService(BaseService):
         """
         Gets the current period usage row
         if it doesn't exist yet(eg org just created now)
-        using the subscription;s preiod dates
+        using the subscriptions preiod dates
         """
         usage = await self.usage_repository.get_current_period(
             organization_id=organization_id
@@ -79,3 +80,43 @@ class UsageService(BaseService):
             organization_id=organization_id
         )
         await self.session.commit()
+
+#STORAGE
+
+    async def check_storage_quota(self, *, organization_id: UUID, new_bytes: int) -> None:
+        usage = await self._get_or_create_usage(
+            organization_id=organization_id
+        )
+        limits = await self._get_plan_limits(
+            organization_id=organization_id
+        )
+        max_bytes = limits.get("max_storage_bytes", 0)
+        if (usage.storage_bytes_used + new_bytes) > max_bytes:
+            max_mb = max_bytes / (1024 * 1024)
+            raise PlanLimitExceededException(
+                message = f"Storage limit of {max_mb:.0f} MB reached/ Please upgrade your plan"
+            )
+
+    async def record_storage_added(self, *, organization_id:UUID, bytes_added:int)-> None:
+        """
+        Increment storage counter after a successfull upload
+        """
+        await self._get_or_create_usage(
+            organization_id=organization_id
+        )
+        await self.usage_repository.increment_storage(
+            organization_id=organization_id,
+            bytes_added=bytes_added
+        )
+        await self.session.commit()
+
+    async def record_storage_removed(self, *, organization_id: UUID, bytes_removed:int) -> None:
+        """
+        Decrement storage counter when a document is deleted
+        """
+        await self.usage_repository.decrement_storage(
+            organization_id=organization_id,
+            bytes_removed=bytes_removed
+        )
+        await self.session.commit()
+
