@@ -13,3 +13,4 @@ from .ticket_event import TicketEvent
 from .user_session import UserSession
 from .subscription import OrganizationSubscription
 from .organization_usage import OrganizationUsage
+from .organization_setting import OrganizationSettings
