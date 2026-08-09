@@ -100,3 +100,5 @@ class OrganizationSettingsService(BaseService):
         await self.session.commit()
         return updated
 
+    
+
