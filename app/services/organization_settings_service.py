@@ -2,7 +2,6 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import User
 from app.repositories.organization_settings_repository import OrganizationSettingsRepository
-from app.repositories.subsciption_repository import SubscriptionRepository
 from app.services.base import BaseService
 from app.services.subscription_service import SubscriptionServices
 from app.models.organization_setting import OrganizationSettings
@@ -70,9 +69,10 @@ class OrganizationSettingsService(BaseService):
         if requested_branding_fields:
             await self.subscription_service.check_feature_allowed(
                 Organization_id=organization_id,
-                feature_flag="allows_custom_branding"
+                feature_flag="allows_custom_branding",
+                current_user=current_user,
             )
-        settings = await self._get_or_create_settings(
+        settings = await self.get_or_create_settings(
             organization_id=organization_id
         )
 
