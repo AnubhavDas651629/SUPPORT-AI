@@ -139,7 +139,7 @@ class UsageService(BaseService):
 
     async def reset_for_new_period(
         self, *, 
-        Organization_id: UUID,
+        organization_id: UUID,
         period_start: datetime,
         period_end: datetime
     ) -> None:
@@ -149,7 +149,7 @@ class UsageService(BaseService):
         The old row stays at the db as a historical record
         """
         await self.usage_repository.create_for_period(
-            organization_id=Organization_id,
+            organization_id=organization_id,
             period_start=period_start,
             period_end=period_end
         )

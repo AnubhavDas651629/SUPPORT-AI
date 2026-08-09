@@ -1,3 +1,4 @@
+from app.services import usage_service
 from datetime import UTC
 from datetime import datetime
 from app.exceptions.subscription import PlanLimitExceededException
@@ -13,6 +14,8 @@ from app.core.plan_config import PlanTier, PLAN_LIMITS
 import stripe
 from app.core.config import settings
 from app.core.plan_config import PlanTier, SubscriptionStatus
+from app.services.usage_service import UsageService
+from datetime import datetime, UTC
 
 stripe.api_key = settings.stripe_secret_key
 
@@ -199,6 +202,17 @@ class SubscriptionServices(BaseService):
         elif event_type in ("customer.subscription.created", "customer.subscription.updated"):
             # this fires when a subscription is created OR when plan changes/ renews
             # This is where we actually update the plan tier
+
+            #reset usage for the new billing period
+            usage_service = UsageService(session=self.session)
+            new_period_start = datetime.fromtimestamp(data["current_period_start"], tz=UTC)
+            new_period_end = datetime.fromtimestamp(data["current_period_end"], tz=UTC)
+            await usage_service.reset_for_new_period(
+                organization_id=sub.organization.id,
+                period_start=new_period_start,
+                period_end=new_period_end,
+            )
+
             customer_id = data["customer"]
             price_id = data["items"]["data"][0]["price"]["id"]
             period_end = data["current_period_end"]
