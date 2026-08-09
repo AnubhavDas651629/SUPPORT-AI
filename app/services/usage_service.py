@@ -6,6 +6,7 @@ from app.processing.tasks import document_tasks
 from app.processing.tasks import document_tasks
 from app.models import OrganizationUsage
 from app.models import Organization
+from app.models.user import User
 from app.repositories.subsciption_repository import SubscriptionRepository
 from app.repositories.usage_repository import UsageRepository
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -158,10 +159,14 @@ class UsageService(BaseService):
 
 # USAGE DASHBORAD
 
-    async def get_usage_summary(self, *, organization_id:UUID) -> dict:
+    async def get_usage_summary(self, *, organization_id:UUID, current_user: User) -> dict:
         """
         will return current usage vs Limits -used by the dashboard API
         """
+        await self._require_member(
+            organization_id=organization_id,
+            current_user=current_user
+        )
         usage = await self._get_or_create_usage(
             organization_id=organization_id
         )
