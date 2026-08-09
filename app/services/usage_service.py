@@ -1,3 +1,4 @@
+from datetime import datetime
 from app.exceptions.subscription import PlanLimitExceededException
 from app.core.plan_config import PLAN_LIMITS
 from app.core.plan_config import PlanTier
@@ -119,4 +120,67 @@ class UsageService(BaseService):
             bytes_removed=bytes_removed
         )
         await self.session.commit()
+
+# CONVERSATIONS
+
+    async def record_conversation_started(self, *, organization_id:UUID)-> None:
+        """
+        Increment conversation counter when a new conversation is created
+        """
+        await self._get_or_create_usage(
+            organization_id=organization_id
+        )
+        await self.usage_repository.increment_conversation(
+            organization_id=organization_id
+        )
+        await self.session.commit()
+
+# PERIOD RESET
+
+    async def reset_for_new_period(
+        self, *, 
+        Organization_id: UUID,
+        period_start: datetime,
+        period_end: datetime
+    ) -> None:
+        """
+        Called from stripe webhook when a subscription renews
+        Creates a brand new usage row with all coutners at 0
+        The old row stays at the db as a historical record
+        """
+        await self.usage_repository.create_for_period(
+            organization_id=Organization_id,
+            period_start=period_start,
+            period_end=period_end
+        )
+        await self.session.commit()
+
+
+# USAGE DASHBORAD
+
+    async def get_usage_summary(self, *, organization_id:UUID) -> dict:
+        """
+        will return current usage vs Limits -used by the dashboard API
+        """
+        usage = await self._get_or_create_usage(
+            organization_id=organization_id
+        )
+        limits = await self._get_plan_limits(
+            organization_id=organization_id
+        )
+        return{
+            "period_start": usage.period_start,
+            "period_end": usage.period_end,
+            "ai_responses": {
+                "used": usage.ai_responses_used,
+                "limit": limits.get("max_ai_responses_per_month")
+            },
+            "storage_bytes":{
+                "used": usage.storage_bytes_used,
+                "limit": limits.get("max_storage_bytes")
+            },
+            "conversations":{
+                "used": usage.conversations_started
+            }
+        }
 

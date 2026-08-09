@@ -8,6 +8,7 @@
 # ↓
 # Return Answer
 
+from app.services import usage_service
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.dto import citation
@@ -25,6 +26,7 @@ from app.utils.prompt_loader import load_prompt
 from app.repositories.knowledge_base_repository import KnowledgeBaseRepository
 from app.models.user import User
 from app.dto.citation import Citation
+from app.services.usage_service import UsageService
 
 class ChatService(BaseService):
     def __init__(self, session: AsyncSession):
@@ -134,6 +136,13 @@ class ChatService(BaseService):
             chunks=chunks,
             question=question
         )
+
+        #usage check
+        usage_service = UsageService(session=self.session)
+        await usage_service.check_ai_quota(
+            organization_id=conversation.organization_id
+        )
+
         result = await self.escalation_service.process(
             conversation=conversation,
             history=history,
@@ -146,6 +155,12 @@ class ChatService(BaseService):
             role=MessageRole.ASSISTANT,
             content=result.answer
         )
+
+        #record usage
+        await usage_service.record_ai_response(
+            organization_id=conversation.organization_id
+        )
+
         title = await self._generate_title(
             conversation=self._build_title_context(
                 question=question,
@@ -223,6 +238,12 @@ class ChatService(BaseService):
                 knowledge_base_id=knowledge_base_id,
                 title=question[:100]
             )
+
+            usage_service = UsageService(session=self.session)
+            await usage_service.record_conversation_started(
+                organization_id=knowledge_base.organization_id
+            )
+
         else:
             conversation = await self.conversation_service.get_conversation(
                 conversation_id=conversation_id,
@@ -254,6 +275,12 @@ class ChatService(BaseService):
                 organization_id=knowledge_base.organization_id,
                 knowledge_base_id=knowledge_base.id
             )
+
+            usage_service = UsageService(session=self.session)
+            await usage_service.record_conversation_started(
+                organization_id=knowledge_base.organization_id
+            )
+
         else:
             conversation = await self.conversation_service.get_conversation(
                 conversation_id=conversation_id,
