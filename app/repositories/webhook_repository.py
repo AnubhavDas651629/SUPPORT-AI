@@ -31,17 +31,17 @@ class WebhookRepository(BaseRepository):
         result = self.session.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def list_endpoints(self, *, organizaztion_id:UUID) -> list[WebhookEndpoint]:
+    async def list_endpoints(self, *, organization_id:UUID) -> list[WebhookEndpoint]:
         stmt = (
             select(WebhookEndpoint)
-            .where(WebhookEndpoint.organization_id == organizaztion_id)
+            .where(WebhookEndpoint.organization_id == organization_id)
             .order_by(WebhookEndpoint.created_at.desc())
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
     async def get_active_endpoints_for_event(self, *, organization_id:UUID, event_type:str) -> list[WebhookEndpoint]:
-        all_endpoints = await self.list_endpoints(organizaztion_id=organization_id)
+        all_endpoints = await self.list_endpoints(organization_id=organization_id)
 
         matching = []
         for endpoint in all_endpoints:
@@ -118,7 +118,7 @@ class WebhookRepository(BaseRepository):
         await self.session.flush()
         return delivery
 
-        
+
     async def list_deliveries(
         self, *, endpoint_id: UUID, limit: int = 50
     ) -> list[WebhookDelivery]:

@@ -54,6 +54,11 @@ class Settings(BaseSettings):
     stripe_enterprise_price_id: str = ""
 
 
+    # for fernet url safe ket enter  in terminal-> uv run python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+    webhook_encryption_key: str = ""
+
+
+
 @lru_cache
 def get_settings():
     return Settings()
