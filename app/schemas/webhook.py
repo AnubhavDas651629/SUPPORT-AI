@@ -1,8 +1,8 @@
 from datetime import datetime
 from uuid import UUID
-from pydantic import BaseModel, HttpUrl, field_validator
+from pydantic import BaseModel, field_validator
 
-class WebhookEndpointsCreateRequest(BaseModel):
+class WebhookEndpointCreateRequest(BaseModel):
     """
     Customer will submit this to register new webhook url
     """
@@ -34,6 +34,22 @@ class WebhookEndpointUpdateRequest(BaseModel):
     url: str | None = None
     subscribed_events: list[str] | None = None
     is_active: bool | None = None
+
+    @field_validator("subscribed_events")
+    @classmethod
+    def validate_events(cls, events: list[str] | None) -> list[str] | None:
+        if events is not None and not events:
+            raise ValueError(
+                "Subscribed events cannot be empty, Use [*] to recieve all events"
+            )
+        return events
+
+    @field_validator("url")
+    @classmethod
+    def validate_url(cls, url: str | None) -> str | None:
+        if url is not None and not url.startswith("http://") and not url.startswith("https://"):
+            raise ValueError("URL must start with http:// or https://")
+        return url
 
 
 class WebhookEndpointCreatedResponse(BaseModel):

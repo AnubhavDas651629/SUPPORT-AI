@@ -13,7 +13,7 @@ def generate_webhook_secret() -> str:
 
 #in the input -> secret: the key generated from the generate_webhook_secret
 #payload: actual JSON data of the event being sent over as raw_bytes, for example: ticket.created
-def sign_webhook_payload(*, secret: str, payload: str) -> str:
+def sign_webhook_payload(*, secret: str, payload: bytes | str) -> str:
     
     """        
     Creates the X-SupportAI-Signature header value using HMAC-SHA256.
@@ -24,8 +24,9 @@ def sign_webhook_payload(*, secret: str, payload: str) -> str:
 
     timestamp = str(int(time.time()))
 
+    payload_bytes = payload.encode("utf-8") if isinstance(payload, str) else payload
     #using encode because cannot mix "str" (timestamp) and "bytes"(payload), so encode will convert timestamp to bytes
-    signed_payload = f"{timestamp}.".encode() + payload
+    signed_payload = f"{timestamp}.".encode() + payload_bytes
     # HMAC-SHA256 with the webhook secret as key
     signature = hmac.new(
         secret.encode("utf-8"), #the customer's webhook secret as bytes

@@ -26,6 +26,7 @@ from app.exceptions.conversation import (
     MessageNotFoundException,
 )
 from app.exceptions.ticket import TicketNotFoundException, TicketAlreadyExistsException, TicketNoteNotFoundException
+from app.exceptions.webhook import WebhookNotFoundException
 import stripe
 
 def register_exception_handlers(app: FastAPI):
@@ -281,5 +282,17 @@ def register_exception_handlers(app: FastAPI):
                 "Retry-After": str(exc.retry_after),
                 "X-RateLimit-Limit": str(exc.limit),
                 "X-RateLimit-Remaining": "0",
+            },
+        )
+
+    @app.exception_handler(WebhookNotFoundException)
+    async def webhook_not_found_handler(
+        request: Request,
+        exc: WebhookNotFoundException,
+    ):
+        return JSONResponse(
+            status_code=404,
+            content={
+                "detail": str(exc),
             },
         )

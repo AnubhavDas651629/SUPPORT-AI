@@ -1,5 +1,5 @@
 from uuid import UUID
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.dependencies import get_db
 from app.dependencies.auth import get_current_user
@@ -12,6 +12,7 @@ from app.schemas.webhook import (
     WebhookEndpointUpdateRequest,
     WebhookTestResponse,
 )
+from app.exceptions.webhook import WebhookNotFoundException
 from app.services.webhook_services import WebhookService
 
 router = APIRouter(
@@ -19,7 +20,7 @@ router = APIRouter(
     tags=["Webhooks"],
 )
 
-@router.post("", response_model=WebhookEndpointCreatedResponse, status_code=201)
+@router.post("", response_model=WebhookEndpointCreatedResponse, status_code=status.HTTP_201_CREATED)
 async def create_webhook(
     organization_id: UUID,
     body: WebhookEndpointCreateRequest,
@@ -102,7 +103,7 @@ async def update_webhook(
     except WebhookNotFoundException:
         raise HTTPException(status_code=404, detail="Webhook endpoint not found.")
 
-@router.delete("/{endpoint_id}", status_code=204)
+@router.delete("/{endpoint_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_webhook(
     organization_id: UUID,
     endpoint_id: UUID,

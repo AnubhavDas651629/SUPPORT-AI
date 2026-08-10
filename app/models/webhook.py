@@ -1,5 +1,3 @@
-from sqlalchemy.orm import backref
-from google.auth import default
 from typing import TYPE_CHECKING
 from uuid import UUID
 from sqlalchemy import (
@@ -28,9 +26,9 @@ class WebhookEndpoint(Base, UUIDMixin, TimestampMixin):
     name: Mapped[str] = mapped_column(String(100),nullable=False) #human labels, eg slack alerts
     url: Mapped[str] = mapped_column(String(500), nullable=False) #customer's url that support ai will post to 
     secret_encrypted: Mapped[str] = mapped_column(Text, nullable=False) #AES fernet encrypted signing secret, customer copies this value once from dashboard and stores it in their .EnvironmentError
-    subscribed_events: Mapped [str] = mapped_column(JSONB, nullable=False, default=list) # ticket.created, ticket.resolved
+    subscribed_events: Mapped[list[str]] = mapped_column(JSONB, nullable=False, default=list) # ticket.created, ticket.resolved
     is_active: Mapped[bool] = mapped_column(Integer, default=True, nullable=False)
-    consecutive_failure: Mapped[int] = mapped_column(Integer, default=0, nullable=False) #how many consecutive times delivery failure
+    consecutive_failures: Mapped[int] = mapped_column(Integer, name="consecutive_failure", default=0, nullable=False) #how many consecutive times delivery failure
     
     organization: Mapped["Organization"] = relationship("Organization", backref="webhook_endpoints")
     deliveries: Mapped[list["WebhookDelivery"]] = relationship("WebhookDelivery", back_populates="endpoint", lazy="select", order_by="WebhookDelivery.created_at.desc()")
@@ -50,7 +48,7 @@ class WebhookDelivery(Base, UUIDMixin, TimestampMixin):
     event_type: Mapped[str] = mapped_column(String(100), nullable=False) #ticket.created
     payload: Mapped[dict] = mapped_column(JSONB, nullable=False) #full payload we sent
     status_code: Mapped[int | None] = mapped_column(Integer, nullable=True) # HTTP response code we recieved(null = timeout / network error)
-    response_body: Mapped [str | None] = mapped_column(Text, nullable=False) # if our payload reaches it might return "ok" or {"recieved": true} and if it fails some other msg
+    response_body: Mapped [str | None] = mapped_column(Text, nullable=True) # if our payload reaches it might return "ok" or {"recieved": true} and if it fails some other msg
     duration_ms: Mapped[int | None] = mapped_column(Integer, nullable=True) #how long req took in miliseconds
     is_success: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False) # true for status code 2xx
     attempt_number: Mapped[int] = mapped_column(Integer, default=1, nullable=False) # 1 = first attempt, 2 = first retry

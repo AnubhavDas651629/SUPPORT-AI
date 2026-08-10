@@ -99,15 +99,15 @@ class WebhookDispatcher:
                 return
             fernet = Fernet(settings.webhook_encryption_key.encode())
             for endpoint in endpoints:
-                raw_secret = fernet.decrypt(endpoint.secret_encrypted.encode()).decode()
-                signature_header = sign_webhook_payload(
-                    secret=raw_secret, payload=payload_bytes
-                )
                 start = time.monotonic()
                 status_code = None
                 response_body = None
                 is_success = False
                 try:
+                    raw_secret = fernet.decrypt(endpoint.secret_encrypted.encode()).decode()
+                    signature_header = sign_webhook_payload(
+                        secret=raw_secret, payload=payload_bytes
+                    )
                     async with httpx.AsyncClient() as client:
                         response = await client.post(
                             endpoint.url,
@@ -145,3 +145,4 @@ class WebhookDispatcher:
                 else:
                     await repo.increment_failure(endpoint=endpoint)
                 await session.commit()
+            return

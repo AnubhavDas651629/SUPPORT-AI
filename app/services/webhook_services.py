@@ -2,7 +2,7 @@ from uuid import UUID
 from cryptography.fernet import Fernet
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
-from app.exceptions.auth import PermissionDeniedException
+from app.exceptions.webhook import WebhookNotFoundException
 from app.models.user import User
 from app.models.webhook import WebhookEndpoint, WebhookDelivery
 from app.repositories.webhook_repository import WebhookRepository
@@ -27,39 +27,39 @@ class WebhookService(BaseService):
         return self._fernet.decrypt(encrypted.encode()).decode()
 
     async def create_endpoint(
-            self,
-            *,
-            organization_id: UUID,
-            current_user: User,
-            name: str,
-            url: str,
-            subscribed_events: list[str],
-        ) -> tuple[WebhookEndpoint, str]:
-            await self._require_owner(
-                organization_id=organization_id,
-                current_user=current_user
-            )
+        self,
+        *,
+        organization_id: UUID,
+        current_user: User,
+        name: str,
+        url: str,
+        subscribed_events: list[str],
+    ) -> tuple[WebhookEndpoint, str]:
+        await self._require_owner(
+            organization_id=organization_id,
+            current_user=current_user
+        )
 
-            #plan gate: free tier cannot use webhooks
-            await self.subscription_service.check_feature_allowed(
-                Organization_id=organization_id,
-                feature_flag="allow_webhooks",
-                current_user=current_user
-            )
+        # Plan gate: free tier cannot use webhooks
+        await self.subscription_service.check_feature_allowed(
+            Organization_id=organization_id,
+            feature_flag="allows_webhooks",
+            current_user=current_user
+        )
 
-            #generate raw secret(shown once), then encrypt for storage
-            raw_secret = generate_webhook_secret()
-            encrypted_secret = self._encrypt(raw_secret)
+        # Generate raw secret (shown once), then encrypt for storage
+        raw_secret = generate_webhook_secret()
+        encrypted_secret = self._encrypt(raw_secret)
 
-            endpoint = await self.webhook_repository.create_endpoint(
-                orgnization_id=organization_id,
-                name=name,
-                url=url,
-                sercet_encrypted=encrypted_secret,
-                subscribed_events=subscribed_events
-            )
-            await self.session.commit()
-            return endpoint, raw_secret #raw secret only returned once
+        endpoint = await self.webhook_repository.create_endpoint(
+            organization_id=organization_id,
+            name=name,
+            url=url,
+            secret_encrypted=encrypted_secret,
+            subscribed_events=subscribed_events
+        )
+        await self.session.commit()
+        return endpoint, raw_secret  # raw secret only returned once
 
     async def list_endpoints(
         self, *, organization_id: UUID, current_user: User

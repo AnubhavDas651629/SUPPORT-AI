@@ -5,12 +5,12 @@ from app.repositories.base import BaseRepository
 
 
 class WebhookRepository(BaseRepository):
-    async def create_endpoint(self, *, orgnization_id:UUID, name:str, url:str, sercet_encrypted:str, subscribed_events: list[str])-> WebhookEndpoint:
+    async def create_endpoint(self, *, organization_id:UUID, name:str, url:str, secret_encrypted:str, subscribed_events: list[str])-> WebhookEndpoint:
         endpoint = WebhookEndpoint(
-            orgnization_id=orgnization_id,
+            organization_id=organization_id,
             name=name, 
             url=url,
-            secret_encrypted=sercet_encrypted,
+            secret_encrypted=secret_encrypted,
             subscribed_events=subscribed_events,
             is_active=True,
             consecutive_failures=0
@@ -28,7 +28,7 @@ class WebhookRepository(BaseRepository):
                 WebhookEndpoint.organization_id == organization_id
             )
         )
-        result = self.session.execute(stmt)
+        result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
     async def list_endpoints(self, *, organization_id:UUID) -> list[WebhookEndpoint]:
