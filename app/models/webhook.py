@@ -12,6 +12,11 @@ from app.models.mixins import TimestampMixin, UUIDMixin
 if TYPE_CHECKING:
     from app.models.organization import Organization
 
+"""
+Webhook endpoints are like 1 url for slack and 1 for zapier
+now each wendpoint will recieve 100's of post request
+those requests would be stored at webhook delivery
+"""
 
 class WebhookEndpoint(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "webhook_endpoints"
