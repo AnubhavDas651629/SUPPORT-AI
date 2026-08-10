@@ -9,6 +9,7 @@ from app.repositories.webhook_repository import WebhookRepository
 from app.services.base import BaseService
 from app.services.subscription_service import SubscriptionServices
 from app.utils.webhook import generate_webhook_secret
+from app.services.webhook_dispatcher import WebhookDispatcher
 
 class WebhookService(BaseService):
     def __init__(self, session: AsyncSession):
@@ -69,3 +70,102 @@ class WebhookService(BaseService):
         return await self.webhook_repository.list_endpoints(
             organization_id=organization_id
         )
+
+    async def get_endpoint(
+        self, *, organization_id: UUID, endpoint_id: UUID, current_user: User
+    ) -> WebhookEndpoint:
+        await self._require_member(
+            organization_id=organization_id, current_user=current_user
+        )
+        endpoint = await self.webhook_repository.get_endpoint_by_id(
+            endpoint_id=endpoint_id, organization_id=organization_id
+        )
+        if endpoint is None:
+            raise WebhookNotFoundException()
+        return endpoint
+
+
+    async def update_endpoint(
+        self,
+        *,
+        organization_id: UUID,
+        endpoint_id: UUID,
+        current_user: User,
+        name: str | None = None,
+        url: str | None = None,
+        subscribed_events: list[str] | None = None,
+        is_active: bool | None = None,
+    ) -> WebhookEndpoint:
+        await self._require_owner(
+            organization_id=organization_id, current_user=current_user
+        )
+        endpoint = await self.webhook_repository.get_endpoint_by_id(
+            endpoint_id=endpoint_id, organization_id=organization_id
+        )
+        if endpoint is None:
+            raise WebhookNotFoundException()
+        updated = await self.webhook_repository.update_endpoint(
+            endpoint=endpoint,
+            name=name,
+            url=url,
+            subscribed_events=subscribed_events,
+            is_active=is_active,
+        )
+        await self.session.commit()
+        return updated
+
+
+    async def delete_endpoint(
+        self, *, organization_id: UUID, endpoint_id: UUID, current_user: User
+    ) -> None:
+        await self._require_owner(
+            organization_id=organization_id, current_user=current_user
+        )
+        endpoint = await self.webhook_repository.get_endpoint_by_id(
+            endpoint_id=endpoint_id, organization_id=organization_id
+        )
+        if endpoint is None:
+            raise WebhookNotFoundException()
+        await self.webhook_repository.delete_endpoint(endpoint=endpoint)
+        await self.session.commit()
+
+
+    async def test_endpoint(
+        self, *, organization_id: UUID, endpoint_id: UUID, current_user: User
+    ) -> dict:
+        """
+        Send a manual test ping event to the endpoint.
+        Returns the delivery result so customer can verify their server
+        is receiving webhooks correctly.
+        """
+        endpoint = await self.get_endpoint(
+            organization_id=organization_id,
+            endpoint_id=endpoint_id,
+            current_user=current_user,
+        )
+        raw_secret = self._decrypt(endpoint.secret_encrypted)
+        test_payload = {
+            "event": "ping",
+            "message": "This is a test webhook from SupportAI.",
+            "organization_id": str(organization_id),
+        }
+        dispatcher = WebhookDispatcher()
+        result = await dispatcher.send_once(
+            url=endpoint.url,
+            secret=raw_secret,
+            payload=test_payload,
+        )
+        return result
+
+    async def list_deliveries(
+        self, *, organization_id: UUID, endpoint_id: UUID, current_user: User
+    ) -> list[WebhookDelivery]:
+        await self.get_endpoint(  # validates membership + endpoint ownership
+            organization_id=organization_id,
+            endpoint_id=endpoint_id,
+            current_user=current_user,
+        )
+        return await self.webhook_repository.list_deliveries(endpoint_id=endpoint_id)
+
+
+
