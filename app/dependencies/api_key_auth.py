@@ -13,11 +13,11 @@ async def get_api_key_organization(
 
     """
     FastAPI dependency for routes that accept API Key authentication.
-    1. Reads the 'X-API-Key' header from the request.
-    2. Hashes it with SHA-256.
-    3. Looks it up in the DB.
-    4. Updates last_used_at.
-    5. Returns the Organization the key belongs to.
+    1. Reads the 'X-API-Key' header from the request
+    2. Hashes it with SHA-256
+    3. Looks it up in the DB
+    4. Updates last_used_at
+    5. Returns the Organization the key belongs to
     """
 
     key_hash = hash_api_key(x_api_key)
@@ -42,7 +42,7 @@ async def get_api_key_organization(
     # Update last_used_at asynchronously (fire and forget approach)
     await repo.touch_last_used(api_key=api_key)
     await session.commit()
-    
+
     # Load and return the full Organization so the route knows which org this key belongs to
     await session.refresh(api_key, attribute_names=["organization"])
     return api_key.organization
