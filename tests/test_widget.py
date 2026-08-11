@@ -5,6 +5,7 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 
 from app.main import app
+from app.db.dependencies import get_db
 from app.models.api_key import ApiKey
 from app.models.organization import Organization
 from app.models.organization_setting import OrganizationSettings
@@ -14,6 +15,20 @@ from app.dependencies.widget_rate_limit import check_widget_rate_limit
 
 
 # ─── Mock Fixtures & Helpers ──────────────────────────────────────────────────
+
+@pytest.fixture(autouse=True)
+def override_db_and_rate_limit():
+    async def mock_get_db():
+        yield AsyncMock()
+
+    async def mock_rate_limit():
+        pass
+
+    app.dependency_overrides[get_db] = mock_get_db
+    app.dependency_overrides[check_widget_rate_limit] = mock_rate_limit
+    yield
+    app.dependency_overrides.clear()
+
 
 @pytest.fixture
 def test_org():

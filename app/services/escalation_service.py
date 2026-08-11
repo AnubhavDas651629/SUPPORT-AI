@@ -64,17 +64,26 @@ class EscalationService(BaseService):
                 escalated=False,
             )
 
-        ticket = await self.ticket_service.create_ticket(
-            conversation_id=conversation.id,
-            priority=TicketPriority.MEDIUM,
-        )
+        from app.exceptions.ticket import TicketAlreadyExistsException
+
+        try:
+            ticket = await self.ticket_service.create_ticket(
+                conversation_id=conversation.id,
+                priority=TicketPriority.MEDIUM,
+            )
+            ticket_id = ticket.id
+        except TicketAlreadyExistsException:
+            existing = await self.ticket_service.ticket_repository.get_by_conversation(
+                conversation_id=conversation.id
+            )
+            ticket_id = existing.id if existing else None
 
         escalation_message = load_prompt(
             "responses/user_escalated"
         )
 
         return EscalationResult(
-            answer= escalation_message,
+            answer=escalation_message,
             escalated=True,
-            ticket_id=ticket.id,
+            ticket_id=ticket_id,
         )

@@ -23,16 +23,20 @@ class S3StorageService(StorageService):
         storage_key = f"documents/{unique_filename}"
 
         loop = asyncio.get_event_loop()
-        await loop.run_in_executor(
-            None,
-            partial(
-                self.s3_client.put_object,
-                Bucket=self.bucket_name,
-                Key=storage_key,
-                Body=content,
-            ),
-        )
-        return storage_key
+        try:
+            await loop.run_in_executor(
+                None,
+                partial(
+                    self.s3_client.put_object,
+                    Bucket=self.bucket_name,
+                    Key=storage_key,
+                    Body=content,
+                ),
+            )
+            return storage_key
+        except Exception as e:
+            from .local import LocalStorageService
+            return await LocalStorageService().save(filename=filename, content=content)
 
     async def delete(self, *, storage_key: str) -> None:
         loop = asyncio.get_event_loop()

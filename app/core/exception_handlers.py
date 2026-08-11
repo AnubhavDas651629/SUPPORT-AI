@@ -321,3 +321,32 @@ def register_exception_handlers(app: FastAPI):
                 "detail": str(exc),
             },
         )
+
+    from app.exceptions.subscription import (
+        FeatureNotAllowedException,
+        PlanLimitExceededException,
+    )
+
+    @app.exception_handler(FeatureNotAllowedException)
+    async def feature_not_allowed_handler(
+        request: Request,
+        exc: FeatureNotAllowedException,
+    ):
+        return JSONResponse(
+            status_code=403,
+            content={
+                "detail": str(exc),
+            },
+        )
+
+    @app.exception_handler(PlanLimitExceededException)
+    async def plan_limit_exceeded_handler(
+        request: Request,
+        exc: PlanLimitExceededException,
+    ):
+        return JSONResponse(
+            status_code=403,
+            content={
+                "detail": str(exc),
+            },
+        )

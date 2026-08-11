@@ -63,13 +63,13 @@ class ChatService(BaseService):
         )
 
         system_prompt = load_prompt(
-            "customer_support/rag_system"
+            "customer_support/system"
         )
         if system_prompt_override:
             system_prompt += f"\n\nAdditional Instructions:\n{system_prompt_override}"
 
         user_prompt = load_prompt(
-            "customer_support/rag_user"
+            "customer_support/user"
         )
         user_prompt = user_prompt.format(
             context=context_text,
@@ -254,15 +254,32 @@ class ChatService(BaseService):
             system_prompt_override=org_settings.system_prompt_override,
         )
 
-        full_answer = ""
+        # 3. Check for escalation
+        result = await self.escalation_service.process(
+            conversation=conversation,
+            history=history,
+            chunks=chunks,
+            question=question,
+        )
 
-        # 3. Pass custom temperature to the streaming LLM call
-        async for token in self.llm_provider.stream(
-            messages=messages,
-            temperature=org_settings.temperature,
-        ):
-            full_answer += token
-            yield token
+        full_answer = ""
+        if result.escalated:
+            full_answer = result.answer
+            words = full_answer.split(" ")
+            for i, word in enumerate(words):
+                yield word + (" " if i < len(words) - 1 else "")
+        elif result.answer:
+            full_answer = result.answer
+            words = full_answer.split(" ")
+            for i, word in enumerate(words):
+                yield word + (" " if i < len(words) - 1 else "")
+        else:
+            async for token in self.llm_provider.stream(
+                messages=messages,
+                temperature=org_settings.temperature,
+            ):
+                full_answer += token
+                yield token
 
         assistant_message = await self.conversation_service.create_message(
             conversation_id=conversation.id,

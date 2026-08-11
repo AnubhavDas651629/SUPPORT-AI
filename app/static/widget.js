@@ -30,7 +30,8 @@
     };
     let isOpen = false;
     let isStreaming = false;
-    let conversationId = localStorage.getItem("supportai_conv_id") || null;
+    const storageKey = "supportai_conv_" + apiKey.slice(-16);
+    let conversationId = localStorage.getItem(storageKey) || null;
 
     // 3. Inject CSS Styles
     const styles = `
@@ -368,10 +369,12 @@
                 titleEl.textContent = config.widget_title;
             }
             // Apply logo
-            if (config.company_logo_url) {
-                avatarBox.innerHTML = `<img src="${config.company_logo_url}" alt="Logo"/>`;
+            if (config.company_logo_url && (config.company_logo_url.startsWith("http") || config.company_logo_url.startsWith("data:image"))) {
+                avatarBox.innerHTML = `<img src="${config.company_logo_url}" alt="Logo" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>`;
             } else if (config.organization_name) {
                 avatarBox.textContent = config.organization_name.charAt(0).toUpperCase();
+            } else if (config.widget_title) {
+                avatarBox.textContent = config.widget_title.charAt(0).toUpperCase();
             }
 
             // Initial welcome message
@@ -396,7 +399,7 @@
         let assistantMsgEl = null;
 
         try {
-            const response = await fetch(`${apiUrl}/api/v1/widget/chat/stream`, {
+            let response = await fetch(`${apiUrl}/api/v1/widget/chat/stream`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -407,6 +410,23 @@
                     question: question,
                 }),
             });
+
+            // Auto-recovery: If old conversation was not found or expired, retry as a fresh conversation
+            if (response.status === 404) {
+                conversationId = null;
+                localStorage.removeItem(storageKey);
+                response = await fetch(`${apiUrl}/api/v1/widget/chat/stream`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-API-Key": apiKey,
+                    },
+                    body: JSON.stringify({
+                        conversation_id: null,
+                        question: question,
+                    }),
+                });
+            }
 
             hideTyping();
 
@@ -444,7 +464,7 @@
                             const data = JSON.parse(dataStr);
                             if (data.type === "meta" && data.conversation_id) {
                                 conversationId = data.conversation_id;
-                                localStorage.setItem("supportai_conv_id", conversationId);
+                                localStorage.setItem(storageKey, conversationId);
                             } else if (data.type === "token" && data.content) {
                                 if (!assistantMsgEl) {
                                     assistantMsgEl = appendMessage("assistant", "");

@@ -1,13 +1,23 @@
-from datetime import datetime
+from datetime import datetime, UTC
 from uuid import UUID
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 
 class ApiKeyCreateRequest(BaseModel):
     """
     Owner sends this to create a new api key
     """
-    name: str
+    name: str = Field(..., min_length=1, max_length=100)
     expires_at: datetime | None = None
+
+    @field_validator("expires_at")
+    @classmethod
+    def validate_expires_at(cls, v: datetime | None) -> datetime | None:
+        if v is not None:
+            now = datetime.now(UTC)
+            v_utc = v if v.tzinfo else v.replace(tzinfo=UTC)
+            if v_utc <= now:
+                raise ValueError("Expiration date must be in the future.")
+        return v
 
 class ApiKeyCreatedResponse(BaseModel):
     """

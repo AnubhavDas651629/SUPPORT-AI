@@ -20,6 +20,7 @@ async def get_widget_organization(
     key_str = x_api_key or api_key
     if not key_str:
         raise InvalidApiKeyException()
+    key_str = key_str.strip()
     key_hash = hash_api_key(key_str)
     api_key_repo = ApiKeyRepository(session)
     api_key_obj = await api_key_repo.get_by_hash(key_hash=key_hash)

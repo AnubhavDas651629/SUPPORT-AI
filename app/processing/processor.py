@@ -1,7 +1,5 @@
 #this will do the main architecture of the processing
 # given document -> find the file -> extract text -> chunk text -> store chunks -> update document status
-from openai import embeddings
-from openai.types import embedding
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.document import Document, DocumentStatus
@@ -62,8 +60,10 @@ class DocumentProcessor:
 
     async def process(self, *, document: Document) -> None:
         try:
-            # Locate file on disk -> stored files are on Storage folder so file path basically storage/documents/a8f31c2.pdf with a8f31c2 beinf the storage key of the file 
-            file_path = Path("Storage") / document.storage_key
+            # Locate file on disk
+            file_path = Path("storage") / document.storage_key
+            if not file_path.exists():
+                file_path = Path("Storage") / document.storage_key
 
             # Choose parser
             parser = ParserFactory.get_parser(

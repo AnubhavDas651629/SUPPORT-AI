@@ -7,6 +7,6 @@ def get_storage_service() -> StorageService:
     """Return s3Storage if storage_provider == 's3', else LocalStorageService"""
     if settings.storage_provider.lower() == "s3":
         return S3StorageService()
-    return LocalStorageService
+    return LocalStorageService()
 
 __all__ = ["StorageService", "LocalStorageService", "S3StorageService", "get_storage_service"]

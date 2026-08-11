@@ -2,3 +2,6 @@
 __pycache__/
 *.pyc
 .venv/
+dump.rdb
+storage/
+.pytest_cache/

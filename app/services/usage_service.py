@@ -35,13 +35,16 @@ class UsageService(BaseService):
             sub = await self.subscription_repository.get_by_organization_id(
                 organization_id=organization_id
             )
-            if sub:
-                usage = await self.usage_repository.create_for_period(
-                    organization_id=organization_id,
-                    period_start=sub.current_period_start,
-                    period_end=sub.current_period_end
+            if not sub:
+                sub = await self.subscription_repository.create_default_free_subscription(
+                    organization_id=organization_id
                 )
-                await self.session.commit()
+            usage = await self.usage_repository.create_for_period(
+                organization_id=organization_id,
+                period_start=sub.current_period_start,
+                period_end=sub.current_period_end,
+            )
+            await self.session.commit()
         return usage
 
     async def _get_plan_limits(self, *, organization_id:UUID) -> dict:
