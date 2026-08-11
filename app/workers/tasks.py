@@ -6,6 +6,8 @@ from asyncio import run
 from app.db.session import AsyncSessionLocal
 from app.services.email_service import EmailService
 from app.models.user_session import UserSession
+from uuid import UUID
+from app.services.webhook_dispatcher import WebhookDispatcher
 
 logger = get_task_logger(__name__)
 
@@ -55,3 +57,22 @@ def cleanup_expired_sessions_task():
     run(_cleanup())
 
     
+
+#4 outbound webhook event dispacth task
+@celery_app.task(
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    retry_backoff_max=300,
+    retry_jitter=True,
+    max_retries=3,
+)
+def distpatch_webhook_task(organization_id:str, event_type: str, data: dict):
+    logger.info(f"Excecuting dispatch_webhook_event_task for org {organization_id}, event: {event_type}")
+    async def _dispatch():
+        dispatcher = WebhookDispatcher()
+        await dispatcher.dispatch_event(
+            organization_id=UUID(organization_id),
+            event_type=event_type,
+            data=data
+        )
+    run(_dispatch())

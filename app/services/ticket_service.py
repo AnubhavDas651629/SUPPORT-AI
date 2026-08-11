@@ -18,7 +18,8 @@ from app.exceptions.ticket import TicketAlreadyExistsException, TicketNotFoundEx
 from app.models.message import Message, MessageRole
 from app.models.user import User
 from app.services.ticket_event_service import TicketEventService
-from app.workers.tasks import send_ticket_create_email
+from app.workers.tasks import send_ticket_create_email, dispatch_webhook_event_task
+from app.core.webhook_events import WebhookEventType
 
 class TicketService(BaseService):
     def __init__(self, *, session: AsyncSession):
