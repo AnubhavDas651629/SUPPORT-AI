@@ -2,7 +2,8 @@ import hashlib
 from fastapi import Request
 from redis.asyncio import Redis
 from app.exceptions.rate_limit import RateLimitExceededException
-from app.redis.client import get_redis
+from app.redis.dependencies import get_redis
+
 
 
 async def check_widget_rate_limit(

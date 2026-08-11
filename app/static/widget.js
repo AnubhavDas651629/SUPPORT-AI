@@ -411,7 +411,14 @@
             hideTyping();
 
             if (!response.ok) {
-                appendMessage("assistant", "Sorry, an error occurred while connecting. Please try again.");
+                let errorMsg = "Sorry, an error occurred while connecting. Please try again.";
+                try {
+                    const errData = await response.json();
+                    if (errData && errData.detail) {
+                        errorMsg = errData.detail;
+                    }
+                } catch (e) {}
+                appendMessage("assistant", errorMsg);
                 return;
             }
 

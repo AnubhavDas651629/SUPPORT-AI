@@ -28,6 +28,10 @@ class KnowledgeBaseRepository(BaseRepository):
 
         return list(result.scalars().all())
 
+    async def list_by_org(self, organization_id: UUID) -> list[KnowledgeBase]:
+        return await self.list_for_organization(organization_id=organization_id)
+
+
     async def get_by_id(self,*,knowledge_base_id: UUID) -> KnowledgeBase | None:
         query = (
             select(KnowledgeBase)

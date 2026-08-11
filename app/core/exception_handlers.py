@@ -27,6 +27,7 @@ from app.exceptions.conversation import (
 )
 from app.exceptions.ticket import TicketNotFoundException, TicketAlreadyExistsException, TicketNoteNotFoundException
 from app.exceptions.webhook import WebhookNotFoundException
+from app.exceptions.api_key import InvalidApiKeyException, ApiKeyNotFoundException
 import stripe
 
 def register_exception_handlers(app: FastAPI):
@@ -289,6 +290,30 @@ def register_exception_handlers(app: FastAPI):
     async def webhook_not_found_handler(
         request: Request,
         exc: WebhookNotFoundException,
+    ):
+        return JSONResponse(
+            status_code=404,
+            content={
+                "detail": str(exc),
+            },
+        )
+
+    @app.exception_handler(InvalidApiKeyException)
+    async def invalid_api_key_handler(
+        request: Request,
+        exc: InvalidApiKeyException,
+    ):
+        return JSONResponse(
+            status_code=401,
+            content={
+                "detail": str(exc),
+            },
+        )
+
+    @app.exception_handler(ApiKeyNotFoundException)
+    async def api_key_not_found_handler(
+        request: Request,
+        exc: ApiKeyNotFoundException,
     ):
         return JSONResponse(
             status_code=404,

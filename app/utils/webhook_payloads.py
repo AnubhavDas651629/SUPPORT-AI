@@ -1,6 +1,16 @@
 from datetime import UTC, datetime
 from uuid import UUID
 
+def _format_datetime(dt: datetime | str | None) -> str:
+    if dt is None:
+        return datetime.now(UTC).isoformat()
+    if isinstance(dt, str):
+        return dt
+    if hasattr(dt, "isoformat"):
+        return dt.isoformat()
+    return str(dt)
+
+
 def serialize_ticket_payload(ticket, extra: dict | None = None) -> dict:
     """Build standardized JSON payload for ticket webhook events."""
     data = {
@@ -12,7 +22,7 @@ def serialize_ticket_payload(ticket, extra: dict | None = None) -> dict:
         "priority": ticket.priority.value if hasattr(ticket.priority, "value") else str(ticket.priority),
         "created_by_ai": ticket.created_by_ai,
         "assigned_to_user_id": str(ticket.assigned_to_user_id) if getattr(ticket, "assigned_to_user_id", None) else None,
-        "created_at": ticket.created_at.isoformat() if getattr(ticket, "created_at", None) else datetime.now(UTC).isoformat(),
+        "created_at": _format_datetime(getattr(ticket, "created_at", None)),
     }
     if extra:
         data.update(extra)
@@ -26,7 +36,7 @@ def serialize_conversation_payload(conversation, extra: dict | None = None) -> d
         "organization_id": str(conversation.organization_id),
         "knowledge_base_id": str(conversation.knowledge_base_id) if getattr(conversation, "knowledge_base_id", None) else None,
         "title": conversation.title,
-        "created_at": conversation.created_at.isoformat() if getattr(conversation, "created_at", None) else datetime.now(UTC).isoformat(),
+        "created_at": _format_datetime(getattr(conversation, "created_at", None)),
     }
     if extra:
         data.update(extra)
@@ -41,7 +51,7 @@ def serialize_message_payload(message, organization_id: UUID | str, extra: dict 
         "organization_id": str(organization_id),
         "role": message.role.value if hasattr(message.role, "value") else str(message.role),
         "content": message.content,
-        "created_at": message.created_at.isoformat() if getattr(message, "created_at", None) else datetime.now(UTC).isoformat(),
+        "created_at": _format_datetime(getattr(message, "created_at", None)),
     }
     if extra:
         data.update(extra)
@@ -57,8 +67,9 @@ def serialize_feedback_payload(feedback, conversation_id: UUID | str, organizati
         "conversation_id": str(conversation_id),
         "organization_id": str(organization_id),
         "feedback": feedback_val,
-        "created_at": feedback.created_at.isoformat() if getattr(feedback, "created_at", None) else datetime.now(UTC).isoformat(),
+        "created_at": _format_datetime(getattr(feedback, "created_at", None)),
     }
     if extra:
         data.update(extra)
     return data
+

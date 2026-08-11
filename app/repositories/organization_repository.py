@@ -15,6 +15,11 @@ class OrganizationRepository(BaseRepository):
         await self.session.flush()
         return organization
 
+    async def get_by_id(self, organization_id: UUID) -> Organization | None:
+        query = select(Organization).where(Organization.id == organization_id)
+        result = await self.session.execute(query)
+        return result.scalar_one_or_none()
+
     async def get_by_slug(self, slug: str) -> Organization | None:
         query = select(Organization).where(Organization.slug == slug)
         result = await self.session.execute(query)
