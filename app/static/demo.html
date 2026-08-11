@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SupportAI Live Widget Demo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: #0F172A;
+            color: #F8FAFC;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            padding: 20px 48px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #1E293B;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 800;
+            color: #818CF8;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .badge {
+            background: #312E81;
+            color: #A5B4FC;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 12px;
+        }
+
+        main {
+            flex: 1;
+            max-width: 900px;
+            margin: 60px auto;
+            padding: 0 24px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 42px;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #FFFFFF 0%, #94A3B8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            font-size: 18px;
+            color: #94A3B8;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: #1E293B;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 32px;
+            text-align: left;
+            margin-bottom: 32px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .card h2 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #F1F5F9;
+        }
+
+        .code-block {
+            background: #090D16;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 14px;
+            color: #38BDF8;
+            overflow-x: auto;
+            border: 1px solid #1E293B;
+            margin-top: 12px;
+        }
+
+        .instructions {
+            color: #CBD5E1;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+            margin-left: 20px;
+        }
+
+        .hint {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #64748B;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="logo">
+            <span>⚡</span> SupportAI Live Widget Demo
+        </div>
+        <div class="badge">Sprint 6.7 Active</div>
+    </header>
+
+    <main>
+        <h1>Install AI Support in Seconds</h1>
+        <p class="subtitle">Look at the bottom right corner of this page to see the live floating chat widget in action.
+        </p>
+
+        <div class="card">
+            <h2>How Customers Install This on Their Website:</h2>
+            <div class="instructions">
+                <ol>
+                    <li>Copy the 1-line script tag below from your SupportAI Dashboard.</li>
+                    <li>Paste it into your website HTML before the closing <code>&lt;/body&gt;</code> tag.</li>
+                    <li>Your visitors can immediately chat with your AI in real time!</li>
+                </ol>
+            </div>
+            <div class="code-block">
+                &lt;script src="http://localhost:8000/static/widget.js" data-api-key="pk_live_your_api_key_here"
+                async&gt;&lt;/script&gt;
+            </div>
+        </div>
+
+        <div class="hint">
+            👉 Click the floating bubble in the bottom right corner to start chatting!
+        </div>
+    </main>
+
+    <!-- Embed the Widget on this demo page -->
+    <script src="/static/widget.js" data-api-key="pk_live_demo" defer></script>
+</body>
+
+</html>

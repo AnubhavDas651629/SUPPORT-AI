@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from app.db.dependencies import get_db
@@ -31,7 +32,7 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan
 )
-
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
