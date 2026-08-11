@@ -14,6 +14,7 @@ from app.api.v1 import redis_test
 from app.api.v1 import organization_settings
 from app.api.v1 import api_keys
 from app.api.v1 import webhooks
+from app.api.v1 import widget
 from app.api.v1 import conversations
 from app.api.v1 import knowledge_bases
 from app.api.v1.users import router as users_router
@@ -55,6 +56,7 @@ app.include_router(redis_test.router)
 app.include_router(conversations.router)
 app.include_router(ticket.router)
 app.include_router(webhooks.router, prefix="/api/v1")
+app.include_router(widget.router)
 app.include_router(ticket_events.router, prefix="/api/v1")
 app.include_router(ticket_notes.router)
 app.include_router(subscription_router, prefix="/api/v1")
