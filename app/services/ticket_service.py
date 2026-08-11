@@ -20,6 +20,7 @@ from app.models.user import User
 from app.services.ticket_event_service import TicketEventService
 from app.workers.tasks import send_ticket_create_email, dispatch_webhook_event_task
 from app.core.webhook_events import WebhookEventType
+from app.utils.webhook_payloads import serialize_ticket_payload, serialize_message_payload
 
 class TicketService(BaseService):
     def __init__(self, *, session: AsyncSession):
@@ -62,6 +63,11 @@ class TicketService(BaseService):
 
         send_ticket_create_email.delay(
             str(ticket.id)
+        )
+        dispatch_webhook_event_task.delay(
+            str(ticket.organization_id),
+            WebhookEventType.TICKET_CREATED.value,
+            serialize_ticket_payload(ticket),
         )
         await self.session.commit()
         await self.session.refresh(ticket)
@@ -142,6 +148,18 @@ class TicketService(BaseService):
             event_type=TicketEventType.STATUS_CHANGED,
             description=f"Status changed to {status.value}.",
         )
+        payload = serialize_ticket_payload(updated)
+        dispatch_webhook_event_task.delay(
+            str(updated.organization_id),
+            WebhookEventType.TICKET_UPDATED.value,
+            payload,
+        )
+        if status in (TicketStatus.RESOLVED, TicketStatus.CLOSED):
+            dispatch_webhook_event_task.delay(
+                str(updated.organization_id),
+                WebhookEventType.TICKET_RESOLVED.value,
+                payload,
+            )
         await self.session.commit()
         await self.session.refresh(updated)
         return updated
@@ -162,6 +180,12 @@ class TicketService(BaseService):
             user_id=current_user.id if current_user else None,
             event_type=TicketEventType.PRIORITY_CHANGED,
             description=f"Priority changed to {priority.value}.",
+        )
+        payload = serialize_ticket_payload(updated)
+        dispatch_webhook_event_task.delay(
+            str(updated.organization_id),
+            WebhookEventType.TICKET_UPDATED.value,
+            payload,
         )
         await self.session.commit()
         await self.session.refresh(updated)
@@ -218,7 +242,17 @@ class TicketService(BaseService):
             event_type=TicketEventType.ASSIGNED,
             description=f"Assigned to {user.full_name}.",
         )
-
+        payload = serialize_ticket_payload(ticket)
+        dispatch_webhook_event_task.delay(
+            str(ticket.organization_id),
+            WebhookEventType.TICKET_ASSIGNED.value,
+            payload,
+        )
+        dispatch_webhook_event_task.delay(
+            str(ticket.organization_id),
+            WebhookEventType.TICKET_UPDATED.value,
+            payload,
+        )
         await self.session.commit()
         await self.session.refresh(ticket)
         return ticket
@@ -240,6 +274,12 @@ class TicketService(BaseService):
             user_id=current_user.id if current_user else ticket.assigned_to_user_id,
             event_type=TicketEventType.REPLIED,
             description="Support agent replied.",
+        )
+        msg_payload = serialize_message_payload(message, organization_id=ticket.organization_id)
+        dispatch_webhook_event_task.delay(
+            str(ticket.organization_id),
+            WebhookEventType.MESSAGE_CREATED.value,
+            msg_payload,
         )
         await self.session.commit()
         await self.session.refresh(message)

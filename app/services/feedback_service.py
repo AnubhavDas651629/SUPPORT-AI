@@ -7,6 +7,9 @@ from app.repositories.message_repository import MessageRepository
 from app.repositories.conversation_repository import ConversationRepository
 from app.services.base import BaseService
 from app.exceptions.conversation import MessageNotFoundException, ConversationNotFoundException
+from app.core.webhook_events import WebhookEventType
+from app.utils.webhook_payloads import serialize_feedback_payload
+from app.workers.tasks import dispatch_webhook_event_task
 
 
 class FeedbackService(BaseService):
@@ -43,11 +46,31 @@ class FeedbackService(BaseService):
                 message_feedback=existing_feedback,
                 feedback=feedback
             )
+            payload = serialize_feedback_payload(
+                updated,
+                conversation_id=conversation.id,
+                organization_id=conversation.organization_id,
+            )
+            dispatch_webhook_event_task.delay(
+                str(conversation.organization_id),
+                WebhookEventType.FEEDBACK_SUBMITTED.value,
+                payload,
+            )
             await self.session.commit()
             return updated
         created = await self.message_feedback_repository.create(
             message_id=message_id,
             feedback=feedback
+        )
+        payload = serialize_feedback_payload(
+            created,
+            conversation_id=conversation.id,
+            organization_id=conversation.organization_id,
+        )
+        dispatch_webhook_event_task.delay(
+            str(conversation.organization_id),
+            WebhookEventType.FEEDBACK_SUBMITTED.value,
+            payload,
         )
         await self.session.commit()
         return created

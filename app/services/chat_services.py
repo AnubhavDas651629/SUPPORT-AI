@@ -28,6 +28,9 @@ from app.models.user import User
 from app.dto.citation import Citation
 from app.services.usage_service import UsageService
 from app.services.organization_settings_service import OrganizationSettingsService
+from app.core.webhook_events import WebhookEventType
+from app.utils.webhook_payloads import serialize_conversation_payload, serialize_message_payload
+from app.workers.tasks import dispatch_webhook_event_task
 
 class ChatService(BaseService):
     def __init__(self, session: AsyncSession):
@@ -60,19 +63,18 @@ class ChatService(BaseService):
         )
 
         system_prompt = load_prompt(
-            "customer_support/system"
+            "customer_support/rag_system"
         )
         if system_prompt_override:
-            system_prompt = f"{system_prompt_override}\n\n{system_prompt}"
+            system_prompt += f"\n\nAdditional Instructions:\n{system_prompt_override}"
 
-        user_template = load_prompt(
-            "customer_support/user"
+        user_prompt = load_prompt(
+            "customer_support/rag_user"
         )
-
-        user_prompt = user_template.format(
-            history=history_text,
+        user_prompt = user_prompt.format(
             context=context_text,
-            question=question
+            question=question,
+            history=history_text,
         )
         
         return [
@@ -117,10 +119,15 @@ class ChatService(BaseService):
         conversation = await self.conversation_service.get_conversation(
             conversation_id=conversation_id
         )
-        await self.conversation_service.create_message(
+        user_message = await self.conversation_service.create_message(
             conversation_id=conversation_id,
             role=MessageRole.USER,
             content=question
+        )
+        dispatch_webhook_event_task.delay(
+            str(conversation.organization_id),
+            WebhookEventType.MESSAGE_CREATED.value,
+            serialize_message_payload(user_message, organization_id=conversation.organization_id),
         )
 
         history = await self.conversation_service.list_messages(
@@ -172,6 +179,11 @@ class ChatService(BaseService):
             role=MessageRole.ASSISTANT,
             content=result.answer
         )
+        dispatch_webhook_event_task.delay(
+            str(conversation.organization_id),
+            WebhookEventType.MESSAGE_CREATED.value,
+            serialize_message_payload(assistant_message, organization_id=conversation.organization_id),
+        )
 
         # 3. Record AI response usage
         await usage_service.record_ai_response(
@@ -203,10 +215,15 @@ class ChatService(BaseService):
             conversation_id=conversation_id
         )
 
-        await self.conversation_service.create_message(
+        user_message = await self.conversation_service.create_message(
             conversation_id=conversation.id,
             role=MessageRole.USER,
             content=question,
+        )
+        dispatch_webhook_event_task.delay(
+            str(conversation.organization_id),
+            WebhookEventType.MESSAGE_CREATED.value,
+            serialize_message_payload(user_message, organization_id=conversation.organization_id),
         )
 
         history = await self.conversation_service.list_messages(
@@ -247,10 +264,15 @@ class ChatService(BaseService):
             full_answer += token
             yield token
 
-        await self.conversation_service.create_message(
+        assistant_message = await self.conversation_service.create_message(
             conversation_id=conversation.id,
             role=MessageRole.ASSISTANT,
             content=full_answer,
+        )
+        dispatch_webhook_event_task.delay(
+            str(conversation.organization_id),
+            WebhookEventType.MESSAGE_CREATED.value,
+            serialize_message_payload(assistant_message, organization_id=conversation.organization_id),
         )
 
         # 4. Record AI response usage
@@ -279,6 +301,11 @@ class ChatService(BaseService):
             usage_service = UsageService(session=self.session)
             await usage_service.record_conversation_started(
                 organization_id=knowledge_base.organization_id
+            )
+            dispatch_webhook_event_task.delay(
+                str(knowledge_base.organization_id),
+                WebhookEventType.CONVERSATION_CREATED.value,
+                serialize_conversation_payload(conversation),
             )
 
         else:
@@ -316,6 +343,11 @@ class ChatService(BaseService):
             usage_service = UsageService(session=self.session)
             await usage_service.record_conversation_started(
                 organization_id=knowledge_base.organization_id
+            )
+            dispatch_webhook_event_task.delay(
+                str(knowledge_base.organization_id),
+                WebhookEventType.CONVERSATION_CREATED.value,
+                serialize_conversation_payload(conversation),
             )
 
         else:

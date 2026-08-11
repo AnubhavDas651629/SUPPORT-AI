@@ -66,8 +66,8 @@ def cleanup_expired_sessions_task():
     retry_jitter=True,
     max_retries=3,
 )
-def distpatch_webhook_task(organization_id:str, event_type: str, data: dict):
-    logger.info(f"Excecuting dispatch_webhook_event_task for org {organization_id}, event: {event_type}")
+def dispatch_webhook_event_task(organization_id: str, event_type: str, data: dict):
+    logger.info(f"Executing dispatch_webhook_event_task for org {organization_id}, event: {event_type}")
     async def _dispatch():
         dispatcher = WebhookDispatcher()
         await dispatcher.dispatch_event(

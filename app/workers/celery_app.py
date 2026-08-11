@@ -24,6 +24,9 @@ celery_app.conf.update(
         "app.workers.tasks.send_ticket_create_email": {
             "queue": "emails",
         },
+        "app.workers.tasks.dispatch_webhook_event_task": {
+            "queue": "webhooks"
+        }
     },
 
 
