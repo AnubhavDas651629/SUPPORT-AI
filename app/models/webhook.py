@@ -31,7 +31,14 @@ class WebhookEndpoint(Base, UUIDMixin, TimestampMixin):
     consecutive_failures: Mapped[int] = mapped_column(Integer, name="consecutive_failure", default=0, nullable=False) #how many consecutive times delivery failure
     
     organization: Mapped["Organization"] = relationship("Organization", backref="webhook_endpoints")
-    deliveries: Mapped[list["WebhookDelivery"]] = relationship("WebhookDelivery", back_populates="endpoint", lazy="select", order_by="WebhookDelivery.created_at.desc()")
+    deliveries: Mapped[list["WebhookDelivery"]] = relationship(
+        "WebhookDelivery",
+        back_populates="endpoint",
+        lazy="select",
+        order_by="WebhookDelivery.created_at.desc()",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
 
 
 class WebhookDelivery(Base, UUIDMixin, TimestampMixin):

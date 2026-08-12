@@ -75,6 +75,10 @@ class WebhookRepository(BaseRepository):
 
 
     async def delete_endpoint(self, *, endpoint: WebhookEndpoint) -> None:
+        from sqlalchemy import delete
+        await self.session.execute(
+            delete(WebhookDelivery).where(WebhookDelivery.endpoint_id == endpoint.id)
+        )
         await self.session.delete(endpoint)
         await self.session.flush()
 
