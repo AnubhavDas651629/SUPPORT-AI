@@ -11,12 +11,14 @@ import {
   Upload,
   Sparkles,
   Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { DocumentUploaderArea } from "./DocumentUploaderArea";
 import { DocumentsListTable } from "./DocumentsListTable";
 import { VectorSearchTester } from "./VectorSearchTester";
 import { ChunkInspectorModal } from "./ChunkInspectorModal";
 import { CreateKbModal } from "./CreateKbModal";
+import { UpgradeModal } from "@/components/dashboard/UpgradeModal";
 import { KnowledgeDocument } from "@/types/dashboard";
 import { useOrganization } from "@/context/OrganizationContext";
 import { api } from "@/lib/api";
@@ -35,6 +37,7 @@ export function KnowledgeBaseManagerView() {
   const [isLoading, setIsLoading] = useState(true);
   const [inspectingDoc, setInspectingDoc] = useState<KnowledgeDocument | null>(null);
   const [isCreateKbOpen, setIsCreateKbOpen] = useState(false);
+  const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
 
   // 1. Load Knowledge Bases for currentOrg
   useEffect(() => {
@@ -45,22 +48,18 @@ export function KnowledgeBaseManagerView() {
         const res = await api.get(`/organizations/${currentOrg!.id}/knowledge-bases`);
         if (Array.isArray(res.data) && res.data.length > 0) {
           setKbs(res.data);
-          setSelectedKbId(res.data[0].id);
+          setSelectedKbId((prev) => {
+            const exists = res.data.some((k: any) => k.id === prev);
+            return exists ? prev : res.data[0].id;
+          });
         } else {
-          // If no KB exists, auto-create a default one
-          try {
-            const createRes = await api.post(`/organizations/${currentOrg!.id}/knowledge-bases`, {
-              name: "General Knowledge Base",
-              description: "Standard support policies, documentation, and FAQs.",
-            });
-            setKbs([createRes.data]);
-            setSelectedKbId(createRes.data.id);
-          } catch (createErr) {
-            setKbs([]);
-          }
+          setKbs([]);
+          setSelectedKbId("");
         }
       } catch (err) {
         console.warn("Could not load knowledge bases:", err);
+        setKbs([]);
+        setSelectedKbId("");
       } finally {
         setIsLoading(false);
       }
@@ -70,7 +69,10 @@ export function KnowledgeBaseManagerView() {
 
   // 2. Load Documents for selected KB
   useEffect(() => {
-    if (!currentOrg || !selectedKbId) return;
+    if (!currentOrg || !selectedKbId) {
+      setDocs([]);
+      return;
+    }
 
     async function loadDocuments() {
       try {
@@ -100,11 +102,7 @@ export function KnowledgeBaseManagerView() {
     loadDocuments();
   }, [currentOrg, selectedKbId]);
 
-  const activeKb = kbs.find((k) => k.id === selectedKbId) || kbs[0] || {
-    id: "default",
-    name: "General Knowledge Base",
-    description: "Support policies, warranty documentation, and FAQs.",
-  };
+  const activeKb = kbs.find((k) => k.id === selectedKbId) || null;
 
   const totalChunks = docs.reduce((acc, d) => acc + (d.chunks_count || 0), 0);
 
@@ -148,36 +146,38 @@ export function KnowledgeBaseManagerView() {
             <span className="text-xs text-slate-400">• pgvector Cosine Search</span>
           </div>
           <h2 className="text-xl font-extrabold text-slate-900 tracking-tight mt-1">
-            {activeKb.name}
+            {activeKb ? activeKb.name : "No Knowledge Base Selected"}
           </h2>
           <p className="text-xs text-slate-500 mt-1 max-w-2xl">
-            {activeKb.description}
+            {activeKb ? activeKb.description : "Create a Knowledge Base to organize, chunk, and index documents for your AI assistant."}
           </p>
         </div>
 
         {/* KB Switcher Tabs & + New KB Button */}
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-2xl border border-slate-200/70">
-            {kbs.map((kb) => (
-              <button
-                key={kb.id}
-                type="button"
-                onClick={() => setSelectedKbId(kb.id)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer truncate max-w-[180px] ${
-                  selectedKbId === kb.id
-                    ? "bg-white text-slate-900 shadow-2xs font-bold"
-                    : "text-slate-500 hover:text-slate-800"
-                }`}
-              >
-                {kb.name}
-              </button>
-            ))}
-          </div>
+          {kbs.length > 0 && (
+            <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-2xl border border-slate-200/70">
+              {kbs.map((kb) => (
+                <button
+                  key={kb.id}
+                  type="button"
+                  onClick={() => setSelectedKbId(kb.id)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer truncate max-w-[180px] ${
+                    selectedKbId === kb.id
+                      ? "bg-white text-slate-900 shadow-2xs font-bold"
+                      : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  {kb.name}
+                </button>
+              ))}
+            </div>
+          )}
 
           <button
             type="button"
             onClick={() => setIsCreateKbOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-950 hover:bg-black text-white text-xs font-semibold shadow-xs transition cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-950 hover:bg-black text-white text-xs font-semibold shadow-xs transition cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>New KB</span>
@@ -214,7 +214,7 @@ export function KnowledgeBaseManagerView() {
           <div>
             <div className="text-xs font-bold text-slate-400 uppercase">Indexing Health</div>
             <div className="text-lg font-extrabold text-emerald-600">
-              {docs.length > 0 ? "100% Synced" : "Ready for Docs"}
+              {docs.length > 0 ? "100% Synced" : activeKb ? "Ready for Docs" : "Create KB First"}
             </div>
           </div>
         </div>
@@ -248,6 +248,13 @@ export function KnowledgeBaseManagerView() {
         isOpen={isCreateKbOpen}
         onClose={() => setIsCreateKbOpen(false)}
         onCreated={handleKbCreated}
+        onOpenUpgrade={() => setIsUpgradeOpen(true)}
+      />
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={isUpgradeOpen}
+        onClose={() => setIsUpgradeOpen(false)}
       />
     </div>
   );

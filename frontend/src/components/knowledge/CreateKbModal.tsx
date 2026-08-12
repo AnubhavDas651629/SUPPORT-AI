@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, BookOpen, Plus, Loader2 } from "lucide-react";
+import { X, BookOpen, Plus, Loader2, AlertCircle, Sparkles } from "lucide-react";
 import { useOrganization } from "@/context/OrganizationContext";
 import { api } from "@/lib/api";
 
@@ -9,41 +9,42 @@ export function CreateKbModal({
   isOpen,
   onClose,
   onCreated,
+  onOpenUpgrade,
 }: {
   isOpen: boolean;
   onClose: () => void;
   onCreated: (kb: any) => void;
+  onOpenUpgrade?: () => void;
 }) {
-  const { currentOrg } = useOrganization();
+  const { currentOrg, subscription } = useOrganization();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   if (!isOpen) return null;
+
+  const planTier = subscription?.plan_tier || "FREE";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !currentOrg) return;
 
     setIsLoading(true);
+    setErrorMessage(null);
+
     try {
       const res = await api.post(`/organizations/${currentOrg.id}/knowledge-bases`, {
         name: name.trim(),
-        description: description.trim(),
+        description: description.trim() || null,
       });
       onCreated(res.data);
       onClose();
-    } catch (err) {
-      // Mock creation for UI demonstration
-      onCreated({
-        id: `kb_${Date.now()}`,
-        name: name.trim(),
-        description: description.trim() || "Customer support documentation and FAQs",
-        documents_count: 0,
-        chunks_count: 0,
-        created_at: "Just now",
-      });
-      onClose();
+    } catch (err: any) {
+      console.error("Failed to create knowledge base:", err);
+      const detail = err.response?.data?.detail;
+      const message = typeof detail === "string" ? detail : "Failed to create knowledge base. Please check plan limits.";
+      setErrorMessage(message);
     } finally {
       setIsLoading(false);
     }
@@ -71,6 +72,28 @@ export function CreateKbModal({
           </button>
         </div>
 
+        {errorMessage && (
+          <div className="mt-4 p-3.5 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-700 space-y-2">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+              <span>{errorMessage}</span>
+            </div>
+            {planTier === "FREE" && onOpenUpgrade && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onOpenUpgrade();
+                }}
+                className="w-full py-2 bg-fuchsia-600 hover:bg-fuchsia-700 text-white rounded-xl font-bold flex items-center justify-center gap-1.5 transition cursor-pointer"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Upgrade to Pro for Unlimited KBs</span>
+              </button>
+            )}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">Knowledge Base Name</label>
@@ -79,13 +102,13 @@ export function CreateKbModal({
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Developer Documentation & APIs"
+              placeholder="e.g. Finance & Invoicing Policies"
               className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/20 focus:border-fuchsia-500 transition"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Description</label>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Description (Optional)</label>
             <textarea
               rows={3}
               value={description}

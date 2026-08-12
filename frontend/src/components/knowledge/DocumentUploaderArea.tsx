@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Upload, FileText, CheckCircle2, AlertCircle, Loader2, Sparkles, X } from "lucide-react";
+import { Upload, FileText, CheckCircle2, AlertCircle, Loader2, Sparkles, BookOpen } from "lucide-react";
 import { KnowledgeDocument } from "@/types/dashboard";
 import { useOrganization } from "@/context/OrganizationContext";
 import { api } from "@/lib/api";
@@ -21,64 +21,78 @@ export function DocumentUploaderArea({
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  if (!kbId) {
+    return (
+      <div className="w-full bg-white rounded-3xl border border-slate-200/80 shadow-2xs p-6 text-center">
+        <div className="p-8 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center space-y-2 bg-slate-50/50">
+          <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center">
+            <BookOpen className="w-6 h-6" />
+          </div>
+          <h4 className="text-xs font-bold text-slate-800">No Knowledge Base Selected</h4>
+          <p className="text-[11px] text-slate-400 max-w-sm">
+            Documents must belong to a Knowledge Base. Please create or select a Knowledge Base before uploading files.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const handleFile = async (file: File) => {
-    if (!file) return;
+    if (!file || !currentOrg || !kbId) return;
     setUploadingFile(file);
     setIsProcessing(true);
-    setUploadProgress(15);
-    setIngestionStage("Uploading document to server...");
+    setUploadProgress(20);
+    setIngestionStage("Uploading document to pgvector knowledge base...");
     setErrorMessage(null);
 
-    // Call real backend upload if org and kbId exist
-    let backendDoc: any = null;
     try {
-      if (currentOrg && kbId) {
-        const formData = new FormData();
-        formData.append("file", file);
-        const res = await api.post(
-          `/organizations/${currentOrg.id}/knowledge-bases/${kbId}/documents`,
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
-        backendDoc = res.data;
-      }
-    } catch (err: any) {
-      console.warn("Backend upload note:", err);
-    }
+      const formData = new FormData();
+      formData.append("file", file);
 
-    setUploadProgress(45);
-    setIngestionStage("Parsing text & extracting chunks...");
+      const res = await api.post(
+        `/organizations/${currentOrg.id}/knowledge-bases/${kbId}/documents`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
-    setTimeout(() => {
-      setUploadProgress(75);
-      setIngestionStage("Generating OpenAI text-embedding-3-small vectors...");
-    }, 600);
+      const backendDoc = res.data;
 
-    setTimeout(() => {
-      setUploadProgress(100);
-      setIngestionStage("Stored & indexed in PostgreSQL pgvector!");
-
-      const newDoc: KnowledgeDocument = {
-        id: backendDoc?.id || `doc_${Date.now()}`,
-        title: file.name.replace(/\.[^/.]+$/, "").replace(/[_-]/g, " "),
-        file_name: file.name,
-        file_size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
-        chunks_count: backendDoc?.chunk_count || 48,
-        status: "READY",
-        uploaded_at: "Just now",
-      };
+      setUploadProgress(60);
+      setIngestionStage("Generating embeddings & indexing vectors...");
 
       setTimeout(() => {
-        onDocumentAdded(newDoc);
-        setIsProcessing(false);
-        setUploadingFile(null);
-        setUploadProgress(0);
-      }, 500);
-    }, 1200);
+        setUploadProgress(100);
+        setIngestionStage("Stored & indexed in PostgreSQL pgvector!");
+
+        const newDoc: KnowledgeDocument = {
+          id: backendDoc?.id || `doc_${Date.now()}`,
+          title: file.name.replace(/\.[^/.]+$/, "").replace(/[_-]/g, " "),
+          file_name: file.name,
+          file_size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
+          chunks_count: backendDoc?.chunk_count || 32,
+          status: "READY",
+          uploaded_at: "Just now",
+        };
+
+        setTimeout(() => {
+          onDocumentAdded(newDoc);
+          setIsProcessing(false);
+          setUploadingFile(null);
+          setUploadProgress(0);
+        }, 500);
+      }, 700);
+    } catch (err: any) {
+      console.error("Backend upload error:", err);
+      const detail = err.response?.data?.detail;
+      setErrorMessage(typeof detail === "string" ? detail : "Failed to upload document. Please check file format and plan limits.");
+      setIsProcessing(false);
+      setUploadingFile(null);
+      setUploadProgress(0);
+    }
   };
 
   return (
