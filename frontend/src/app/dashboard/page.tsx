@@ -11,6 +11,7 @@ import { TicketInboxView } from "@/components/tickets/TicketInboxView";
 import { KnowledgeBaseManagerView } from "@/components/knowledge/KnowledgeBaseManagerView";
 import { AssistantSettingsView } from "@/components/assistant/AssistantSettingsView";
 import { DeveloperPortalView } from "@/components/developer/DeveloperPortalView";
+import { UsageAnalyticsView } from "@/components/billing/UsageAnalyticsView";
 import { Loader2 } from "lucide-react";
 
 export default function DashboardPage() {
@@ -39,19 +40,15 @@ export default function DashboardPage() {
   const getTabTitle = () => {
     switch (activeTab) {
       case "tickets":
-        return "Escalated Tickets";
-      case "conversations":
-        return "Live Widget Conversations";
+        return "Escalated Tickets & Helpdesk";
       case "knowledge":
-        return "Knowledge Base & Embeddings";
+        return "Knowledge Base & Vector Store";
       case "assistant":
-        return "AI Assistant Configuration";
+        return "AI Assistant Studio & Widget";
       case "developer":
-        return "Webhooks & API Keys";
+        return "Developer Hub & API Gateway";
       case "analytics":
-        return "Usage & Analytics";
-      case "settings":
-        return "Workspace Settings";
+        return "Usage, Quotas & Subscription Billing";
       default:
         return "Command Center";
     }
@@ -86,6 +83,8 @@ export default function DashboardPage() {
             <AssistantSettingsView />
           ) : activeTab === "developer" ? (
             <DeveloperPortalView />
+          ) : activeTab === "analytics" ? (
+            <UsageAnalyticsView />
           ) : (
             <DashboardOverview
               onOpenLiveTester={() => setIsLiveTesterOpen(true)}
