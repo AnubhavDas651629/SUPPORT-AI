@@ -18,10 +18,13 @@ import { DocumentsListTable } from "./DocumentsListTable";
 import { VectorSearchTester } from "./VectorSearchTester";
 import { ChunkInspectorModal } from "./ChunkInspectorModal";
 import { CreateKbModal } from "./CreateKbModal";
+import { EditKbModal } from "./EditKbModal";
+import { DeleteKbModal } from "./DeleteKbModal";
 import { UpgradeModal } from "@/components/dashboard/UpgradeModal";
 import { KnowledgeDocument } from "@/types/dashboard";
 import { useOrganization } from "@/context/OrganizationContext";
 import { api } from "@/lib/api";
+import { Pencil, Trash2 } from "lucide-react";
 
 interface KnowledgeBaseItem {
   id: string;
@@ -37,6 +40,8 @@ export function KnowledgeBaseManagerView() {
   const [isLoading, setIsLoading] = useState(true);
   const [inspectingDoc, setInspectingDoc] = useState<KnowledgeDocument | null>(null);
   const [isCreateKbOpen, setIsCreateKbOpen] = useState(false);
+  const [isEditKbOpen, setIsEditKbOpen] = useState(false);
+  const [isDeleteKbOpen, setIsDeleteKbOpen] = useState(false);
   const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
 
   // 1. Load Knowledge Bases for currentOrg
@@ -134,6 +139,23 @@ export function KnowledgeBaseManagerView() {
     setSelectedKbId(formatted.id);
   };
 
+  const handleKbUpdated = (updatedKb: KnowledgeBaseItem) => {
+    setKbs((prev) => prev.map((k) => (k.id === updatedKb.id ? updatedKb : k)));
+  };
+
+  const handleKbDeleted = (deletedKbId: string) => {
+    setKbs((prev) => {
+      const filtered = prev.filter((k) => k.id !== deletedKbId);
+      if (selectedKbId === deletedKbId) {
+        setSelectedKbId(filtered.length > 0 ? filtered[0].id : "");
+      }
+      return filtered;
+    });
+    if (selectedKbId === deletedKbId) {
+      setDocs([]);
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
       {/* Knowledge Base Header Bar */}
@@ -145,11 +167,35 @@ export function KnowledgeBaseManagerView() {
             </span>
             <span className="text-xs text-slate-400">• pgvector Cosine Search</span>
           </div>
-          <h2 className="text-xl font-extrabold text-slate-900 tracking-tight mt-1">
-            {activeKb ? activeKb.name : "No Knowledge Base Selected"}
-          </h2>
+          <div className="flex items-center gap-3 mt-1 flex-wrap">
+            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">
+              {activeKb ? activeKb.name : "No Knowledge Base Selected"}
+            </h2>
+            {activeKb && (
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setIsEditKbOpen(true)}
+                  title="Edit Knowledge Base"
+                  className="flex items-center gap-1 px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition cursor-pointer"
+                >
+                  <Pencil className="w-3 h-3 text-slate-500" />
+                  <span>Edit</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsDeleteKbOpen(true)}
+                  title="Delete Knowledge Base"
+                  className="flex items-center gap-1 px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-semibold transition cursor-pointer"
+                >
+                  <Trash2 className="w-3 h-3 text-rose-500" />
+                  <span>Delete</span>
+                </button>
+              </div>
+            )}
+          </div>
           <p className="text-xs text-slate-500 mt-1 max-w-2xl">
-            {activeKb ? activeKb.description : "Create a Knowledge Base to organize, chunk, and index documents for your AI assistant."}
+            {activeKb ? activeKb.description || "No description provided." : "Create a Knowledge Base to organize, chunk, and index documents for your AI assistant."}
           </p>
         </div>
 
@@ -249,6 +295,23 @@ export function KnowledgeBaseManagerView() {
         onClose={() => setIsCreateKbOpen(false)}
         onCreated={handleKbCreated}
         onOpenUpgrade={() => setIsUpgradeOpen(true)}
+      />
+
+      {/* Edit KB Modal */}
+      <EditKbModal
+        isOpen={isEditKbOpen}
+        onClose={() => setIsEditKbOpen(false)}
+        kb={activeKb}
+        onUpdated={handleKbUpdated}
+      />
+
+      {/* Delete KB Modal */}
+      <DeleteKbModal
+        isOpen={isDeleteKbOpen}
+        onClose={() => setIsDeleteKbOpen(false)}
+        kb={activeKb}
+        documentsCount={docs.length}
+        onDeleted={handleKbDeleted}
       />
 
       {/* Upgrade Modal */}
