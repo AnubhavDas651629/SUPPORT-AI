@@ -13,6 +13,7 @@ import { AssistantSettingsView } from "@/components/assistant/AssistantSettingsV
 import { DeveloperPortalView } from "@/components/developer/DeveloperPortalView";
 import { UsageAnalyticsView } from "@/components/billing/UsageAnalyticsView";
 import { LiveConversationsView } from "@/components/conversations/LiveConversationsView";
+import { WorkspaceSettingsView } from "@/components/settings/WorkspaceSettingsView";
 import { Loader2 } from "lucide-react";
 
 export default function DashboardPage() {
@@ -52,6 +53,8 @@ export default function DashboardPage() {
         return "Developer Hub & API Gateway";
       case "analytics":
         return "Usage, Quotas & Subscription Billing";
+      case "settings":
+        return "Workspace Organization & Team Settings";
       default:
         return "Command Center";
     }
@@ -90,6 +93,8 @@ export default function DashboardPage() {
             <DeveloperPortalView />
           ) : activeTab === "analytics" ? (
             <UsageAnalyticsView />
+          ) : activeTab === "settings" ? (
+            <WorkspaceSettingsView />
           ) : (
             <DashboardOverview
               onOpenLiveTester={() => setIsLiveTesterOpen(true)}
