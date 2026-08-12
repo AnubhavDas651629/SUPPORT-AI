@@ -1,99 +1,78 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { TicketListPane } from "./TicketListPane";
 import { TicketDetailWorkspace } from "./TicketDetailWorkspace";
 import { TicketItem, TicketPriority, TicketStatus } from "@/types/dashboard";
 import { CreateTicketModal } from "@/components/dashboard/CreateTicketModal";
-
-const INITIAL_TICKETS: TicketItem[] = [
-  {
-    id: "88392",
-    organization_id: "org_1",
-    conversation_id: "conv_88392",
-    subject: "Refund request for $500 - Order #88392 (VIP Customer)",
-    customer_name: "Sarah Jenkins",
-    customer_email: "sarah.j@enterprise.com",
-    status: "OPEN",
-    priority: "URGENT",
-    assigned_to: "Unassigned",
-    messages_count: 4,
-    attachments_count: 2,
-    sla_deadline: "1 hour left",
-    ai_confidence: 12,
-    created_at: "10 mins ago",
-    updated_at: "10 mins ago",
-  },
-  {
-    id: "88341",
-    organization_id: "org_1",
-    conversation_id: "conv_88341",
-    subject: "Custom webhook signature validation failing on staging server",
-    customer_name: "Alex Rivera",
-    customer_email: "alex@techcorp.io",
-    status: "IN_PROGRESS",
-    priority: "HIGH",
-    assigned_to: "Partha Das (You)",
-    messages_count: 8,
-    attachments_count: 4,
-    sla_deadline: "3 hours left",
-    ai_confidence: 45,
-    created_at: "45 mins ago",
-    updated_at: "12 mins ago",
-  },
-  {
-    id: "88290",
-    organization_id: "org_1",
-    conversation_id: "conv_88290",
-    subject: "Knowledge Base DOCX ingestion timeout on 45MB document",
-    customer_name: "David Kim",
-    customer_email: "david.k@startup.co",
-    status: "OPEN",
-    priority: "MEDIUM",
-    assigned_to: "Unassigned",
-    messages_count: 5,
-    attachments_count: 1,
-    sla_deadline: "8 hours left",
-    ai_confidence: 68,
-    created_at: "2 hours ago",
-    updated_at: "2 hours ago",
-  },
-  {
-    id: "88112",
-    organization_id: "org_1",
-    conversation_id: "conv_88112",
-    subject: "International shipping rates inquiry to Tokyo, Japan",
-    customer_name: "Kenji Sato",
-    customer_email: "kenji@tokyo-retail.jp",
-    status: "RESOLVED",
-    priority: "LOW",
-    assigned_to: "Auto-AI Deflected",
-    messages_count: 4,
-    attachments_count: 0,
-    sla_deadline: "Completed",
-    ai_confidence: 96,
-    created_at: "Yesterday",
-    updated_at: "Yesterday",
-  },
-];
+import { useOrganization } from "@/context/OrganizationContext";
+import { api } from "@/lib/api";
 
 export function TicketInboxView() {
-  const [tickets, setTickets] = useState<TicketItem[]>(INITIAL_TICKETS);
-  const [selectedTicket, setSelectedTicket] = useState<TicketItem>(INITIAL_TICKETS[0]);
+  const { currentOrg } = useOrganization();
+  const [tickets, setTickets] = useState<TicketItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedTicket, setSelectedTicket] = useState<TicketItem | null>(null);
   const [isNewTicketModalOpen, setIsNewTicketModalOpen] = useState(false);
 
+  const loadTickets = async () => {
+    if (!currentOrg) return;
+    setIsLoading(true);
+
+    try {
+      const res = await api.get(`/tickets?organization_id=${currentOrg.id}`);
+      const items = res.data?.items || [];
+      if (Array.isArray(items) && items.length > 0) {
+        const mapped: TicketItem[] = items.map((t: any) => ({
+          id: t.id,
+          organization_id: t.organization_id,
+          conversation_id: t.conversation_id,
+          subject: t.subject || "Customer Support Escalation",
+          customer_name: "Customer",
+          customer_email: "customer@example.com",
+          status: t.status,
+          priority: t.priority,
+          assigned_to: t.assigned_to_user_id ? "Assigned Agent" : "Unassigned",
+          messages_count: 3,
+          attachments_count: 0,
+          sla_deadline: "4 hours left",
+          ai_confidence: t.created_by_ai ? 100 : 0,
+          created_at: new Date(t.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          updated_at: new Date(t.updated_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        }));
+        setTickets(mapped);
+        setSelectedTicket(mapped[0]);
+      } else {
+        setTickets([]);
+        setSelectedTicket(null);
+      }
+    } catch (err) {
+      console.warn("Could not load tickets:", err);
+      setTickets([]);
+      setSelectedTicket(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadTickets();
+  }, [currentOrg]);
+
   const handleStatusChange = (status: TicketStatus) => {
+    if (!selectedTicket) return;
     setTickets((prev) =>
       prev.map((t) => (t.id === selectedTicket.id ? { ...t, status } : t))
     );
-    setSelectedTicket((prev) => ({ ...prev, status }));
+    setSelectedTicket((prev) => (prev ? { ...prev, status } : null));
   };
 
   const handlePriorityChange = (priority: TicketPriority) => {
+    if (!selectedTicket) return;
     setTickets((prev) =>
       prev.map((t) => (t.id === selectedTicket.id ? { ...t, priority } : t))
     );
-    setSelectedTicket((prev) => ({ ...prev, priority }));
+    setSelectedTicket((prev) => (prev ? { ...prev, priority } : null));
   };
 
   const handleNewTicketCreated = (newTicket: TicketItem) => {
@@ -106,7 +85,8 @@ export function TicketInboxView() {
       {/* Left Ticket List Pane */}
       <TicketListPane
         tickets={tickets}
-        selectedTicketId={selectedTicket.id}
+        isLoading={isLoading}
+        selectedTicketId={selectedTicket?.id || ""}
         onSelectTicket={setSelectedTicket}
         onOpenNewTicket={() => setIsNewTicketModalOpen(true)}
       />

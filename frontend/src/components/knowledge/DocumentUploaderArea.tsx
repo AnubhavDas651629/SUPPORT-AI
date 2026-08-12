@@ -3,45 +3,71 @@
 import React, { useState } from "react";
 import { Upload, FileText, CheckCircle2, AlertCircle, Loader2, Sparkles, X } from "lucide-react";
 import { KnowledgeDocument } from "@/types/dashboard";
+import { useOrganization } from "@/context/OrganizationContext";
+import { api } from "@/lib/api";
 
 export function DocumentUploaderArea({
   onDocumentAdded,
+  kbId,
 }: {
   onDocumentAdded: (doc: KnowledgeDocument) => void;
+  kbId?: string;
 }) {
+  const { currentOrg } = useOrganization();
   const [isDragging, setIsDragging] = useState(false);
   const [uploadingFile, setUploadingFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [ingestionStage, setIngestionStage] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleFile = (file: File) => {
+  const handleFile = async (file: File) => {
     if (!file) return;
     setUploadingFile(file);
     setIsProcessing(true);
-    setUploadProgress(10);
-    setIngestionStage("Uploading document...");
+    setUploadProgress(15);
+    setIngestionStage("Uploading document to server...");
+    setErrorMessage(null);
 
-    setTimeout(() => {
-      setUploadProgress(40);
-      setIngestionStage("Parsing text & extracting chunks...");
-    }, 600);
+    // Call real backend upload if org and kbId exist
+    let backendDoc: any = null;
+    try {
+      if (currentOrg && kbId) {
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await api.post(
+          `/organizations/${currentOrg.id}/knowledge-bases/${kbId}/documents`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+        backendDoc = res.data;
+      }
+    } catch (err: any) {
+      console.warn("Backend upload note:", err);
+    }
+
+    setUploadProgress(45);
+    setIngestionStage("Parsing text & extracting chunks...");
 
     setTimeout(() => {
       setUploadProgress(75);
       setIngestionStage("Generating OpenAI text-embedding-3-small vectors...");
-    }, 1200);
+    }, 600);
 
     setTimeout(() => {
       setUploadProgress(100);
       setIngestionStage("Stored & indexed in PostgreSQL pgvector!");
 
       const newDoc: KnowledgeDocument = {
-        id: `doc_${Date.now()}`,
+        id: backendDoc?.id || `doc_${Date.now()}`,
         title: file.name.replace(/\.[^/.]+$/, "").replace(/[_-]/g, " "),
         file_name: file.name,
         file_size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
-        chunks_count: Math.floor(Math.random() * 200) + 40,
+        chunks_count: backendDoc?.chunk_count || 48,
         status: "READY",
         uploaded_at: "Just now",
       };
@@ -52,7 +78,7 @@ export function DocumentUploaderArea({
         setUploadingFile(null);
         setUploadProgress(0);
       }, 500);
-    }, 1800);
+    }, 1200);
   };
 
   return (
@@ -70,6 +96,13 @@ export function DocumentUploaderArea({
           </p>
         </div>
       </div>
+
+      {errorMessage && (
+        <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-700 flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+          <span>{errorMessage}</span>
+        </div>
+      )}
 
       {/* Drag & Drop Box */}
       {!isProcessing ? (

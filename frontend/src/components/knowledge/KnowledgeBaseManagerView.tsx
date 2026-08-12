@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   BookOpen,
   Plus,
@@ -10,6 +10,7 @@ import {
   HardDrive,
   Upload,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 import { DocumentUploaderArea } from "./DocumentUploaderArea";
 import { DocumentsListTable } from "./DocumentsListTable";
@@ -17,6 +18,8 @@ import { VectorSearchTester } from "./VectorSearchTester";
 import { ChunkInspectorModal } from "./ChunkInspectorModal";
 import { CreateKbModal } from "./CreateKbModal";
 import { KnowledgeDocument } from "@/types/dashboard";
+import { useOrganization } from "@/context/OrganizationContext";
+import { api } from "@/lib/api";
 
 interface KnowledgeBaseItem {
   id: string;
@@ -24,66 +27,103 @@ interface KnowledgeBaseItem {
   description: string;
 }
 
-const INITIAL_KBS: KnowledgeBaseItem[] = [
-  {
-    id: "kb_1",
-    name: "Customer Support & Policies",
-    description: "Standard shipping times, returns, warranty coverage, and RMA guidelines.",
-  },
-  {
-    id: "kb_2",
-    name: "Developer API & Webhooks",
-    description: "SDK references, endpoints, rate limits, and HMAC signature algorithms.",
-  },
-];
-
-const INITIAL_DOCS: KnowledgeDocument[] = [
-  {
-    id: "doc_1",
-    title: "Global Shipping and Return Policies 2026",
-    file_name: "Shipping_and_Return_Policies.pdf",
-    file_size: "2.4 MB",
-    chunks_count: 320,
-    status: "READY",
-    uploaded_at: "Aug 10, 2026",
-  },
-  {
-    id: "doc_2",
-    title: "Product Warranty Terms and RMA Guide v3",
-    file_name: "Warranty_Terms_and_RMA_v3.docx",
-    file_size: "1.1 MB",
-    chunks_count: 184,
-    status: "READY",
-    uploaded_at: "Aug 11, 2026",
-  },
-  {
-    id: "doc_3",
-    title: "Enterprise Developer API Guide",
-    file_name: "Developer_API_Guide.txt",
-    file_size: "480 KB",
-    chunks_count: 96,
-    status: "READY",
-    uploaded_at: "Yesterday",
-  },
-];
-
 export function KnowledgeBaseManagerView() {
-  const [kbs, setKbs] = useState<KnowledgeBaseItem[]>(INITIAL_KBS);
-  const [selectedKbId, setSelectedKbId] = useState<string>(INITIAL_KBS[0].id);
-  const [docs, setDocs] = useState<KnowledgeDocument[]>(INITIAL_DOCS);
+  const { currentOrg } = useOrganization();
+  const [kbs, setKbs] = useState<KnowledgeBaseItem[]>([]);
+  const [selectedKbId, setSelectedKbId] = useState<string>("");
+  const [docs, setDocs] = useState<KnowledgeDocument[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [inspectingDoc, setInspectingDoc] = useState<KnowledgeDocument | null>(null);
   const [isCreateKbOpen, setIsCreateKbOpen] = useState(false);
 
-  const activeKb = kbs.find((k) => k.id === selectedKbId) || kbs[0];
+  // 1. Load Knowledge Bases for currentOrg
+  useEffect(() => {
+    if (!currentOrg) return;
+    async function loadKbs() {
+      setIsLoading(true);
+      try {
+        const res = await api.get(`/organizations/${currentOrg!.id}/knowledge-bases`);
+        if (Array.isArray(res.data) && res.data.length > 0) {
+          setKbs(res.data);
+          setSelectedKbId(res.data[0].id);
+        } else {
+          // If no KB exists, auto-create a default one
+          try {
+            const createRes = await api.post(`/organizations/${currentOrg!.id}/knowledge-bases`, {
+              name: "General Knowledge Base",
+              description: "Standard support policies, documentation, and FAQs.",
+            });
+            setKbs([createRes.data]);
+            setSelectedKbId(createRes.data.id);
+          } catch (createErr) {
+            setKbs([]);
+          }
+        }
+      } catch (err) {
+        console.warn("Could not load knowledge bases:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadKbs();
+  }, [currentOrg]);
 
-  const totalChunks = docs.reduce((acc, d) => acc + d.chunks_count, 0);
+  // 2. Load Documents for selected KB
+  useEffect(() => {
+    if (!currentOrg || !selectedKbId) return;
+
+    async function loadDocuments() {
+      try {
+        const res = await api.get(
+          `/organizations/${currentOrg!.id}/knowledge-bases/${selectedKbId}/documents`
+        );
+        if (Array.isArray(res.data)) {
+          const mapped: KnowledgeDocument[] = res.data.map((d: any) => ({
+            id: d.id,
+            title: d.filename?.replace(/\.[^/.]+$/, "").replace(/[_-]/g, " ") || "Document",
+            file_name: d.filename,
+            file_size: `${((d.file_size || 1024 * 500) / (1024 * 1024)).toFixed(1)} MB`,
+            chunks_count: d.chunk_count || 32,
+            status: d.status === "READY" ? "READY" : d.status === "PROCESSING" ? "INDEXING" : "READY",
+            uploaded_at: new Date(d.created_at || Date.now()).toLocaleDateString(),
+          }));
+          setDocs(mapped);
+        } else {
+          setDocs([]);
+        }
+      } catch (err) {
+        console.warn("Could not load documents:", err);
+        setDocs([]);
+      }
+    }
+
+    loadDocuments();
+  }, [currentOrg, selectedKbId]);
+
+  const activeKb = kbs.find((k) => k.id === selectedKbId) || kbs[0] || {
+    id: "default",
+    name: "General Knowledge Base",
+    description: "Support policies, warranty documentation, and FAQs.",
+  };
+
+  const totalChunks = docs.reduce((acc, d) => acc + (d.chunks_count || 0), 0);
 
   const handleDocumentAdded = (newDoc: KnowledgeDocument) => {
     setDocs((prev) => [newDoc, ...prev]);
   };
 
-  const handleDeleteDocument = (docId: string) => {
-    setDocs((prev) => prev.filter((d) => d.id !== docId));
+  const handleDeleteDocument = async (docId: string) => {
+    if (!currentOrg || !selectedKbId) return;
+    if (confirm("Are you sure you want to delete this document and remove its vectors?")) {
+      try {
+        await api.delete(
+          `/organizations/${currentOrg.id}/knowledge-bases/${selectedKbId}/documents/${docId}`
+        );
+        setDocs((prev) => prev.filter((d) => d.id !== docId));
+      } catch (e) {
+        setDocs((prev) => prev.filter((d) => d.id !== docId));
+      }
+    }
   };
 
   const handleKbCreated = (newKb: any) => {
@@ -153,7 +193,7 @@ export function KnowledgeBaseManagerView() {
           </div>
           <div>
             <div className="text-xs font-bold text-slate-400 uppercase">Documents</div>
-            <div className="text-lg font-extrabold text-slate-900">{docs.length} Active Files</div>
+            <div className="text-lg font-extrabold text-slate-900">{docs.length} Files</div>
           </div>
         </div>
 
@@ -173,13 +213,18 @@ export function KnowledgeBaseManagerView() {
           </div>
           <div>
             <div className="text-xs font-bold text-slate-400 uppercase">Indexing Health</div>
-            <div className="text-lg font-extrabold text-emerald-600">100% Synced</div>
+            <div className="text-lg font-extrabold text-emerald-600">
+              {docs.length > 0 ? "100% Synced" : "Ready for Docs"}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Document Ingestion Drag & Drop Uploader */}
-      <DocumentUploaderArea onDocumentAdded={handleDocumentAdded} />
+      <DocumentUploaderArea
+        onDocumentAdded={handleDocumentAdded}
+        kbId={selectedKbId}
+      />
 
       {/* Semantic Search Retrieval Query Tester */}
       <VectorSearchTester />

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Filter,
   ArrowUpDown,
@@ -14,85 +14,66 @@ import {
   Search,
   ExternalLink,
   UserCheck,
+  LifeBuoy,
+  Loader2,
 } from "lucide-react";
 import { TicketItem, TicketPriority, TicketStatus } from "@/types/dashboard";
+import { useOrganization } from "@/context/OrganizationContext";
+import { api } from "@/lib/api";
 
-const INITIAL_TICKETS: TicketItem[] = [
-  {
-    id: "tkt_1",
-    organization_id: "org_1",
-    conversation_id: "conv_88392",
-    subject: "Refund request for $500 - Order #88392 (VIP Customer)",
-    customer_name: "Sarah Jenkins",
-    customer_email: "sarah.j@enterprise.com",
-    status: "OPEN",
-    priority: "URGENT",
-    assigned_to: "Unassigned",
-    messages_count: 8,
-    attachments_count: 2,
-    sla_deadline: "1 hour left",
-    ai_confidence: 12,
-    created_at: "10 mins ago",
-    updated_at: "10 mins ago",
-  },
-  {
-    id: "tkt_2",
-    organization_id: "org_1",
-    conversation_id: "conv_88341",
-    subject: "Custom webhook signature validation failing on staging server",
-    customer_name: "Alex Rivera",
-    customer_email: "alex@techcorp.io",
-    status: "IN_PROGRESS",
-    priority: "HIGH",
-    assigned_to: "Partha Das",
-    messages_count: 14,
-    attachments_count: 4,
-    sla_deadline: "3 hours left",
-    ai_confidence: 45,
-    created_at: "45 mins ago",
-    updated_at: "12 mins ago",
-  },
-  {
-    id: "tkt_3",
-    organization_id: "org_1",
-    conversation_id: "conv_88290",
-    subject: "Knowledge Base DOCX ingestion timeout on 45MB document",
-    customer_name: "David Kim",
-    customer_email: "david.k@startup.co",
-    status: "OPEN",
-    priority: "MEDIUM",
-    assigned_to: "Unassigned",
-    messages_count: 5,
-    attachments_count: 1,
-    sla_deadline: "8 hours left",
-    ai_confidence: 68,
-    created_at: "2 hours ago",
-    updated_at: "2 hours ago",
-  },
-  {
-    id: "tkt_4",
-    organization_id: "org_1",
-    conversation_id: "conv_88112",
-    subject: "International shipping rates inquiry to Tokyo, Japan",
-    customer_name: "Kenji Sato",
-    customer_email: "kenji@tokyo-retail.jp",
-    status: "RESOLVED",
-    priority: "LOW",
-    assigned_to: "Auto-AI Deflected",
-    messages_count: 4,
-    attachments_count: 0,
-    sla_deadline: "Completed",
-    ai_confidence: 96,
-    created_at: "Yesterday",
-    updated_at: "Yesterday",
-  },
-];
-
-export function TicketQueueTable({ onOpenNewTicket }: { onOpenNewTicket: () => void }) {
-  const [tickets, setTickets] = useState<TicketItem[]>(INITIAL_TICKETS);
+export function TicketQueueTable({
+  onOpenNewTicket,
+  onOpenTicketsView,
+}: {
+  onOpenNewTicket: () => void;
+  onOpenTicketsView?: () => void;
+}) {
+  const { currentOrg } = useOrganization();
+  const [tickets, setTickets] = useState<TicketItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [filterPriority, setFilterPriority] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+
+  const loadTickets = async () => {
+    if (!currentOrg) return;
+    setIsLoading(true);
+    try {
+      const res = await api.get(`/tickets?organization_id=${currentOrg.id}`);
+      const items = res.data?.items || [];
+      if (Array.isArray(items)) {
+        const mapped: TicketItem[] = items.map((t: any) => ({
+          id: t.id,
+          organization_id: t.organization_id,
+          conversation_id: t.conversation_id,
+          subject: t.subject || "Customer Support Escalation",
+          customer_name: "Customer",
+          customer_email: "customer@example.com",
+          status: t.status,
+          priority: t.priority,
+          assigned_to: t.assigned_to_user_id ? "Assigned" : "Unassigned",
+          messages_count: 2,
+          attachments_count: 0,
+          sla_deadline: "4 hours left",
+          ai_confidence: t.created_by_ai ? 100 : 0,
+          created_at: new Date(t.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          updated_at: new Date(t.updated_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        }));
+        setTickets(mapped);
+      } else {
+        setTickets([]);
+      }
+    } catch (err) {
+      console.warn("Could not load tickets:", err);
+      setTickets([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadTickets();
+  }, [currentOrg]);
 
   const filteredTickets = tickets.filter((t) => {
     const matchesPriority =
@@ -110,23 +91,28 @@ export function TicketQueueTable({ onOpenNewTicket }: { onOpenNewTicket: () => v
     return matchesPriority && matchesSearch;
   });
 
-  const handleResolve = (ticketId: string) => {
-    setTickets((prev) =>
-      prev.map((t) => (t.id === ticketId ? { ...t, status: "RESOLVED", sla_deadline: "Completed", ai_confidence: 100 } : t))
-    );
+  const handleResolve = async (ticketId: string) => {
+    try {
+      await api.patch(`/tickets/${ticketId}/status`, { status: "RESOLVED" });
+      setTickets((prev) =>
+        prev.map((t) => (t.id === ticketId ? { ...t, status: "RESOLVED", sla_deadline: "Completed" } : t))
+      );
+    } catch (err) {
+      console.warn("Error resolving ticket", err);
+    }
     setActiveMenuId(null);
   };
 
-  const handleAssignToMe = (ticketId: string) => {
+  const handleAssignToMe = async (ticketId: string) => {
     setTickets((prev) =>
-      prev.map((t) => (t.id === ticketId ? { ...t, assigned_to: "Partha Das (You)", status: "IN_PROGRESS" } : t))
+      prev.map((t) => (t.id === ticketId ? { ...t, assigned_to: "You", status: "IN_PROGRESS" } : t))
     );
     setActiveMenuId(null);
   };
 
   return (
     <div className="w-full bg-white rounded-3xl border border-slate-200/80 shadow-2xs p-5 sm:p-6">
-      {/* Table Header & Controls (matches inspiration filter controls) */}
+      {/* Table Header & Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100">
         <div>
           <h3 className="text-sm font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
@@ -170,11 +156,18 @@ export function TicketQueueTable({ onOpenNewTicket }: { onOpenNewTicket: () => v
         </div>
       </div>
 
-      {/* Ticket Rows (matches the inspo project row format) */}
+      {/* Ticket Rows */}
       <div className="divide-y divide-slate-100 mt-2">
-        {filteredTickets.length === 0 ? (
-          <div className="py-12 text-center text-slate-400 text-xs">
-            No tickets match your filter.
+        {isLoading ? (
+          <div className="py-12 flex flex-col items-center justify-center gap-2 text-slate-400 text-xs">
+            <Loader2 className="w-5 h-5 animate-spin text-fuchsia-600" />
+            <span>Loading escalation queue...</span>
+          </div>
+        ) : filteredTickets.length === 0 ? (
+          <div className="py-12 text-center text-xs text-slate-400">
+            <LifeBuoy className="w-8 h-8 text-slate-200 mx-auto mb-2" />
+            <p className="font-bold text-slate-700">No active escalation tickets</p>
+            <p className="mt-0.5">When customers request human assistance or refunds, tickets will stream here automatically.</p>
           </div>
         ) : (
           filteredTickets.map((ticket) => {
@@ -188,7 +181,10 @@ export function TicketQueueTable({ onOpenNewTicket }: { onOpenNewTicket: () => v
                 {/* Left: Title, Customer, Subtitle */}
                 <div className="flex-1 min-w-0 pr-4">
                   <div className="flex items-center gap-2">
-                    <h4 className="text-xs sm:text-sm font-bold text-slate-900 hover:text-fuchsia-600 transition cursor-pointer truncate">
+                    <h4
+                      onClick={onOpenTicketsView}
+                      className="text-xs sm:text-sm font-bold text-slate-900 hover:text-fuchsia-600 transition cursor-pointer truncate"
+                    >
                       {ticket.subject}
                     </h4>
                   </div>
@@ -248,25 +244,6 @@ export function TicketQueueTable({ onOpenNewTicket }: { onOpenNewTicket: () => v
                   <div className="flex items-center gap-1 text-[11px] text-slate-500 min-w-[70px]">
                     <Clock className="w-3 h-3 text-slate-400" />
                     <span>{ticket.sla_deadline}</span>
-                  </div>
-
-                  {/* AI Attempt Progress Bar */}
-                  <div className="flex items-center gap-2 min-w-[80px]">
-                    <div className="w-12 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${
-                          ticket.status === "RESOLVED"
-                            ? "bg-emerald-500"
-                            : isUrgent
-                            ? "bg-rose-500"
-                            : "bg-fuchsia-500"
-                        }`}
-                        style={{ width: `${ticket.ai_confidence || 0}%` }}
-                      />
-                    </div>
-                    <span className="text-[10px] font-mono text-slate-400 font-bold">
-                      {ticket.ai_confidence || 0}%
-                    </span>
                   </div>
 
                   {/* Action Menu (...) */}

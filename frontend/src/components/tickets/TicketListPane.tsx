@@ -11,16 +11,19 @@ import {
   Paperclip,
   CheckCircle2,
   ChevronDown,
+  Loader2,
 } from "lucide-react";
 import { TicketItem, TicketPriority, TicketStatus } from "@/types/dashboard";
 
 export function TicketListPane({
   tickets,
+  isLoading,
   selectedTicketId,
   onSelectTicket,
   onOpenNewTicket,
 }: {
   tickets: TicketItem[];
+  isLoading: boolean;
   selectedTicketId: string;
   onSelectTicket: (ticket: TicketItem) => void;
   onOpenNewTicket: () => void;
@@ -101,14 +104,20 @@ export function TicketListPane({
 
       {/* Ticket List */}
       <div className="flex-1 overflow-y-auto divide-y divide-slate-100 p-2 space-y-1">
-        {filtered.length === 0 ? (
+        {isLoading ? (
+          <div className="p-8 text-center text-xs text-slate-400 flex flex-col items-center justify-center gap-2">
+            <Loader2 className="w-5 h-5 animate-spin text-fuchsia-600" />
+            <span>Loading tickets from server...</span>
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="p-8 text-center text-xs text-slate-400">
-            No tickets found.
+            <LifeBuoy className="w-8 h-8 text-slate-200 mx-auto mb-2" />
+            <p className="font-bold text-slate-700">No tickets found</p>
+            <p className="mt-0.5">Escalated chats or new tickets will appear here.</p>
           </div>
         ) : (
           filtered.map((ticket) => {
             const isSelected = ticket.id === selectedTicketId;
-            const isUrgent = ticket.priority === "URGENT" || ticket.priority === "HIGH";
 
             return (
               <div
@@ -127,7 +136,7 @@ export function TicketListPane({
                       {ticket.customer_name ? ticket.customer_name.charAt(0).toUpperCase() : "C"}
                     </div>
                     <span className="text-xs font-bold text-slate-900 truncate">
-                      {ticket.customer_name}
+                      {ticket.customer_name || "Customer"}
                     </span>
                   </div>
 
@@ -155,7 +164,7 @@ export function TicketListPane({
                 <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1">
                   <span className="flex items-center gap-1">
                     <Clock className="w-3 h-3 text-slate-400" />
-                    <span>{ticket.sla_deadline}</span>
+                    <span>{ticket.sla_deadline || "4 hrs left"}</span>
                   </span>
 
                   <span

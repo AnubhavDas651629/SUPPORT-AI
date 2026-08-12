@@ -81,8 +81,8 @@ export function TicketDetailWorkspace({
         {
           id: "msg_1",
           sender: "customer",
-          senderName: ticket.customer_name || "Customer",
-          text: ticket.subject || "Customer initiated support chat.",
+          senderName: ticket?.customer_name || "Customer",
+          text: ticket?.subject || "Customer initiated support chat.",
           timestamp: "Recently",
         },
         {
