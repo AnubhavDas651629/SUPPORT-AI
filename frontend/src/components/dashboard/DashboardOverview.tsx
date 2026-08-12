@@ -25,6 +25,7 @@ export function DashboardOverview({
   setIsUpgradeOpen,
   onNavigateToTickets,
   onNavigateToKnowledge,
+  onNavigateToDeveloper,
 }: {
   onOpenLiveTester: () => void;
   isLiveTesterOpen: boolean;
@@ -38,6 +39,7 @@ export function DashboardOverview({
   setIsUpgradeOpen: (open: boolean) => void;
   onNavigateToTickets?: () => void;
   onNavigateToKnowledge?: () => void;
+  onNavigateToDeveloper?: () => void;
 }) {
   const { currentOrg } = useOrganization();
   const [isEmbedModalOpen, setIsEmbedModalOpen] = useState(false);
@@ -47,7 +49,7 @@ export function DashboardOverview({
     else if (key === "new_ticket") setIsNewTicketOpen(true);
     else if (key === "embed_code") setIsEmbedModalOpen(true);
     else if (key === "upload_doc") onNavigateToKnowledge ? onNavigateToKnowledge() : alert("Document upload dialog triggered");
-    else if (key === "webhooks" || key === "api_keys") setIsUpgradeOpen(true);
+    else if (key === "webhooks" || key === "api_keys") onNavigateToDeveloper ? onNavigateToDeveloper() : setIsUpgradeOpen(true);
   };
 
   return (
@@ -58,8 +60,8 @@ export function DashboardOverview({
         onOpenUploadDoc={() => onNavigateToKnowledge ? onNavigateToKnowledge() : alert("Upload Document: Select PDF, DOCX, or TXT for pgvector")}
         onOpenTickets={() => onNavigateToTickets ? onNavigateToTickets() : setIsNewTicketOpen(true)}
         onOpenEmbedModal={() => setIsEmbedModalOpen(true)}
-        onOpenWebhooks={() => setIsUpgradeOpen(true)}
-        onOpenApiKeys={() => setIsUpgradeOpen(true)}
+        onOpenWebhooks={() => onNavigateToDeveloper ? onNavigateToDeveloper() : setIsUpgradeOpen(true)}
+        onOpenApiKeys={() => onNavigateToDeveloper ? onNavigateToDeveloper() : setIsUpgradeOpen(true)}
       />
 
       {/* 2. Real-Time Performance & Quota HUD */}

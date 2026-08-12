@@ -10,6 +10,7 @@ import { DashboardOverview } from "@/components/dashboard/DashboardOverview";
 import { TicketInboxView } from "@/components/tickets/TicketInboxView";
 import { KnowledgeBaseManagerView } from "@/components/knowledge/KnowledgeBaseManagerView";
 import { AssistantSettingsView } from "@/components/assistant/AssistantSettingsView";
+import { DeveloperPortalView } from "@/components/developer/DeveloperPortalView";
 import { Loader2 } from "lucide-react";
 
 export default function DashboardPage() {
@@ -83,6 +84,8 @@ export default function DashboardPage() {
             <KnowledgeBaseManagerView />
           ) : activeTab === "assistant" ? (
             <AssistantSettingsView />
+          ) : activeTab === "developer" ? (
+            <DeveloperPortalView />
           ) : (
             <DashboardOverview
               onOpenLiveTester={() => setIsLiveTesterOpen(true)}
@@ -97,6 +100,7 @@ export default function DashboardPage() {
               setIsUpgradeOpen={setIsUpgradeOpen}
               onNavigateToTickets={() => setActiveTab("tickets")}
               onNavigateToKnowledge={() => setActiveTab("knowledge")}
+              onNavigateToDeveloper={() => setActiveTab("developer")}
             />
           )}
         </main>
