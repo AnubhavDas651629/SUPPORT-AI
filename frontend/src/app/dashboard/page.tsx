@@ -12,6 +12,7 @@ import { KnowledgeBaseManagerView } from "@/components/knowledge/KnowledgeBaseMa
 import { AssistantSettingsView } from "@/components/assistant/AssistantSettingsView";
 import { DeveloperPortalView } from "@/components/developer/DeveloperPortalView";
 import { UsageAnalyticsView } from "@/components/billing/UsageAnalyticsView";
+import { LiveConversationsView } from "@/components/conversations/LiveConversationsView";
 import { Loader2 } from "lucide-react";
 
 export default function DashboardPage() {
@@ -41,6 +42,8 @@ export default function DashboardPage() {
     switch (activeTab) {
       case "tickets":
         return "Escalated Tickets & Helpdesk";
+      case "conversations":
+        return "Live Widget Conversations";
       case "knowledge":
         return "Knowledge Base & Vector Store";
       case "assistant":
@@ -55,15 +58,15 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex">
-      {/* 1. Left Responsive Sidebar (matches inspo layout) */}
+    <div className="flex min-h-screen bg-[#F8FAFC]">
+      {/* Permanent Left Sidebar Navigation */}
       <DashboardSidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         onOpenUpgrade={() => setIsUpgradeOpen(true)}
       />
 
-      {/* 2. Main Content View Area */}
+      {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Header Bar */}
         <DashboardHeader
@@ -77,6 +80,8 @@ export default function DashboardPage() {
         <main className="flex-1 p-6 sm:p-8 overflow-y-auto">
           {activeTab === "tickets" ? (
             <TicketInboxView />
+          ) : activeTab === "conversations" ? (
+            <LiveConversationsView />
           ) : activeTab === "knowledge" ? (
             <KnowledgeBaseManagerView />
           ) : activeTab === "assistant" ? (
