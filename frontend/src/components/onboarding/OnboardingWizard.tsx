@@ -46,9 +46,15 @@ export function OnboardingWizard() {
   const [isCheckingExisting, setIsCheckingExisting] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // Check if user already has an organization -> redirect to dashboard
+  // Check if user already has an organization -> only redirect if not creating a new one
   React.useEffect(() => {
     async function checkExistingOrg() {
+      const isExplicitNew = typeof window !== "undefined" && window.location.search.includes("new=true");
+      if (isExplicitNew) {
+        setIsCheckingExisting(false);
+        return;
+      }
+
       try {
         const res = await api.get("/organizations");
         if (Array.isArray(res.data) && res.data.length > 0) {
@@ -198,6 +204,9 @@ export function OnboardingWizard() {
 
   // Final Launch
   const handleFinish = () => {
+    if (createdOrgId && typeof window !== "undefined") {
+      localStorage.setItem("support_ai_active_org_id", createdOrgId);
+    }
     router.push("/dashboard");
   };
 

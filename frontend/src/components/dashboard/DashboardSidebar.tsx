@@ -146,7 +146,8 @@ export function DashboardSidebar({
 
               <div className="pt-2 border-t border-slate-100 mt-1">
                 <Link
-                  href="/onboarding"
+                  href="/onboarding?new=true"
+                  onClick={() => setIsOrgDropdownOpen(false)}
                   className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs text-slate-600 hover:text-fuchsia-600 hover:bg-fuchsia-50/50 transition font-medium"
                 >
                   <Plus className="w-3.5 h-3.5" />
