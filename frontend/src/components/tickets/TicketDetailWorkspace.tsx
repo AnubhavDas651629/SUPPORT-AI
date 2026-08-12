@@ -59,14 +59,15 @@ export function TicketDetailWorkspace({
     async function loadTranscript() {
       try {
         if (ticket?.conversation_id) {
-          const res = await api.get(`/conversations/${ticket.conversation_id}/messages`);
-          if (Array.isArray(res.data) && res.data.length > 0) {
-            const mapped: ChatMessage[] = res.data.map((m: any) => ({
+          const res = await api.get(`/conversations/${ticket.conversation_id}`);
+          const msgs = res.data?.messages || res.data;
+          if (Array.isArray(msgs) && msgs.length > 0) {
+            const mapped: ChatMessage[] = msgs.map((m: any) => ({
               id: m.id,
-              sender: m.sender === "USER" ? "customer" : m.sender === "ASSISTANT" ? "ai" : "agent",
-              senderName: m.sender === "USER" ? (ticket.customer_name || "Customer") : m.sender === "ASSISTANT" ? "Support AI" : "Support Agent",
+              sender: m.role === "USER" || m.sender === "USER" ? "customer" : m.role === "ASSISTANT" || m.sender === "ASSISTANT" ? "ai" : "agent",
+              senderName: m.role === "USER" || m.sender === "USER" ? (ticket.customer_name || "Customer") : m.role === "ASSISTANT" || m.sender === "ASSISTANT" ? "Support AI" : "Support Agent",
               text: m.content,
-              timestamp: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              timestamp: new Date(m.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
               isEscalationTrigger: m.content?.toLowerCase().includes("refund") || m.content?.toLowerCase().includes("escalate"),
             }));
             setMessages(mapped);
