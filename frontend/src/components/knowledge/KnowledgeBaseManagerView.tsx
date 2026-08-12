@@ -227,7 +227,7 @@ export function KnowledgeBaseManagerView() {
       />
 
       {/* Semantic Search Retrieval Query Tester */}
-      <VectorSearchTester />
+      <VectorSearchTester documentsCount={docs.length} />
 
       {/* Documents Table */}
       <DocumentsListTable

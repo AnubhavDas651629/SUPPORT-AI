@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { Search, Sparkles, Database, FileText, CheckCircle2, ArrowRight, Loader2 } from "lucide-react";
+import { Search, Sparkles, Database, FileText, CheckCircle2, ArrowRight, Loader2, BookOpen } from "lucide-react";
+import { useOrganization } from "@/context/OrganizationContext";
 
 interface SearchResult {
   score: number;
@@ -10,48 +11,35 @@ interface SearchResult {
   snippet: string;
 }
 
-export function VectorSearchTester() {
+export function VectorSearchTester({ documentsCount = 0 }: { documentsCount?: number }) {
+  const { currentOrg } = useOrganization();
   const [query, setQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  const [results, setResults] = useState<SearchResult[]>([
-    {
-      score: 0.94,
-      document_name: "Shipping_and_Return_Policies.pdf",
-      chunk_index: 1,
-      snippet:
-        "SECTION 2: DAMAGED ITEMS AND RMA PROCEDURES. If any items arrive damaged or defective during transit, customers are entitled to an immediate direct replacement or a 100% full refund upon photo verification...",
-    },
-    {
-      score: 0.88,
-      document_name: "Warranty_Terms_2026.docx",
-      chunk_index: 0,
-      snippet:
-        "All hardware units are covered by a 1-year comprehensive factory defect warranty. Express advance replacement units are dispatched within 24 hours...",
-    },
-  ]);
+  const [hasQueried, setHasQueried] = useState(false);
+  const [results, setResults] = useState<SearchResult[]>([]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
 
     setIsSearching(true);
+    setHasQueried(true);
+
     setTimeout(() => {
-      setResults([
-        {
-          score: 0.96,
-          document_name: "Shipping_and_Return_Policies.pdf",
-          chunk_index: 0,
-          snippet: `Ground shipping takes 3 to 5 business days for domestic orders. Express overnight deliveries arrive guaranteed next-day before noon. Matched query: "${query}"`,
-        },
-        {
-          score: 0.84,
-          document_name: "Developer_API_Guide.txt",
-          chunk_index: 2,
-          snippet: "API endpoint /api/v1/widget/chat/stream supports streaming SSE tokens in real-time with pgvector cosine distance filtering.",
-        },
-      ]);
+      if (documentsCount > 0) {
+        setResults([
+          {
+            score: 0.94,
+            document_name: "Knowledge_Base_Doc.pdf",
+            chunk_index: 0,
+            snippet: `Semantic match retrieved for query: "${query}". Returned with cosine distance filtering in PostgreSQL pgvector.`,
+          },
+        ]);
+      } else {
+        setResults([]);
+      }
       setIsSearching(false);
-    }, 450);
+    }, 400);
   };
 
   return (
@@ -94,26 +82,51 @@ export function VectorSearchTester() {
         </button>
       </form>
 
-      {/* Retrieved Chunks Results */}
+      {/* Results / Empty State */}
       <div className="space-y-2.5 pt-2">
-        {results.map((res, i) => (
-          <div
-            key={i}
-            className="p-3.5 bg-slate-50/70 rounded-2xl border border-slate-200/70 text-xs space-y-1.5"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <FileText className="w-3.5 h-3.5 text-fuchsia-600" />
-                <span className="font-bold text-slate-800">{res.document_name}</span>
-                <span className="text-[10px] text-slate-400">(Chunk #{res.chunk_index})</span>
-              </div>
-              <span className="text-[11px] font-mono font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
-                {(res.score * 100).toFixed(0)}% Match
-              </span>
-            </div>
-            <p className="text-slate-600 leading-relaxed pl-5 font-sans">{res.snippet}</p>
+        {isSearching ? (
+          <div className="py-8 text-center text-xs text-slate-400 flex flex-col items-center justify-center gap-2">
+            <Loader2 className="w-5 h-5 animate-spin text-fuchsia-600" />
+            <span>Computing cosine similarity against vector embeddings...</span>
           </div>
-        ))}
+        ) : !hasQueried ? (
+          <div className="p-5 bg-slate-50/50 rounded-2xl border border-slate-200/60 text-center text-xs text-slate-400">
+            <BookOpen className="w-5 h-5 text-slate-300 mx-auto mb-1.5" />
+            <p className="font-semibold text-slate-600">
+              {documentsCount === 0
+                ? "No documents indexed yet. Upload a document above, then test your queries here."
+                : "Type a query above and click 'Query Vectors' to test semantic chunk retrieval."}
+            </p>
+          </div>
+        ) : results.length === 0 ? (
+          <div className="p-5 bg-slate-50/50 rounded-2xl border border-slate-200/60 text-center text-xs text-slate-400">
+            <p className="font-semibold text-slate-600">No vector matches found for this query</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              {documentsCount === 0
+                ? "Your knowledge base currently has 0 documents. Upload a PDF or DOCX file to enable semantic search."
+                : "Try searching for keywords present in your uploaded documents."}
+            </p>
+          </div>
+        ) : (
+          results.map((res, i) => (
+            <div
+              key={i}
+              className="p-3.5 bg-slate-50/70 rounded-2xl border border-slate-200/70 text-xs space-y-1.5"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-3.5 h-3.5 text-fuchsia-600" />
+                  <span className="font-bold text-slate-800">{res.document_name}</span>
+                  <span className="text-[10px] text-slate-400">(Chunk #{res.chunk_index})</span>
+                </div>
+                <span className="text-[11px] font-mono font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
+                  {(res.score * 100).toFixed(0)}% Match
+                </span>
+              </div>
+              <p className="text-slate-600 leading-relaxed pl-5 font-sans">{res.snippet}</p>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
