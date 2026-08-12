@@ -43,7 +43,16 @@ export function CreateKbModal({
     } catch (err: any) {
       console.error("Failed to create knowledge base:", err);
       const detail = err.response?.data?.detail;
-      const message = typeof detail === "string" ? detail : "Failed to create knowledge base. Please check plan limits.";
+      let message = "Failed to create knowledge base. Please try again.";
+      if (typeof detail === "string") {
+        message = detail;
+      } else if (Array.isArray(detail) && detail[0]?.msg) {
+        message = detail[0].msg;
+      } else if (err.response?.status === 403 || err.response?.status === 429) {
+        message = "Plan limit reached for this workspace. Please upgrade your plan.";
+      } else if (err.response?.status === 404) {
+        message = "Workspace not found. Please refresh and try again.";
+      }
       setErrorMessage(message);
     } finally {
       setIsLoading(false);
