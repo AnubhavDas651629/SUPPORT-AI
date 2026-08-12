@@ -83,31 +83,40 @@ export function PlanTierPricingCards({ onOpenCheckoutModal }: { onOpenCheckoutMo
     setLoadingTier(tierId);
     try {
       if (tierId === "FREE") {
-        // Manage in portal or downgrade
         const res = await api.post(`/organizations/${currentOrg.id}/subscription/portal`, {
           return_url: window.location.href,
         });
         if (res.data?.checkout_url) {
-          window.location.href = res.data.checkout_url;
+          if (res.data.checkout_url.startsWith("http") && !res.data.checkout_url.includes(window.location.host)) {
+            window.location.href = res.data.checkout_url;
+          } else {
+            await refreshOrgData();
+            window.location.href = res.data.checkout_url;
+          }
           return;
         }
       }
 
       // Call Stripe Checkout API
       const res = await api.post(`/organizations/${currentOrg.id}/subscription/checkout`, {
-        price_id: tierId === "PRO" ? "price_pro_monthly" : "price_enterprise_monthly",
-        success_url: window.location.href,
+        price_id: tierId,
+        success_url: `${window.location.origin}/dashboard?tab=analytics&upgraded=true`,
         cancel_url: window.location.href,
       });
 
       if (res.data?.checkout_url) {
-        window.location.href = res.data.checkout_url;
+        if (res.data.checkout_url.startsWith("http") && !res.data.checkout_url.includes(window.location.host)) {
+          window.location.href = res.data.checkout_url;
+        } else {
+          await refreshOrgData();
+          window.location.href = res.data.checkout_url;
+        }
       }
     } catch (err) {
       if (onOpenCheckoutModal) {
         onOpenCheckoutModal();
       } else {
-        alert(`Proceeding to checkout for ${tierId} Plan...`);
+        alert(`Could not initiate checkout for ${tierId} Plan. Please try again.`);
       }
     } finally {
       setLoadingTier(null);

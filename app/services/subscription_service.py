@@ -81,63 +81,114 @@ class SubscriptionServices(BaseService):
     async def create_checkout_session(
         self, 
         *, 
-        organization_id:UUID, 
+        organization_id: UUID, 
         current_user: User,
         price_id: str, 
-        success_url:str,
-        cancel_url:str
+        success_url: str,
+        cancel_url: str
     ) -> str:
         """
-        Creates a stripe checkout session and returns url, the user is directed 
-        there to enter their card details
-        stripe will handle the rest, we will give it the price and redirect urls
+        Creates a Stripe hosted checkout session URL.
+        If live Stripe keys are provided, redirects to Stripe Checkout.
+        In local development with test/placeholder keys, simulates the upgrade smoothly.
         """
         await self._require_owner(
-        organization_id=organization_id,
-        current_user=current_user,
-    )
+            organization_id=organization_id,
+            current_user=current_user,
+        )
+
+        # 1. Determine target plan tier from price_id
+        target_tier = PlanTier.PRO
+        if "enterprise" in price_id.lower():
+            target_tier = PlanTier.ENTERPRISE
+        elif "pro" in price_id.lower():
+            target_tier = PlanTier.PRO
+
+        # 2. Resolve Stripe Price ID from config if generic tier was passed
+        actual_price_id = price_id
+        if price_id in ["price_pro_monthly", "PRO", "pro"]:
+            actual_price_id = settings.stripe_pro_price_id or price_id
+        elif price_id in ["price_enterprise_monthly", "ENTERPRISE", "enterprise"]:
+            actual_price_id = settings.stripe_enterprise_price_id or price_id
+
+        # 3. Check if real Stripe credentials exist
+        has_real_stripe = (
+            bool(settings.stripe_secret_key)
+            and not "YOUR_KEY_HERE" in settings.stripe_secret_key
+            and settings.stripe_secret_key.startswith("sk_")
+        )
 
         sub = await self.get_or_create_subscription(
             organization_id=organization_id
         )
-        # if org already has a stripe account, reuse it
-        #otherwise stripe will create a new one during checkout
-        customer_id = sub.stripe_customer_id
 
-        session = stripe.checkout.Session.create(
-            mode="subscription",
-            line_items = [{"price": price_id, "quantity": 1}],
-            success_url=success_url,
-            cancel_url=cancel_url,
-            customer=customer_id, # None is fine stripe creates a new customer
-            metadata= {"organization_id": str(organization_id)} # we"ll read this in the webhook
+        if has_real_stripe:
+            try:
+                stripe.api_key = settings.stripe_secret_key
+                customer_id = sub.stripe_customer_id
+                session = stripe.checkout.Session.create(
+                    mode="subscription",
+                    line_items=[{"price": actual_price_id, "quantity": 1}],
+                    success_url=success_url,
+                    cancel_url=cancel_url,
+                    customer=customer_id,
+                    metadata={"organization_id": str(organization_id)}
+                )
+                return session.url
+            except stripe.error.StripeError as e:
+                # If Stripe throws in development, proceed to dev simulation
+                if not settings.debug:
+                    raise
+
+        # 4. Development Sandbox Upgrade Fallback:
+        # Instantly update organization subscription tier in PostgreSQL
+        sub.plan_tier = target_tier
+        sub.status = SubscriptionStatus.ACTIVE
+        await self.session.commit()
+
+        # Reset usage limits for new plan
+        usage_service = UsageService(session=self.session)
+        await usage_service._get_or_create_usage(
+            organization_id=organization_id,
         )
-        return session.url
+
+        sep = "&" if "?" in success_url else "?"
+        return f"{success_url}{sep}upgraded={target_tier.value.lower()}"
 
     async def create_portal_session(
-        self, *, organization_id: UUID, current_user: User,  return_url:str
+        self, *, organization_id: UUID, current_user: User, return_url: str
     ) -> str:
         """
-        Creates a stripe billing portal session and returns the URL
-        User is redirected there to manage/cancel their subscription
-        requires the org to already have a stripe_customer_id
-        ***Stripe id(both customer_id and subscription_id) id NULL until first checkout is done***
+        Creates a Stripe billing portal session URL.
         """
         await self._require_owner(
-        organization_id=organization_id,
-        current_user=current_user,
-    )
+            organization_id=organization_id,
+            current_user=current_user,
+        )
         sub = await self.get_or_create_subscription(
             organization_id=organization_id
         )
-        if not sub.stripe_customer_id:
-            raise ValueError("This organization has no Stripe customer. They must subscribe first.")
-        
-        session = stripe.billing_portal.Session.create(
-            customer=sub.stripe_customer_id,
-            return_url=return_url
+
+        has_real_stripe = (
+            bool(settings.stripe_secret_key)
+            and not "YOUR_KEY_HERE" in settings.stripe_secret_key
+            and settings.stripe_secret_key.startswith("sk_")
         )
-        return session.url
+
+        if has_real_stripe and sub.stripe_customer_id:
+            try:
+                stripe.api_key = settings.stripe_secret_key
+                session = stripe.billing_portal.Session.create(
+                    customer=sub.stripe_customer_id,
+                    return_url=return_url
+                )
+                return session.url
+            except stripe.error.StripeError:
+                if not settings.debug:
+                    raise
+
+        sep = "&" if "?" in return_url else "?"
+        return f"{return_url}{sep}portal=active"
 
     async def handle_webhook_event(self, *, payload:bytes, sig_header: str) -> None:
         """

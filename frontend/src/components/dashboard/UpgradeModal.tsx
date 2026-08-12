@@ -66,7 +66,7 @@ export function UpgradeModal({
   isOpen: boolean;
   onClose: () => void;
 }) {
-  const { currentOrg, subscription } = useOrganization();
+  const { currentOrg, subscription, refreshOrgData } = useOrganization();
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
 
   if (!isOpen) return null;
@@ -84,23 +84,35 @@ export function UpgradeModal({
           return_url: window.location.href,
         });
         if (res.data?.checkout_url) {
-          window.location.href = res.data.checkout_url;
+          if (res.data.checkout_url.startsWith("http") && !res.data.checkout_url.includes(window.location.host)) {
+            window.location.href = res.data.checkout_url;
+          } else {
+            await refreshOrgData();
+            onClose();
+            window.location.href = res.data.checkout_url;
+          }
           return;
         }
       }
 
       const res = await api.post(`/organizations/${currentOrg.id}/subscription/checkout`, {
-        price_id: tierId === "PRO" ? "price_pro_monthly" : "price_enterprise_monthly",
+        price_id: tierId,
         success_url: `${window.location.origin}/dashboard?tab=analytics&upgraded=true`,
         cancel_url: window.location.href,
       });
 
       if (res.data?.checkout_url) {
-        window.location.href = res.data.checkout_url;
+        if (res.data.checkout_url.startsWith("http") && !res.data.checkout_url.includes(window.location.host)) {
+          window.location.href = res.data.checkout_url;
+        } else {
+          await refreshOrgData();
+          onClose();
+          window.location.href = res.data.checkout_url;
+        }
       }
     } catch (e: any) {
-      alert(`Stripe Checkout redirected for ${tierId} Plan.`);
-      onClose();
+      console.error("Checkout error:", e);
+      alert(`Could not initiate checkout for ${tierId} Plan. Please try again.`);
     } finally {
       setLoadingTier(null);
     }
