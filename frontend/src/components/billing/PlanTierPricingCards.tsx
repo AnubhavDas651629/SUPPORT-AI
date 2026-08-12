@@ -5,6 +5,12 @@ import { Check, Sparkles, Zap, Shield, Key, Webhook, Headphones, ArrowRight, Loa
 import { useOrganization } from "@/context/OrganizationContext";
 import { api } from "@/lib/api";
 
+const TIER_ORDER: Record<string, number> = {
+  FREE: 0,
+  PRO: 1,
+  ENTERPRISE: 2,
+};
+
 const TIERS = [
   {
     id: "FREE",
@@ -21,7 +27,6 @@ const TIERS = [
       "Standard vector search",
       "Community support",
     ],
-    ctaText: "Current Plan",
     isPopular: false,
   },
   {
@@ -41,7 +46,6 @@ const TIERS = [
       "Custom Widget Branding & CSS",
       "SLA Priority Escalations",
     ],
-    ctaText: "Upgrade to Pro",
     isPopular: true,
   },
   {
@@ -61,7 +65,6 @@ const TIERS = [
       "Custom SSO & SAML Authentication",
       "24/7 Dedicated Support & SLA",
     ],
-    ctaText: "Upgrade to Enterprise",
     isPopular: false,
   },
 ];
@@ -71,6 +74,7 @@ export function PlanTierPricingCards({ onOpenCheckoutModal }: { onOpenCheckoutMo
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
 
   const currentTier = subscription?.plan_tier || "FREE";
+  const currentRank = TIER_ORDER[currentTier] ?? 0;
 
   const handlePlanAction = async (tierId: string) => {
     if (tierId === currentTier) return;
@@ -78,6 +82,17 @@ export function PlanTierPricingCards({ onOpenCheckoutModal }: { onOpenCheckoutMo
 
     setLoadingTier(tierId);
     try {
+      if (tierId === "FREE") {
+        // Manage in portal or downgrade
+        const res = await api.post(`/organizations/${currentOrg.id}/subscription/portal`, {
+          return_url: window.location.href,
+        });
+        if (res.data?.checkout_url) {
+          window.location.href = res.data.checkout_url;
+          return;
+        }
+      }
+
       // Call Stripe Checkout API
       const res = await api.post(`/organizations/${currentOrg.id}/subscription/checkout`, {
         price_id: tierId === "PRO" ? "price_pro_monthly" : "price_enterprise_monthly",
@@ -112,31 +127,46 @@ export function PlanTierPricingCards({ onOpenCheckoutModal }: { onOpenCheckoutMo
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {TIERS.map((tier) => {
+          const tierRank = TIER_ORDER[tier.id] ?? 0;
           const isCurrent = tier.id === currentTier;
-          const isUpgrade = !isCurrent;
+          const isHigher = tierRank > currentRank;
+          const isLower = tierRank < currentRank;
+
+          const buttonLabel = isCurrent
+            ? "Active Plan"
+            : isHigher
+            ? `Upgrade to ${tier.name}`
+            : `Downgrade to ${tier.name}`;
 
           return (
             <div
               key={tier.id}
               className={`rounded-3xl p-6 flex flex-col justify-between transition relative ${
-                tier.isPopular
+                isCurrent
                   ? "bg-white border-2 border-fuchsia-500 shadow-xl ring-4 ring-fuchsia-500/10"
+                  : tier.isPopular && !isCurrent
+                  ? "bg-white border-2 border-slate-300 shadow-md"
                   : "bg-white border border-slate-200/80 shadow-2xs hover:shadow-md"
               }`}
             >
-              {/* Popular Badge */}
-              {tier.badge && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-gradient-to-r from-fuchsia-600 to-indigo-600 text-white font-extrabold text-[10px] tracking-wider uppercase shadow-xs">
+              {/* Top Badges */}
+              {isCurrent ? (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-fuchsia-600 text-white font-extrabold text-[10px] tracking-wider uppercase shadow-xs flex items-center gap-1">
+                  <Check className="w-3 h-3 stroke-[3]" />
+                  <span>CURRENT PLAN</span>
+                </div>
+              ) : tier.badge ? (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-slate-900 text-white font-extrabold text-[10px] tracking-wider uppercase shadow-xs">
                   {tier.badge}
                 </div>
-              )}
+              ) : null}
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h4 className="text-base font-extrabold text-slate-900">{tier.name}</h4>
                   {isCurrent && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
-                      CURRENT PLAN
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-fuchsia-50 text-fuchsia-700">
+                      ACTIVE
                     </span>
                   )}
                 </div>
@@ -177,9 +207,9 @@ export function PlanTierPricingCards({ onOpenCheckoutModal }: { onOpenCheckoutMo
                   className={`w-full py-2.5 px-4 rounded-2xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer disabled:cursor-default ${
                     isCurrent
                       ? "bg-slate-100 text-slate-400 border border-slate-200"
-                      : tier.isPopular
+                      : isHigher
                       ? "bg-fuchsia-600 hover:bg-fuchsia-700 text-white shadow-xs"
-                      : "bg-slate-950 hover:bg-black text-white shadow-xs"
+                      : "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300"
                   }`}
                 >
                   {loadingTier === tier.id ? (
@@ -188,7 +218,7 @@ export function PlanTierPricingCards({ onOpenCheckoutModal }: { onOpenCheckoutMo
                     <span>Active Plan</span>
                   ) : (
                     <>
-                      <span>{tier.ctaText}</span>
+                      <span>{buttonLabel}</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </>
                   )}
