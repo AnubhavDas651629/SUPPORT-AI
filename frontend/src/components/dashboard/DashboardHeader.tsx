@@ -32,7 +32,6 @@ export function DashboardHeader({
   const { user, logout } = useAuth();
   const { currentOrg, subscription } = useOrganization();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
   return (
     <header className="h-16 bg-white border-b border-slate-200/80 px-6 sm:px-8 flex items-center justify-between sticky top-0 z-20 shadow-2xs">
@@ -85,44 +84,6 @@ export function DashboardHeader({
           <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
           <span>New Ticket</span>
         </button>
-
-        {/* Notifications Bell */}
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-            className="w-9 h-9 rounded-xl border border-slate-200 hover:bg-slate-50 flex items-center justify-center text-slate-600 transition cursor-pointer relative"
-          >
-            <Bell className="w-4 h-4" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-fuchsia-600 ring-2 ring-white" />
-          </button>
-
-          {/* Notifications Dropdown */}
-          {isNotificationsOpen && (
-            <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl border border-slate-200 shadow-xl p-3 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100 mb-2">
-                <span className="text-xs font-bold text-slate-900">Notifications</span>
-                <span className="text-[10px] text-fuchsia-600 font-semibold cursor-pointer">Mark all read</span>
-              </div>
-              <div className="space-y-2">
-                <div className="p-2.5 rounded-xl bg-fuchsia-50/50 border border-fuchsia-100 text-xs">
-                  <div className="font-semibold text-slate-800">Auto-Escalation Triggered</div>
-                  <div className="text-slate-500 text-[11px] mt-0.5">
-                    Customer requested $500 refund on live chat. Ticket #88392 created.
-                  </div>
-                  <span className="text-[10px] text-slate-400 mt-1 block">5 minutes ago</span>
-                </div>
-                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs">
-                  <div className="font-semibold text-slate-800">Knowledge Base Synced</div>
-                  <div className="text-slate-500 text-[11px] mt-0.5">
-                    12 chunks successfully embedded to pgvector.
-                  </div>
-                  <span className="text-[10px] text-slate-400 mt-1 block">1 hour ago</span>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
 
         {/* User Profile Pill & Dropdown (matches inspo avatar icon) */}
         <div className="relative">

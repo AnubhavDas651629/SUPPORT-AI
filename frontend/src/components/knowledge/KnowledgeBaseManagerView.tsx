@@ -273,7 +273,7 @@ export function KnowledgeBaseManagerView() {
       />
 
       {/* Semantic Search Retrieval Query Tester */}
-      <VectorSearchTester documentsCount={docs.length} />
+      <VectorSearchTester documentsCount={docs.length} kbId={selectedKbId} />
 
       {/* Documents Table */}
       <DocumentsListTable
@@ -287,6 +287,7 @@ export function KnowledgeBaseManagerView() {
         isOpen={!!inspectingDoc}
         onClose={() => setInspectingDoc(null)}
         document={inspectingDoc}
+        kbId={selectedKbId}
       />
 
       {/* Create KB Modal */}

@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Search, Sparkles, Database, FileText, CheckCircle2, ArrowRight, Loader2, BookOpen } from "lucide-react";
 import { useOrganization } from "@/context/OrganizationContext";
+import { api } from "@/lib/api";
 
 interface SearchResult {
   score: number;
@@ -11,7 +12,7 @@ interface SearchResult {
   snippet: string;
 }
 
-export function VectorSearchTester({ documentsCount = 0 }: { documentsCount?: number }) {
+export function VectorSearchTester({ documentsCount = 0, kbId }: { documentsCount?: number, kbId?: string }) {
   const { currentOrg } = useOrganization();
   const [query, setQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -20,26 +21,22 @@ export function VectorSearchTester({ documentsCount = 0 }: { documentsCount?: nu
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!query.trim()) return;
+    if (!query.trim() || !currentOrg || !kbId) return;
 
     setIsSearching(true);
     setHasQueried(true);
 
-    setTimeout(() => {
-      if (documentsCount > 0) {
-        setResults([
-          {
-            score: 0.94,
-            document_name: "Knowledge_Base_Doc.pdf",
-            chunk_index: 0,
-            snippet: `Semantic match retrieved for query: "${query}". Returned with cosine distance filtering in PostgreSQL pgvector.`,
-          },
-        ]);
-      } else {
-        setResults([]);
-      }
+    api.post(`/organizations/${currentOrg.id}/knowledge-bases/${kbId}/search`, {
+      query,
+      limit: 3
+    }).then(res => {
+      setResults(res.data || []);
+    }).catch(err => {
+      console.error(err);
+      setResults([]);
+    }).finally(() => {
       setIsSearching(false);
-    }, 400);
+    });
   };
 
   return (
@@ -74,7 +71,7 @@ export function VectorSearchTester({ documentsCount = 0 }: { documentsCount?: nu
         </div>
         <button
           type="submit"
-          disabled={!query.trim() || isSearching}
+          disabled={!query.trim() || isSearching || !kbId}
           className="px-5 py-2.5 rounded-2xl bg-fuchsia-600 hover:bg-fuchsia-700 text-white text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
         >
           {isSearching ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Database className="w-3.5 h-3.5" />}

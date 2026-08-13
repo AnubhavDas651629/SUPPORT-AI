@@ -1,40 +1,45 @@
 "use client";
 
-import React from "react";
-import { X, Layers, CheckCircle2, Copy, Hash } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { X, Layers, CheckCircle2, Copy, Hash, Loader2 } from "lucide-react";
 import { KnowledgeDocument } from "@/types/dashboard";
+import { api } from "@/lib/api";
+import { useOrganization } from "@/context/OrganizationContext";
+
+interface Chunk {
+  id: string;
+  chunk_index: number;
+  token_count: number;
+  content: string;
+}
 
 export function ChunkInspectorModal({
   isOpen,
   onClose,
   document,
+  kbId,
 }: {
   isOpen: boolean;
   onClose: () => void;
   document: KnowledgeDocument | null;
+  kbId?: string;
 }) {
-  if (!isOpen || !document) return null;
+  const { currentOrg } = useOrganization();
+  const [chunks, setChunks] = useState<Chunk[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const sampleChunks = [
-    {
-      chunk_index: 0,
-      token_count: 342,
-      content:
-        "SECTION 1: GLOBAL SHIPPING POLICIES. Standard domestic shipping orders process within 24 business hours. Ground delivery to continental United States addresses typically takes 3 to 5 business days. Express overnight orders must be placed before 2:00 PM EST for guaranteed next-day morning delivery.",
-    },
-    {
-      chunk_index: 1,
-      token_count: 298,
-      content:
-        "SECTION 2: DAMAGED ITEMS AND RMA PROCEDURES. If any items arrive damaged or defective during transit, customers are entitled to an immediate direct replacement or a 100% full refund upon providing photo verification. Requests under $50.00 are automated instantly; requests exceeding $50.00 are routed to human specialists.",
-    },
-    {
-      chunk_index: 2,
-      token_count: 260,
-      content:
-        "SECTION 3: INTERNATIONAL CUSTOMS AND DUTIES. International packages sent to Japan, United Kingdom, and the European Union include all VAT and local import tariffs prepaid at checkout. No additional courier fees will be requested upon arrival.",
-    },
-  ];
+  useEffect(() => {
+    if (isOpen && document && currentOrg && kbId) {
+      setIsLoading(true);
+      api
+        .get(`/organizations/${currentOrg.id}/knowledge-bases/${kbId}/documents/${document.id}/chunks`)
+        .then((res) => setChunks(res.data))
+        .catch((err) => console.error(err))
+        .finally(() => setIsLoading(false));
+    }
+  }, [isOpen, document, currentOrg, kbId]);
+
+  if (!isOpen || !document) return null;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
@@ -59,22 +64,33 @@ export function ChunkInspectorModal({
         </div>
 
         <div className="my-4 space-y-3 max-h-[60vh] overflow-y-auto pr-1">
-          {sampleChunks.map((chunk) => (
-            <div
-              key={chunk.chunk_index}
-              className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-2 text-xs"
-            >
-              <div className="flex items-center justify-between text-slate-400">
-                <span className="font-mono text-[10px] font-bold text-fuchsia-600 bg-fuchsia-50 px-2 py-0.5 rounded-md">
-                  Chunk #{chunk.chunk_index}
-                </span>
-                <span className="text-[10px] font-semibold text-slate-500">
-                  {chunk.token_count} tokens • 1536 dim vector
-                </span>
-              </div>
-              <p className="text-slate-800 leading-relaxed font-sans">{chunk.content}</p>
+          {isLoading ? (
+            <div className="py-12 flex flex-col items-center justify-center text-slate-400">
+              <Loader2 className="w-6 h-6 animate-spin mb-2" />
+              <p className="text-xs">Fetching vectors from PostgreSQL...</p>
             </div>
-          ))}
+          ) : chunks.length === 0 ? (
+            <div className="py-12 text-center text-slate-400 text-xs">
+              No chunks found for this document.
+            </div>
+          ) : (
+            chunks.map((chunk) => (
+              <div
+                key={chunk.id}
+                className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-2 text-xs"
+              >
+                <div className="flex items-center justify-between text-slate-400">
+                  <span className="font-mono text-[10px] font-bold text-fuchsia-600 bg-fuchsia-50 px-2 py-0.5 rounded-md">
+                    Chunk #{chunk.chunk_index}
+                  </span>
+                  <span className="text-[10px] font-semibold text-slate-500">
+                    {chunk.token_count} tokens • 1536 dim vector
+                  </span>
+                </div>
+                <p className="text-slate-800 leading-relaxed font-sans">{chunk.content}</p>
+              </div>
+            ))
+          )}
         </div>
 
         <div className="flex items-center justify-end pt-3 border-t border-slate-100">

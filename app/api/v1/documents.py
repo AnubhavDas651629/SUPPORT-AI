@@ -111,3 +111,29 @@ async def delete_document(
         document_id=document_id,
         current_user=current_user,
     )
+
+from app.schemas.document import DocumentChunkResponse
+from app.repositories.document_chunk_repository import DocumentChunkRepository
+
+@router.get("/{document_id}/chunks", response_model=list[DocumentChunkResponse])
+async def get_document_chunks(
+    organization_id: UUID,
+    knowledge_base_id: UUID,
+    document_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    service = DocumentService(db)
+    
+    # ensure user has access to the document and organization
+    await service.get_by_id(
+        organization_id=organization_id,
+        knowledge_base_id=knowledge_base_id,
+        document_id=document_id,
+        current_user=current_user,
+    )
+
+    chunk_repo = DocumentChunkRepository(db)
+    chunks = await chunk_repo.list_for_document(document_id=document_id)
+    
+    return [DocumentChunkResponse.model_validate(c) for c in chunks]
