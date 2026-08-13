@@ -37,6 +37,7 @@ const NAV_ITEMS: NavItem[] = [
   { name: "Live Conversations", href: "/dashboard?tab=conversations", icon: MessageSquare },
   { name: "Knowledge Base", href: "/dashboard?tab=knowledge", icon: BookOpen },
   { name: "AI Assistant", href: "/dashboard?tab=assistant", icon: Sliders },
+  { name: "Organization", href: "/dashboard?tab=organization", icon: Building2 },
   { name: "Webhooks & API", href: "/dashboard?tab=developer", icon: Webhook },
   { name: "Usage & Analytics", href: "/dashboard?tab=analytics", icon: BarChart3 },
 ];
@@ -180,6 +181,7 @@ export function DashboardSidebar({
                     else if (tabKey === "liveconversations") setActiveTab("conversations");
                     else if (tabKey === "knowledgebase") setActiveTab("knowledge");
                     else if (tabKey === "aiassistant") setActiveTab("assistant");
+                    else if (tabKey === "organization") setActiveTab("organization");
                     else if (tabKey === "webhooksapi") setActiveTab("developer");
                     else if (tabKey === "usageanalytics") setActiveTab("analytics");
                   }}

@@ -34,11 +34,6 @@ export function InviteMemberModal({
 
     setErrorMessage(null);
 
-    if (isFreePlan) {
-      setErrorMessage("Free plan includes 1 seat. Upgrade to Pro to invite team members and agents.");
-      return;
-    }
-
     setIsLoading(true);
     try {
       const res = await api.post(`/organizations/${currentOrg.id}/members`, {
@@ -119,7 +114,8 @@ export function InviteMemberModal({
               onChange={(e) => setRole(e.target.value as any)}
               className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/20 focus:border-fuchsia-500 transition"
             >
-              <option value="MEMBER">Member / Support Agent (Can view tickets & reply)</option>
+              <option value="MEMBER">Member (Read-only access)</option>
+              <option value="SUPPORT">Support Agent (Can view tickets & reply)</option>
               <option value="ADMIN">Admin (Can manage docs, settings, and team)</option>
               <option value="OWNER">Owner (Full access & billing control)</option>
             </select>

@@ -80,6 +80,20 @@ export function TeamMembersTab({ onOpenUpgrade }: { onOpenUpgrade: () => void })
     }
   };
 
+  const handleRoleChange = async (userId: string, newRole: string) => {
+    if (!currentOrg) return;
+    try {
+      await api.patch(`/organizations/${currentOrg.id}/members/${userId}`, {
+        role: newRole,
+      });
+      setMembers((prev) =>
+        prev.map((m) => (m.user_id === userId ? { ...m, role: newRole as any } : m))
+      );
+    } catch (err: any) {
+      alert("Failed to update member role: " + (err.response?.data?.detail || "Unknown error"));
+    }
+  };
+
   return (
     <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xs p-6 sm:p-8 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
@@ -97,21 +111,11 @@ export function TeamMembersTab({ onOpenUpgrade }: { onOpenUpgrade: () => void })
 
         <button
           type="button"
-          onClick={() => {
-            if (isFreePlan) {
-              onOpenUpgrade();
-            } else {
-              setIsInviteOpen(true);
-            }
-          }}
-          className={`flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs font-semibold shadow-xs transition cursor-pointer ${
-            isFreePlan
-              ? "bg-slate-100 text-slate-600 hover:bg-slate-200"
-              : "bg-slate-950 hover:bg-black text-white"
-          }`}
+          onClick={() => setIsInviteOpen(true)}
+          className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs font-semibold shadow-xs transition cursor-pointer bg-slate-950 hover:bg-black text-white"
         >
-          {isFreePlan ? <Lock className="w-3.5 h-3.5 text-fuchsia-600" /> : <UserPlus className="w-3.5 h-3.5" />}
-          <span>{isFreePlan ? "Unlock Team Seats (Pro)" : "Invite Member"}</span>
+          <UserPlus className="w-3.5 h-3.5" />
+          <span>Invite Member</span>
         </button>
       </div>
 
@@ -159,17 +163,25 @@ export function TeamMembersTab({ onOpenUpgrade }: { onOpenUpgrade: () => void })
                     <span className="font-bold text-slate-900 truncate">
                       {m.full_name || m.email.split("@")[0]}
                     </span>
-                    <span
-                      className={`text-[9px] font-extrabold px-2 py-0.2 rounded-md uppercase ${
-                        m.role === "OWNER"
-                          ? "bg-purple-100 text-purple-700"
-                          : m.role === "ADMIN"
-                          ? "bg-fuchsia-100 text-fuchsia-700"
-                          : "bg-slate-100 text-slate-700"
-                      }`}
-                    >
-                      {m.role}
-                    </span>
+                    {m.role === "OWNER" ? (
+                      <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-md uppercase bg-purple-100 text-purple-700">
+                        OWNER
+                      </span>
+                    ) : (
+                      <select
+                        value={m.role}
+                        onChange={(e) => handleRoleChange(m.user_id, e.target.value)}
+                        className={`text-[9px] font-extrabold px-1 py-0.5 rounded-md uppercase outline-none cursor-pointer ${
+                          m.role === "ADMIN"
+                            ? "bg-fuchsia-100 text-fuchsia-700"
+                            : "bg-slate-100 text-slate-700"
+                        }`}
+                      >
+                        <option value="MEMBER">MEMBER</option>
+                        <option value="SUPPORT">SUPPORT</option>
+                        <option value="ADMIN">ADMIN</option>
+                      </select>
+                    )}
                   </div>
                   <div className="text-slate-400 text-[11px] truncate">{m.email}</div>
                 </div>

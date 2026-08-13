@@ -59,6 +59,8 @@ export default function DashboardPage() {
         return "Developer Hub & API Gateway";
       case "analytics":
         return "Usage, Quotas & Subscription Billing";
+      case "organization":
+        return "Organization & Team Management";
       case "settings":
         return "Workspace Organization & Team Settings";
       default:
@@ -107,7 +109,7 @@ export default function DashboardPage() {
             <DeveloperPortalView />
           ) : activeTab === "analytics" ? (
             <UsageAnalyticsView />
-          ) : activeTab === "settings" ? (
+          ) : activeTab === "settings" || activeTab === "organization" ? (
             <WorkspaceSettingsView />
           ) : (
             <DashboardOverview
