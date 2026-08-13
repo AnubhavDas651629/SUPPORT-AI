@@ -73,7 +73,7 @@ export function TeamMembersTab({ onOpenUpgrade }: { onOpenUpgrade: () => void })
     if (confirm("Are you sure you want to remove this team member?")) {
       try {
         await api.delete(`/organizations/${currentOrg.id}/members/${userId}`);
-        setMembers((prev) => prev.filter((m) => m.user_id !== userId));
+        setMembers((prev) => prev.filter((m) => m.id !== userId));
       } catch (err) {
         alert("Failed to remove member.");
       }
@@ -87,7 +87,7 @@ export function TeamMembersTab({ onOpenUpgrade }: { onOpenUpgrade: () => void })
         role: newRole,
       });
       setMembers((prev) =>
-        prev.map((m) => (m.user_id === userId ? { ...m, role: newRole as any } : m))
+        prev.map((m) => (m.id === userId ? { ...m, role: newRole as any } : m))
       );
     } catch (err: any) {
       alert("Failed to update member role: " + (err.response?.data?.detail || "Unknown error"));
@@ -170,7 +170,7 @@ export function TeamMembersTab({ onOpenUpgrade }: { onOpenUpgrade: () => void })
                     ) : (
                       <select
                         value={m.role}
-                        onChange={(e) => handleRoleChange(m.user_id, e.target.value)}
+                        onChange={(e) => handleRoleChange(m.id, e.target.value)}
                         className={`text-[9px] font-extrabold px-1 py-0.5 rounded-md uppercase outline-none cursor-pointer ${
                           m.role === "ADMIN"
                             ? "bg-fuchsia-100 text-fuchsia-700"
@@ -190,7 +190,7 @@ export function TeamMembersTab({ onOpenUpgrade }: { onOpenUpgrade: () => void })
               {m.role !== "OWNER" && (
                 <button
                   type="button"
-                  onClick={() => handleRemoveMember(m.user_id)}
+                  onClick={() => handleRemoveMember(m.id)}
                   className="p-1.5 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition cursor-pointer"
                   title="Remove Member"
                 >

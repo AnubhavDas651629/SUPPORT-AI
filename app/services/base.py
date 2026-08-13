@@ -57,6 +57,36 @@ class BaseService:
 
         return membership
 
+    async def _require_admin(self, *, organization_id:UUID, current_user: User) -> OrganizationMember:
+        cache_key = RedisKeys.cache_member(str(organization_id), str(current_user.id))
+
+        cached_role = await self.redis.get(cache_key)
+        if cached_role:
+            if cached_role not in (OrganizationRole.OWNER.value, OrganizationRole.ADMIN.value):
+                raise PermissionDeniedException()
+            return OrganizationMember(
+                organization_id=organization_id,
+                user_id=current_user.id,
+                role=OrganizationRole(cached_role)
+            )
+
+        organization = await self.organization_repository.get_by_id_for_user(
+            organization_id=organization_id,
+            user_id=current_user.id
+        )
+        if organization is None:
+            raise OrganizationNotFoundException()
+
+        membership = await self.membership_repository.get_membership(
+            organization_id=organization_id,
+            user_id=current_user.id,
+        )
+        if membership is None or membership.role not in (OrganizationRole.OWNER, OrganizationRole.ADMIN):
+            raise PermissionDeniedException()
+        
+        await self.redis.set(cache_key, membership.role.value, ex=3600)
+        return membership
+
 
     async def _require_member(self, *, organization_id: UUID, current_user: User) -> OrganizationMember:
         cache_key = RedisKeys.cache_member(str(organization_id), str(current_user.id))

@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { AlertTriangle, Trash2, Loader2 } from "lucide-react";
 import { useOrganization } from "@/context/OrganizationContext";
+import { api } from "@/lib/api";
 
 export function DangerZoneCard() {
   const { currentOrg } = useOrganization();
@@ -10,13 +11,19 @@ export function DangerZoneCard() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
-    if (confirmText !== currentOrg?.name) return;
-    if (confirm(`Are you absolutely sure you want to delete ${currentOrg?.name}? All tickets, documents, and API keys will be deleted immediately.`)) {
+    if (confirmText !== currentOrg?.name || !currentOrg) return;
+    if (confirm(`Are you absolutely sure you want to delete ${currentOrg.name}? All tickets, documents, and API keys will be deleted immediately.`)) {
       setIsDeleting(true);
-      setTimeout(() => {
+      try {
+        await api.delete(`/organizations/${currentOrg.id}`);
         alert("Workspace deleted.");
+        // Redirect or refresh
         window.location.href = "/dashboard";
-      }, 1000);
+      } catch (err: any) {
+        alert("Failed to delete workspace: " + (err.response?.data?.detail || "Unknown error"));
+      } finally {
+        setIsDeleting(false);
+      }
     }
   };
 

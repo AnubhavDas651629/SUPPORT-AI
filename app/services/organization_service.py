@@ -57,6 +57,35 @@ class OrganizationService(BaseService):
         await self.session.commit()
         return organization
 
+    async def update_organization(self, *, organization_id: UUID, current_user: User, name: str) -> Organization:
+        await self._require_admin(
+            organization_id=organization_id,
+            current_user=current_user,
+        )
+
+        organization = await self.organization_repository.get_by_id(organization_id)
+        if organization is None:
+            raise OrganizationNotFoundException()
+
+        organization.name = name
+        # We can also update slug if needed, but usually it's better to keep it static or update it safely
+        
+        await self.session.commit()
+        return organization
+
+    async def delete_organization(self, *, organization_id: UUID, current_user: User) -> None:
+        await self._require_owner(
+            organization_id=organization_id,
+            current_user=current_user,
+        )
+
+        organization = await self.organization_repository.get_by_id(organization_id)
+        if organization is None:
+            raise OrganizationNotFoundException()
+
+        await self.organization_repository.delete(organization)
+        await self.session.commit()
+
     async def list_organizations(self, *, current_user:User,) -> list[Organization]:
         return await self.organization_repository.list_for_user(
             user_id=current_user.id
