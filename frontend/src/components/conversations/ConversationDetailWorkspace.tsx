@@ -138,6 +138,12 @@ export function ConversationDetailWorkspace({
     const content = replyText.trim();
     setReplyText("");
 
+    try {
+      await api.post(`/conversations/${conversation.id}/reply`, { content });
+    } catch (err) {
+      console.warn("Reply API error:", err);
+    }
+
     const newMsg: MessageItem = {
       id: `msg_${Date.now()}`,
       role: "AGENT",

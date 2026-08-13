@@ -32,6 +32,7 @@
     let isStreaming = false;
     const storageKey = "supportai_conv_" + apiKey.slice(-16);
     let conversationId = localStorage.getItem(storageKey) || null;
+    let knownBackendMessageCount = 0;
 
     // 3. Inject CSS Styles
     const styles = `
@@ -330,7 +331,10 @@
 
     function appendMessage(role, text) {
         const msg = document.createElement("div");
-        msg.className = `sai-msg ${role === "user" ? "sai-msg-user" : "sai-msg-assistant"}`;
+        // Map 'support' role to 'assistant' so it renders on the left side
+        const safeRole = (role || "").toLowerCase();
+        const renderRole = (safeRole === "user") ? "user" : "assistant";
+        msg.className = `sai-msg ${renderRole === "user" ? "sai-msg-user" : "sai-msg-assistant"}`;
         msg.textContent = text;
         messagesBox.appendChild(msg);
         messagesBox.scrollTop = messagesBox.scrollHeight;
@@ -381,8 +385,44 @@
             if (messagesBox.children.length === 0) {
                 appendMessage("assistant", config.welcome_message || "Hi! How can we help?");
             }
+
+            // Sync history if returning user
+            if (conversationId) {
+                await syncMessages();
+            }
         } catch (err) {
             console.warn("[SupportAI] Failed to load config:", err);
+        }
+    }
+
+    // 7.5 Sync Messages for Polling & History
+    async function syncMessages() {
+        if (!conversationId || isStreaming) return;
+        try {
+            const res = await fetch(`${apiUrl}/api/v1/widget/conversations/${conversationId}/messages`, {
+                headers: { "X-API-Key": apiKey }
+            });
+            if (!res.ok) {
+                if (res.status === 404) {
+                    conversationId = null;
+                    localStorage.removeItem(storageKey);
+                }
+                return;
+            }
+            const msgs = await res.json();
+            
+            if (msgs.length > knownBackendMessageCount) {
+                // New messages found! Re-render chat
+                messagesBox.innerHTML = "";
+                appendMessage("assistant", config.welcome_message || "Hi! How can we help?");
+                
+                for (const msg of msgs) {
+                    appendMessage(msg.role, msg.content);
+                }
+                knownBackendMessageCount = msgs.length;
+            }
+        } catch (err) {
+            console.warn("[SupportAI] Error syncing messages:", err);
         }
     }
 
@@ -499,4 +539,7 @@
 
     // 10. Initialize
     loadConfig();
+    
+    // 11. Poll for new messages (e.g. human agent replies)
+    setInterval(syncMessages, 5000);
 })();

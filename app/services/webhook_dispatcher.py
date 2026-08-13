@@ -80,6 +80,9 @@ class WebhookDispatcher:
         Fires an event to all active endpoints subscribed to it.
         Runs asynchronously in the background.
         """
+        import logging
+        logger = logging.getLogger(__name__)
+
         payload = {
             "id": str(uuid4()),
             "event": event_type,
@@ -88,14 +91,18 @@ class WebhookDispatcher:
             "data": data,
         }
         payload_bytes = json.dumps(payload, default=str).encode("utf-8")
+
         # Open an independent database session for the background task
-        async for session in get_db():
+        session_gen = get_db()
+        session = await session_gen.__anext__()
+        try:
             repo = WebhookRepository(session)
             endpoints = await repo.get_active_endpoints_for_event(
                 organization_id=organization_id,
                 event_type=event_type,
             )
             if not endpoints:
+                logger.info("No active endpoints for event %s in org %s", event_type, organization_id)
                 return
             fernet = Fernet(settings.webhook_encryption_key.encode())
             for endpoint in endpoints:
@@ -123,12 +130,18 @@ class WebhookDispatcher:
                     status_code = response.status_code
                     response_body = response.text[:self.MAX_RESPONSE_BODY_LENGTH]
                     is_success = 200 <= status_code < 300
+                    logger.info(
+                        "Webhook delivery to %s: status=%s success=%s duration=%dms",
+                        endpoint.url, status_code, is_success, duration_ms,
+                    )
                 except httpx.TimeoutException:
                     duration_ms = int((time.monotonic() - start) * 1000)
                     response_body = "Timeout after 10s"
+                    logger.warning("Webhook delivery to %s timed out after %dms", endpoint.url, duration_ms)
                 except Exception as exc:
                     duration_ms = int((time.monotonic() - start) * 1000)
                     response_body = f"Network error: {str(exc)}"
+                    logger.error("Webhook delivery to %s failed: %s", endpoint.url, exc, exc_info=True)
                 # Log the delivery attempt in database
                 await repo.create_delivery_log(
                     endpoint_id=endpoint.id,
@@ -145,4 +158,9 @@ class WebhookDispatcher:
                 else:
                     await repo.increment_failure(endpoint=endpoint)
                 await session.commit()
-            return
+        finally:
+            # Properly close the async generator
+            try:
+                await session_gen.aclose()
+            except Exception:
+                pass

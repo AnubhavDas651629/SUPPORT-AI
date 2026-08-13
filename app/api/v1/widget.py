@@ -22,7 +22,7 @@ from app.services.organization_settings_service import OrganizationSettingsServi
 from app.services.usage_service import UsageService
 from app.core.webhook_events import WebhookEventType
 from app.utils.webhook_payloads import serialize_conversation_payload
-from app.workers.tasks import dispatch_webhook_event_task
+from app.utils.webhook_dispatch import fire_webhook_event
 
 router = APIRouter(prefix="/api/v1/widget", tags=["widget"])
 
@@ -83,7 +83,7 @@ async def create_widget_conversation(
     await usage_service.record_conversation_started(
         organization_id=organization.id
     )
-    dispatch_webhook_event_task.delay(
+    fire_webhook_event(
         str(organization.id),
         WebhookEventType.CONVERSATION_CREATED.value,
         serialize_conversation_payload(conversation),

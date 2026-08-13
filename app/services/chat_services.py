@@ -30,7 +30,7 @@ from app.services.usage_service import UsageService
 from app.services.organization_settings_service import OrganizationSettingsService
 from app.core.webhook_events import WebhookEventType
 from app.utils.webhook_payloads import serialize_conversation_payload, serialize_message_payload
-from app.workers.tasks import dispatch_webhook_event_task
+from app.utils.webhook_dispatch import fire_webhook_event
 
 class ChatService(BaseService):
     def __init__(self, session: AsyncSession):
@@ -124,7 +124,7 @@ class ChatService(BaseService):
             role=MessageRole.USER,
             content=question
         )
-        dispatch_webhook_event_task.delay(
+        fire_webhook_event(
             str(conversation.organization_id),
             WebhookEventType.MESSAGE_CREATED.value,
             serialize_message_payload(user_message, organization_id=conversation.organization_id),
@@ -179,7 +179,7 @@ class ChatService(BaseService):
             role=MessageRole.ASSISTANT,
             content=result.answer
         )
-        dispatch_webhook_event_task.delay(
+        fire_webhook_event(
             str(conversation.organization_id),
             WebhookEventType.MESSAGE_CREATED.value,
             serialize_message_payload(assistant_message, organization_id=conversation.organization_id),
@@ -220,7 +220,7 @@ class ChatService(BaseService):
             role=MessageRole.USER,
             content=question,
         )
-        dispatch_webhook_event_task.delay(
+        fire_webhook_event(
             str(conversation.organization_id),
             WebhookEventType.MESSAGE_CREATED.value,
             serialize_message_payload(user_message, organization_id=conversation.organization_id),
@@ -286,7 +286,7 @@ class ChatService(BaseService):
             role=MessageRole.ASSISTANT,
             content=full_answer,
         )
-        dispatch_webhook_event_task.delay(
+        fire_webhook_event(
             str(conversation.organization_id),
             WebhookEventType.MESSAGE_CREATED.value,
             serialize_message_payload(assistant_message, organization_id=conversation.organization_id),
@@ -319,7 +319,7 @@ class ChatService(BaseService):
             await usage_service.record_conversation_started(
                 organization_id=knowledge_base.organization_id
             )
-            dispatch_webhook_event_task.delay(
+            fire_webhook_event(
                 str(knowledge_base.organization_id),
                 WebhookEventType.CONVERSATION_CREATED.value,
                 serialize_conversation_payload(conversation),
@@ -361,7 +361,7 @@ class ChatService(BaseService):
             await usage_service.record_conversation_started(
                 organization_id=knowledge_base.organization_id
             )
-            dispatch_webhook_event_task.delay(
+            fire_webhook_event(
                 str(knowledge_base.organization_id),
                 WebhookEventType.CONVERSATION_CREATED.value,
                 serialize_conversation_payload(conversation),

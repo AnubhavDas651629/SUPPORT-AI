@@ -6,10 +6,14 @@ import { useOrganization } from "@/context/OrganizationContext";
 import { api } from "@/lib/api";
 
 const ALL_EVENTS = [
-  { id: "ticket.escalated", label: "Ticket Auto-Escalated", desc: "Fires when customer requests refund or negative sentiment triggers human escalation." },
-  { id: "message.created", label: "New Message Sent", desc: "Fires on every customer or AI response message." },
-  { id: "conversation.resolved", label: "Conversation Resolved", desc: "Fires when a ticket or chat session is marked resolved." },
-  { id: "knowledge.synced", label: "Knowledge Base Synced", desc: "Fires when a document finishes vector embedding in pgvector." },
+  { id: "ticket.created", label: "Ticket Created", desc: "Fires when a customer request triggers AI auto-escalation or manual ticket creation." },
+  { id: "ticket.updated", label: "Ticket Updated", desc: "Fires when a ticket's status, priority, or assignment changes." },
+  { id: "ticket.assigned", label: "Ticket Assigned", desc: "Fires when a ticket is assigned to a support agent." },
+  { id: "ticket.resolved", label: "Ticket Resolved", desc: "Fires when a ticket is marked as resolved or closed." },
+  { id: "conversation.created", label: "Conversation Created", desc: "Fires when a new visitor chat session is started." },
+  { id: "message.created", label: "New Message Sent", desc: "Fires on every customer, AI, or agent message." },
+  { id: "feedback.submitted", label: "Feedback Submitted", desc: "Fires when a visitor submits thumbs up/down feedback on a response." },
+  { id: "*", label: "All Events (Wildcard)", desc: "Subscribe to every event type. Useful for logging and audit." },
 ];
 
 export function CreateWebhookModal({
@@ -27,8 +31,8 @@ export function CreateWebhookModal({
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
   const [selectedEvents, setSelectedEvents] = useState<string[]>([
-    "ticket.escalated",
-    "conversation.resolved",
+    "ticket.created",
+    "ticket.resolved",
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);

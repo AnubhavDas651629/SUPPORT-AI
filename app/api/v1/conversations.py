@@ -5,10 +5,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.dependencies import get_db
 from app.dependencies.auth import get_current_user
+from app.dto.message import SupportReplyRequest
 from app.models.user import User
 from app.schemas.conversation import (
     ConversationSummaryResponse,
     ConversationDetailResponse,
+    MessageResponse,
 )
 from app.services.conversation_services import ConversationService
 
@@ -59,6 +61,23 @@ async def get_conversation(
     return ConversationDetailResponse.model_validate(
         conversation
     )
+
+
+@router.post("/{conversation_id}/reply", response_model=MessageResponse)
+async def reply_to_conversation(
+    conversation_id: UUID,
+    request: SupportReplyRequest,
+    session: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Human agent sends a reply directly on a conversation (from Live Conversations page)."""
+    service = ConversationService(session=session)
+    message = await service.reply_as_agent(
+        conversation_id=conversation_id,
+        content=request.content,
+        current_user=current_user,
+    )
+    return MessageResponse.model_validate(message)
 
 
 @router.delete(

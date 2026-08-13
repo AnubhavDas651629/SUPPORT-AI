@@ -32,6 +32,7 @@ class ConversationService(BaseService):
         cache_service = RedisCacheService(self.redis)
         cache_key = RedisKeys.cache_conversation(str(conversation_id))
 
+        # Fast-path: use cached metadata for membership validation only
         cached_conv = await cache_service.get_json(key=cache_key, schema_cls=ConversationResponse)
         if cached_conv:
             if current_user is not None:
@@ -39,14 +40,13 @@ class ConversationService(BaseService):
                     organization_id=cached_conv.organization_id,
                     current_user=current_user,
                 )
-            return Conversation(
-                id=cached_conv.id,
-                organization_id=cached_conv.organization_id,
-                knowledge_base_id=cached_conv.knowledge_base_id,
-                title=cached_conv.title,
-                created_at=cached_conv.created_at,
-                updated_at=cached_conv.updated_at,
+            # Still fetch from DB so eager-loaded relationships (messages) are present
+            conversation = await self.conversation_repository.get_by_id(
+                conversation_id=conversation_id,
             )
+            if conversation is None:
+                raise ConversationNotFoundException()
+            return conversation
 
         conversation = await self.conversation_repository.get_by_id(
             conversation_id=conversation_id,
@@ -72,6 +72,30 @@ class ConversationService(BaseService):
             conversation_id=conversation_id,
             role=role,
             content=content
+        )
+        await self.session.commit()
+        await self.session.refresh(message)
+        return message
+
+    async def reply_as_agent(self, *, conversation_id: UUID, content: str, current_user: User) -> Message:
+        """Create a SUPPORT message on a conversation from the Live Conversations page."""
+        from app.core.webhook_events import WebhookEventType
+        from app.utils.webhook_payloads import serialize_message_payload
+        from app.utils.webhook_dispatch import fire_webhook_event
+
+        conversation = await self.get_conversation(
+            conversation_id=conversation_id,
+            current_user=current_user,
+        )
+        message = await self.message_repository.create(
+            conversation_id=conversation.id,
+            role=MessageRole.SUPPORT,
+            content=content,
+        )
+        fire_webhook_event(
+            str(conversation.organization_id),
+            WebhookEventType.MESSAGE_CREATED.value,
+            serialize_message_payload(message, organization_id=conversation.organization_id),
         )
         await self.session.commit()
         await self.session.refresh(message)

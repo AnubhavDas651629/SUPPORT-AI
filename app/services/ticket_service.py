@@ -18,7 +18,8 @@ from app.exceptions.ticket import TicketAlreadyExistsException, TicketNotFoundEx
 from app.models.message import Message, MessageRole
 from app.models.user import User
 from app.services.ticket_event_service import TicketEventService
-from app.workers.tasks import send_ticket_create_email, dispatch_webhook_event_task
+from app.workers.tasks import send_ticket_create_email
+from app.utils.webhook_dispatch import fire_webhook_event
 from app.core.webhook_events import WebhookEventType
 from app.utils.webhook_payloads import serialize_ticket_payload, serialize_message_payload
 
@@ -64,7 +65,7 @@ class TicketService(BaseService):
         send_ticket_create_email.delay(
             str(ticket.id)
         )
-        dispatch_webhook_event_task.delay(
+        fire_webhook_event(
             str(ticket.organization_id),
             WebhookEventType.TICKET_CREATED.value,
             serialize_ticket_payload(ticket),
@@ -149,13 +150,13 @@ class TicketService(BaseService):
             description=f"Status changed to {status.value}.",
         )
         payload = serialize_ticket_payload(updated)
-        dispatch_webhook_event_task.delay(
+        fire_webhook_event(
             str(updated.organization_id),
             WebhookEventType.TICKET_UPDATED.value,
             payload,
         )
         if status in (TicketStatus.RESOLVED, TicketStatus.CLOSED):
-            dispatch_webhook_event_task.delay(
+            fire_webhook_event(
                 str(updated.organization_id),
                 WebhookEventType.TICKET_RESOLVED.value,
                 payload,
@@ -182,7 +183,7 @@ class TicketService(BaseService):
             description=f"Priority changed to {priority.value}.",
         )
         payload = serialize_ticket_payload(updated)
-        dispatch_webhook_event_task.delay(
+        fire_webhook_event(
             str(updated.organization_id),
             WebhookEventType.TICKET_UPDATED.value,
             payload,
@@ -243,12 +244,12 @@ class TicketService(BaseService):
             description=f"Assigned to {user.full_name}.",
         )
         payload = serialize_ticket_payload(ticket)
-        dispatch_webhook_event_task.delay(
+        fire_webhook_event(
             str(ticket.organization_id),
             WebhookEventType.TICKET_ASSIGNED.value,
             payload,
         )
-        dispatch_webhook_event_task.delay(
+        fire_webhook_event(
             str(ticket.organization_id),
             WebhookEventType.TICKET_UPDATED.value,
             payload,
@@ -276,7 +277,7 @@ class TicketService(BaseService):
             description="Support agent replied.",
         )
         msg_payload = serialize_message_payload(message, organization_id=ticket.organization_id)
-        dispatch_webhook_event_task.delay(
+        fire_webhook_event(
             str(ticket.organization_id),
             WebhookEventType.MESSAGE_CREATED.value,
             msg_payload,
