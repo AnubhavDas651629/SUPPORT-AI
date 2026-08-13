@@ -21,3 +21,10 @@ class DocumentListResponse(BaseModel):
     id: UUID
     original_filename: str
     status: DocumentStatus
+
+class DocumentChunkResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    chunk_index: int
+    content: str
+    token_count: int

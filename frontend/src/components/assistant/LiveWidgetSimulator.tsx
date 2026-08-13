@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 import { MessageSquare, X, Send, Bot, Sparkles, RotateCcw, Check, ExternalLink } from "lucide-react";
+import { useOrganization } from "@/context/OrganizationContext";
+import { api, getAccessToken } from "@/lib/api";
 
 interface LiveWidgetSimulatorProps {
   widgetTitle: string;
@@ -18,8 +20,10 @@ export function LiveWidgetSimulator({
   placement,
   starterPrompts,
 }: LiveWidgetSimulatorProps) {
+  const { currentOrg } = useOrganization();
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(true);
-  const [messages, setMessages] = useState<Array<{ sender: "ai" | "user"; text: string }>>([
+  const [messages, setMessages] = useState<Array<{ sender: "ai" | "user"; text: string; isEscalated?: boolean }>>([
     {
       sender: "ai",
       text: welcomeMessage || "Hi there! How can we help you today?",
@@ -28,7 +32,7 @@ export function LiveWidgetSimulator({
   const [inputVal, setInputVal] = useState("");
   const [isTyping, setIsTyping] = useState(false);
 
-  const handleSend = (textToSend?: string) => {
+  const handleSend = async (textToSend?: string) => {
     const text = textToSend || inputVal;
     if (!text.trim() || isTyping) return;
 
@@ -36,17 +40,101 @@ export function LiveWidgetSimulator({
     setMessages((prev) => [...prev, { sender: "user", text }]);
     setIsTyping(true);
 
-    setTimeout(() => {
-      let reply = `Thanks for asking! Based on our documentation, standard delivery takes 3 to 5 business days. Let me know if you need anything else!`;
-      if (text.toLowerCase().includes("refund") || text.toLowerCase().includes("human")) {
-        reply = "I understand you need immediate assistance. I have flagged this conversation for human agent takeover. A specialist will assist you shortly.";
+    try {
+      const token = getAccessToken();
+      
+      let kbId = null;
+      if (currentOrg) {
+        if (!conversationId) {
+          const resKb = await api.get(`/organizations/${currentOrg.id}/knowledge-bases`);
+          if (resKb.data && resKb.data.length > 0) {
+            kbId = resKb.data[0].id;
+          }
+        }
       }
-      setMessages((prev) => [...prev, { sender: "ai", text: reply }]);
+
+      const res = await fetch(`http://localhost:8000/api/v1/chat/stream`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          conversation_id: conversationId,
+          knowledge_base_id: kbId,
+          organization_id: currentOrg?.id,
+          question: text,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to chat");
+
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder();
+      let aiResponse = "";
+      let currentConvId = conversationId;
+
+      setMessages((prev) => [...prev, { sender: "ai", text: "" }]);
+
+      let buffer = "";
+      while (reader) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        buffer += decoder.decode(value, { stream: true });
+        
+        const parts = buffer.split("\n\n");
+        buffer = parts.pop() || "";
+        
+        for (const part of parts) {
+          if (part.trim() === "data: [DONE]") continue;
+          if (part.startsWith("data: ")) {
+            try {
+              const dataStr = part.replace(/^data: /, "");
+              const data = JSON.parse(dataStr);
+              
+              if (data.type === "meta") {
+                currentConvId = data.conversation_id;
+                setConversationId(currentConvId);
+              } else if (data.type === "token") {
+                aiResponse += data.content;
+                setMessages((prev) => {
+                  const newMessages = [...prev];
+                  newMessages[newMessages.length - 1].text = aiResponse;
+                  
+                  if (
+                    aiResponse.toLowerCase().includes("escalat") ||
+                    aiResponse.toLowerCase().includes("ticket #") ||
+                    aiResponse.toLowerCase().includes("human agent")
+                  ) {
+                    newMessages[newMessages.length - 1].isEscalated = true;
+                  }
+                  
+                  return newMessages;
+                });
+              }
+            } catch (err) {
+              console.error("Error parsing SSE JSON", err, part);
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error(e);
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: "ai",
+          text: "Sorry, I encountered an error connecting to the server.",
+        },
+      ]);
+    } finally {
       setIsTyping(false);
-    }, 700);
+    }
   };
 
   const handleReset = () => {
+    setConversationId(null);
     setMessages([
       {
         sender: "ai",

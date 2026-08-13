@@ -25,4 +25,14 @@ class KnowledgeBaseListResponse(BaseModel):
 
     id: UUID
     name: str
-    description: str | None
+    description: str | None = None
+
+class KnowledgeBaseSearchRequest(BaseModel):
+    query: str
+    limit: int = 3
+
+class KnowledgeBaseSearchResult(BaseModel):
+    score: float
+    document_name: str
+    chunk_index: int
+    snippet: str

@@ -78,23 +78,53 @@ async def chat(
         ],
     )
 
+import json
+
 @router.post("/stream")
 async def stream_chat(
     request: ChatRequest,
     session: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    service = ChatService(session=session)
+    from app.services.conversation_services import ConversationService
+    conv_service = ConversationService(session=session)
+    
+    # 1. Resolve or create conversation to get ID before streaming
+    if request.conversation_id:
+        conversation = await conv_service.get_conversation(
+            conversation_id=request.conversation_id,
+            current_user=current_user
+        )
+    else:
+        # Create a new conversation
+        conversation = await conv_service.create_conversation(
+            organization_id=request.organization_id,
+            knowledge_base_id=request.knowledge_base_id,
+            title=request.question[:100]
+        )
+        # Note: We don't fire webhooks here since it's just the simulator, 
+        # but if we wanted to, we could. The actual chat service will fire message webhooks.
 
-    generator = service.stream_chat(
-        conversation_id=request.conversation_id,
-        knowledge_base_id=request.knowledge_base_id,
-        question=request.question,
-        current_user=current_user,
-    )
+    async def sse_event_stream():
+        # First event: Send conversation metadata
+        initial_meta = json.dumps({
+            "type": "meta",
+            "conversation_id": str(conversation.id),
+        })
+        yield f"data: {initial_meta}\n\n"
+        
+        service = ChatService(session=session)
+        async for token in service.stream_answer(
+            conversation_id=conversation.id,
+            question=request.question,
+        ):
+            chunk_data = json.dumps({"type": "token", "content": token})
+            yield f"data: {chunk_data}\n\n"
+            
+        yield "data: [DONE]\n\n"
 
     return StreamingResponse(
-        generator,
+        sse_event_stream(),
         media_type="text/event-stream"
     )
 

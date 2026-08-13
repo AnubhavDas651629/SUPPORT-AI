@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { X, Send, Sparkles, Bot, AlertCircle, CheckCircle2, RotateCcw, Loader2 } from "lucide-react";
 import { useOrganization } from "@/context/OrganizationContext";
-import { api } from "@/lib/api";
+import { api, getAccessToken } from "@/lib/api";
 
 interface Message {
   sender: "ai" | "user";
@@ -19,6 +19,7 @@ export function LiveAiTestDrawer({
   onClose: () => void;
 }) {
   const { currentOrg } = useOrganization();
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([
     {
       sender: "ai",
@@ -39,37 +40,106 @@ export function LiveAiTestDrawer({
     setMessages((prev) => [...prev, { sender: "user", text: userText }]);
     setIsStreaming(true);
 
-    // Simulate RAG & Escalation check
-    const isEscalationPrompt =
-      userText.toLowerCase().includes("refund") ||
-      userText.toLowerCase().includes("escalate") ||
-      userText.toLowerCase().includes("human") ||
-      userText.toLowerCase().includes("urgent");
-
-    setTimeout(() => {
-      if (isEscalationPrompt) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            sender: "ai",
-            text: "I understand you need immediate assistance regarding this request. I have automatically escalated this conversation to our senior human support team and generated Ticket #88392. A human specialist will assist you shortly.",
-            isEscalated: true,
-          },
-        ]);
-      } else {
-        setMessages((prev) => [
-          ...prev,
-          {
-            sender: "ai",
-            text: `Based on your uploaded knowledge base (Shipping & Policies), standard ground delivery takes 3 to 5 business days across North America. Expedited express orders arrive within 24–48 hours. Let me know if you need help tracking a specific package!`,
-          },
-        ]);
+    try {
+      const token = getAccessToken();
+      
+      let kbId = null;
+      if (currentOrg) {
+        // Fetch org KBs to get one, or we can just send knowledge_base_id = null and let backend fail if none.
+        // Actually, backend requires either conversation_id or knowledge_base_id.
+        // If we don't have a KB, we must fetch it first if conversationId is null.
+        if (!conversationId) {
+          const resKb = await api.get(`/organizations/${currentOrg.id}/knowledge-bases`);
+          if (resKb.data && resKb.data.length > 0) {
+            kbId = resKb.data[0].id;
+          }
+        }
       }
+
+      const res = await fetch(`http://localhost:8000/api/v1/chat/stream`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          conversation_id: conversationId,
+          knowledge_base_id: kbId,
+          organization_id: currentOrg?.id,
+          question: userText,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to chat");
+
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder();
+      let aiResponse = "";
+      let currentConvId = conversationId;
+
+      setMessages((prev) => [...prev, { sender: "ai", text: "" }]);
+
+      let buffer = "";
+      while (reader) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        buffer += decoder.decode(value, { stream: true });
+        
+        // SSE messages are separated by \n\n
+        const parts = buffer.split("\n\n");
+        buffer = parts.pop() || ""; // Keep the incomplete part in the buffer
+        
+        for (const part of parts) {
+          if (part.trim() === "data: [DONE]") continue;
+          if (part.startsWith("data: ")) {
+            try {
+              const dataStr = part.replace(/^data: /, "");
+              const data = JSON.parse(dataStr);
+              
+              if (data.type === "meta") {
+                currentConvId = data.conversation_id;
+                setConversationId(currentConvId);
+              } else if (data.type === "token") {
+                aiResponse += data.content;
+                setMessages((prev) => {
+                  const newMessages = [...prev];
+                  newMessages[newMessages.length - 1].text = aiResponse;
+                  
+                  if (
+                    aiResponse.toLowerCase().includes("escalat") ||
+                    aiResponse.toLowerCase().includes("ticket #") ||
+                    aiResponse.toLowerCase().includes("human agent")
+                  ) {
+                    newMessages[newMessages.length - 1].isEscalated = true;
+                  }
+                  
+                  return newMessages;
+                });
+              }
+            } catch (err) {
+              console.error("Error parsing SSE JSON", err, part);
+            }
+          }
+        }
+      }
+
+    } catch (e) {
+      console.error(e);
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: "ai",
+          text: "Sorry, I encountered an error connecting to the server. Do you have an active knowledge base?",
+        },
+      ]);
+    } finally {
       setIsStreaming(false);
-    }, 900);
+    }
   };
 
   const handleReset = () => {
+    setConversationId(null);
     setMessages([
       {
         sender: "ai",

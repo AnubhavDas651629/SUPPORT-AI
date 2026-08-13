@@ -9,6 +9,7 @@ class ChatRequest(BaseModel):
     #if a user blindly joins and in goes to chat then there is not conversation_id yet, it will be created, but when a person joins a chat again, no knowledge_base_id would be requuried as it alr knows from first chat which knowledge base to search for
     conversation_id: UUID | None = None
     knowledge_base_id: UUID | None = None
+    organization_id: UUID | None = None
     question: str
 
     @model_validator(mode="after")

@@ -87,8 +87,8 @@ export function KnowledgeBaseManagerView() {
         if (Array.isArray(res.data)) {
           const mapped: KnowledgeDocument[] = res.data.map((d: any) => ({
             id: d.id,
-            title: d.filename?.replace(/\.[^/.]+$/, "").replace(/[_-]/g, " ") || "Document",
-            file_name: d.filename,
+            title: d.original_filename?.replace(/\.[^/.]+$/, "").replace(/[_-]/g, " ") || "Document",
+            file_name: d.original_filename,
             file_size: `${((d.file_size || 1024 * 500) / (1024 * 1024)).toFixed(1)} MB`,
             chunks_count: d.chunk_count || 32,
             status: d.status === "READY" ? "READY" : d.status === "PROCESSING" ? "INDEXING" : "READY",
