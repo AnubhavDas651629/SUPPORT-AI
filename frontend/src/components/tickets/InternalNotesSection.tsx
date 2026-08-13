@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Lock, Send, Trash2, User, Clock, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { api } from "@/lib/api";
 
 export interface NoteItem {
   id: string;
@@ -19,47 +20,64 @@ export function InternalNotesSection({
   initialNotes?: NoteItem[];
 }) {
   const { user } = useAuth();
-  const [notes, setNotes] = useState<NoteItem[]>(
-    initialNotes.length > 0
-      ? initialNotes
-      : [
-          {
-            id: "note_1",
-            author_name: "Support AI System",
-            content: "Auto-escalated due to refund amount ($500) exceeding auto-approval limit ($50).",
-            created_at: "10 mins ago",
-          },
-          {
-            id: "note_2",
-            author_name: user?.full_name || "Lead Agent",
-            content: "Checked customer order #88392 in Stripe. Payment was settled 2 days ago. Approved for full refund under 30-day warranty.",
-            created_at: "4 mins ago",
-          },
-        ]
-  );
+  const [notes, setNotes] = useState<NoteItem[]>(initialNotes);
   const [newNoteContent, setNewNoteContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleAddNote = (e: React.FormEvent) => {
+  React.useEffect(() => {
+    async function loadNotes() {
+      try {
+        const res = await api.get(`/tickets/${ticketId}/notes`);
+        if (Array.isArray(res.data)) {
+          const mapped = res.data.map((n: any) => ({
+            id: n.id,
+            author_name: n.author_name || "Unknown",
+            content: n.content,
+            created_at: new Date(n.created_at).toLocaleString(),
+          }));
+          setNotes(mapped);
+        }
+      } catch (err) {
+        console.warn("Failed to load notes", err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadNotes();
+  }, [ticketId]);
+
+  const handleAddNote = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newNoteContent.trim()) return;
+    if (!newNoteContent.trim() || isSubmitting) return;
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      const newNote: NoteItem = {
-        id: `note_${Date.now()}`,
-        author_name: user?.full_name || "You",
+    try {
+      const res = await api.post(`/tickets/${ticketId}/notes`, {
         content: newNoteContent.trim(),
-        created_at: "Just now",
+      });
+      const newNote: NoteItem = {
+        id: res.data.id,
+        author_name: res.data.author_name || user?.full_name || "You",
+        content: res.data.content,
+        created_at: new Date(res.data.created_at).toLocaleString(),
       };
       setNotes((prev) => [...prev, newNote]);
       setNewNoteContent("");
+    } catch (err) {
+      console.error("Failed to add note", err);
+    } finally {
       setIsSubmitting(false);
-    }, 300);
+    }
   };
 
-  const handleDeleteNote = (noteId: string) => {
-    setNotes((prev) => prev.filter((n) => n.id !== noteId));
+  const handleDeleteNote = async (noteId: string) => {
+    try {
+      await api.delete(`/tickets/notes/${noteId}`);
+      setNotes((prev) => prev.filter((n) => n.id !== noteId));
+    } catch (err) {
+      console.error("Failed to delete note", err);
+    }
   };
 
   return (

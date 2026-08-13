@@ -7,11 +7,12 @@ from app.models.message import Message
 
 
 class MessageRepository(BaseRepository):
-    async def create(self, *, conversation_id: UUID, role:MessageRole, content: str ) -> Message:
+    async def create(self, *, conversation_id: UUID, role:MessageRole, content: str, citations: list[dict] | None = None ) -> Message:
         message = Message(
             conversation_id = conversation_id,
             role = role,
-            content = content
+            content = content,
+            citations = citations
         )
         self.session.add(message)
         await self.session.flush()

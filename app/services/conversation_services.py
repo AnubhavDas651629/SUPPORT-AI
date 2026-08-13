@@ -67,11 +67,12 @@ class ConversationService(BaseService):
         )
         return conversation
 
-    async def create_message(self,*, conversation_id: UUID, role: MessageRole, content: str) -> Message:
+    async def create_message(self,*, conversation_id: UUID, role: MessageRole, content: str, citations: list[dict] | None = None) -> Message:
         message = await self.message_repository.create(
             conversation_id=conversation_id,
             role=role,
-            content=content
+            content=content,
+            citations=citations
         )
         await self.session.commit()
         await self.session.refresh(message)

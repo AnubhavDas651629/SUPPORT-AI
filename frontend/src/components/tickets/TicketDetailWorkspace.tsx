@@ -30,6 +30,7 @@ interface ChatMessage {
   text: string;
   timestamp: string;
   isEscalationTrigger?: boolean;
+  citations?: any[];
 }
 
 export function TicketDetailWorkspace({
@@ -44,6 +45,7 @@ export function TicketDetailWorkspace({
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<"transcript" | "notes" | "events">("transcript");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [events, setEvents] = useState<any[]>([]);
   const [replyText, setReplyText] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
@@ -53,11 +55,17 @@ export function TicketDetailWorkspace({
   useEffect(() => {
     if (!ticket) {
       setMessages([]);
+      setEvents([]);
       return;
     }
 
     async function loadTranscript() {
       try {
+        const evtRes = await api.get(`/tickets/${ticket!.id}/events`);
+        if (Array.isArray(evtRes.data)) {
+          setEvents(evtRes.data);
+        }
+        
         if (ticket?.conversation_id) {
           const res = await api.get(`/conversations/${ticket.conversation_id}`);
           const msgs = res.data?.messages || res.data;
@@ -69,6 +77,7 @@ export function TicketDetailWorkspace({
               text: m.content,
               timestamp: new Date(m.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
               isEscalationTrigger: m.content?.toLowerCase().includes("refund") || m.content?.toLowerCase().includes("escalate"),
+              citations: m.citations || [],
             }));
             setMessages(mapped);
             return;
@@ -348,14 +357,20 @@ export function TicketDetailWorkspace({
 
           {activeTab === "events" && (
             <div className="space-y-3 p-2">
-              <div className="flex items-start gap-3 text-xs">
-                <div className="w-2 h-2 rounded-full bg-rose-500 mt-1.5" />
-                <div>
-                  <div className="font-bold text-slate-900">Ticket Created in Workspace</div>
-                  <div className="text-slate-500 text-[11px]">Subject: {ticket.subject}</div>
-                  <span className="text-[10px] text-slate-400">{ticket.created_at}</span>
-                </div>
-              </div>
+              {events.length === 0 ? (
+                <div className="text-xs text-slate-400">No events found.</div>
+              ) : (
+                events.map((evt, idx) => (
+                  <div key={idx} className="flex items-start gap-3 text-xs">
+                    <div className="w-2 h-2 rounded-full bg-slate-400 mt-1.5" />
+                    <div>
+                      <div className="font-bold text-slate-900">{evt.event_type.replace(/_/g, ' ')}</div>
+                      <div className="text-slate-500 text-[11px]">{evt.description}</div>
+                      <span className="text-[10px] text-slate-400">{new Date(evt.created_at).toLocaleString()}</span>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           )}
         </div>
@@ -392,7 +407,7 @@ export function TicketDetailWorkspace({
       </div>
 
       {/* Customer Context Sidebar */}
-      <CustomerContextSidebar ticket={ticket} />
+      <CustomerContextSidebar ticket={ticket} messages={messages} />
     </div>
   );
 }

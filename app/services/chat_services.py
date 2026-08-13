@@ -185,7 +185,8 @@ class ChatService(BaseService):
         assistant_message = await self.conversation_service.create_message(
             conversation_id=conversation.id,
             role=MessageRole.ASSISTANT,
-            content=final_answer
+            content=final_answer,
+            citations=[c.model_dump() for c in citations]
         )
         fire_webhook_event(
             str(conversation.organization_id),
@@ -284,10 +285,20 @@ class ChatService(BaseService):
                 full_answer += token
                 yield token
 
+        citations = [
+            Citation(
+                document_id=chunk.document_id,
+                filename=chunk.document.original_filename,
+                chunk_index=chunk.chunk_index
+            )
+            for chunk in chunks
+        ]
+
         assistant_message = await self.conversation_service.create_message(
             conversation_id=conversation.id,
             role=MessageRole.ASSISTANT,
             content=full_answer,
+            citations=[c.model_dump() for c in citations]
         )
         fire_webhook_event(
             str(conversation.organization_id),

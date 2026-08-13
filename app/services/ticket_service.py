@@ -23,6 +23,7 @@ from app.utils.webhook_dispatch import fire_webhook_event
 from app.core.webhook_events import WebhookEventType
 from app.utils.webhook_payloads import serialize_ticket_payload, serialize_message_payload
 
+from datetime import datetime, timezone, timedelta
 class TicketService(BaseService):
     def __init__(self, *, session: AsyncSession):
         super().__init__(session)
@@ -32,6 +33,48 @@ class TicketService(BaseService):
         self.user_repository = UserRepository(session)
         self.organization_member_repository = OrganizationMemberRepository(session)
         self.ticket_event_service = TicketEventService(session=session)
+
+    async def _check_sla(self, ticket: Ticket) -> None:
+        if ticket.status in [TicketStatus.RESOLVED, TicketStatus.CLOSED]:
+            return
+            
+        sla_hours = {
+            TicketPriority.URGENT: 1,
+            TicketPriority.HIGH: 4,
+            TicketPriority.MEDIUM: 24,
+            TicketPriority.LOW: 48,
+        }.get(ticket.priority, 24)
+
+        created = ticket.created_at
+        if created.tzinfo is None:
+            created = created.replace(tzinfo=timezone.utc)
+            
+        deadline = created + timedelta(hours=sla_hours)
+        now = datetime.now(timezone.utc)
+        
+        if now > deadline and ticket.priority != TicketPriority.URGENT:
+            # Escalate priority
+            new_priority_map = {
+                TicketPriority.LOW: TicketPriority.MEDIUM,
+                TicketPriority.MEDIUM: TicketPriority.HIGH,
+                TicketPriority.HIGH: TicketPriority.URGENT,
+            }
+            new_priority = new_priority_map.get(ticket.priority)
+            if new_priority:
+                await self.ticket_repository.update_priority(
+                    ticket=ticket,
+                    priority=new_priority,
+                )
+                await self.ticket_event_service.create_event(
+                    ticket_id=ticket.id,
+                    user_id=None,
+                    event_type=TicketEventType.PRIORITY_CHANGED,
+                    description=f"Auto-escalated to {new_priority.value} due to SLA breach.",
+                )
+                ticket.priority = new_priority
+                await self.session.commit()
+                # We could dispatch webhook here, but keep it simple
+
 
 
     async def create_ticket(self, *, conversation_id: UUID, priority: TicketPriority = TicketPriority.MEDIUM, created_by_ai: bool = True, current_user: User | None = None) -> Ticket:
@@ -88,6 +131,7 @@ class TicketService(BaseService):
                 current_user=current_user,
             )
 
+        await self._check_sla(ticket)
         return ticket
 
     async def list_tickets(self, *, organization_id: UUID, current_user: User, limit: int = 20, offset: int = 0) -> list[Ticket]:
@@ -95,11 +139,14 @@ class TicketService(BaseService):
             organization_id=organization_id,
             current_user=current_user,
         )
-        return await self.ticket_repository.list_for_organization(
+        tickets = await self.ticket_repository.list_for_organization(
             organization_id=organization_id,
             limit=limit,
             offset=offset,
         )
+        for ticket in tickets:
+            await self._check_sla(ticket)
+        return tickets
 
     async def list_tickets_paginated(
         self,
@@ -124,6 +171,9 @@ class TicketService(BaseService):
             cursor=cursor,
             limit=limit,
         )
+
+        for ticket in tickets:
+            await self._check_sla(ticket)
 
         next_cursor = None
         if has_more and tickets:

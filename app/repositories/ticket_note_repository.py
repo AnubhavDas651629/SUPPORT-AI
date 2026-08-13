@@ -1,5 +1,5 @@
 from uuid import UUID
-from sqlalchemy.orm import query
+from sqlalchemy.orm import joinedload
 from app.api.v1 import ticket
 from app.models.ticket import Ticket
 from sqlalchemy import select
@@ -22,9 +22,11 @@ class TicketNoteRepository(BaseRepository):
     async def list_for_ticket(self, *, ticket_id: UUID) -> list[TicketNote]:
         query =(
             select(TicketNote)
+            .options(joinedload(TicketNote.author))
             .where(
                 TicketNote.ticket_id == ticket_id,
             )
+            .order_by(TicketNote.created_at.asc())
         )
         result = await self.session.execute(query)
 
@@ -33,6 +35,7 @@ class TicketNoteRepository(BaseRepository):
     async def get_by_id(self, *, note_id: UUID) -> TicketNote | None:
         query = (
             select(TicketNote)
+            .options(joinedload(TicketNote.author))
             .where(
                 TicketNote.id == note_id
             )

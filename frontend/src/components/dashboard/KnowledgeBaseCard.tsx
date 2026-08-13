@@ -26,8 +26,8 @@ export function KnowledgeBaseCard({ onOpenUploadModal }: { onOpenUploadModal: ()
           if (Array.isArray(docRes.data)) {
             const mapped: KnowledgeDocument[] = docRes.data.map((d: any) => ({
               id: d.id,
-              title: d.filename?.replace(/\.[^/.]+$/, "").replace(/[_-]/g, " ") || "Document",
-              file_name: d.filename,
+              title: d.original_filename?.replace(/\.[^/.]+$/, "").replace(/[_-]/g, " ") || "Document",
+              file_name: d.original_filename || d.filename,
               file_size: `${((d.file_size || 1024 * 500) / (1024 * 1024)).toFixed(1)} MB`,
               chunks_count: d.chunk_count || 32,
               status: "READY",

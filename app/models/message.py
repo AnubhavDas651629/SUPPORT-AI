@@ -6,6 +6,7 @@ from app.db.base import Base
 from sqlalchemy.orm import Mapped,mapped_column, relationship
 from uuid import UUID
 from sqlalchemy import Text
+from sqlalchemy.dialects.postgresql import JSONB
 from enum import Enum
 from typing import TYPE_CHECKING
 
@@ -29,6 +30,7 @@ class Message(Base, UUIDMixin, TimestampMixin):
     conversation_id: Mapped[UUID] = mapped_column(ForeignKey("conversations.id"), nullable=False, index=True)
     role: Mapped[MessageRole] = mapped_column(SQLEnum(MessageRole), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
+    citations: Mapped[list[dict] | None] = mapped_column(JSONB, nullable=True)
     conversation: Mapped[list["Conversation"]] = relationship(back_populates="messages")
     feedback: Mapped[list["MessageFeedback"]] = relationship(back_populates="message", cascade="all, delete-orphan")
 

@@ -14,6 +14,11 @@ import { DeveloperPortalView } from "@/components/developer/DeveloperPortalView"
 import { UsageAnalyticsView } from "@/components/billing/UsageAnalyticsView";
 import { LiveConversationsView } from "@/components/conversations/LiveConversationsView";
 import { WorkspaceSettingsView } from "@/components/settings/WorkspaceSettingsView";
+import { LiveAiTestDrawer } from "@/components/dashboard/LiveAiTestDrawer";
+import { CreateTicketModal } from "@/components/dashboard/CreateTicketModal";
+import { CommandPaletteModal } from "@/components/dashboard/CommandPaletteModal";
+import { EmbedScriptModal } from "@/components/dashboard/EmbedScriptModal";
+import { UpgradeModal } from "@/components/dashboard/UpgradeModal";
 import { Loader2 } from "lucide-react";
 
 export default function DashboardPage() {
@@ -26,6 +31,7 @@ export default function DashboardPage() {
   const [isNewTicketOpen, setIsNewTicketOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
+  const [isEmbedModalOpen, setIsEmbedModalOpen] = useState(false);
 
   // Keyboard shortcut listener for Command Palette (⌘K or ⌘F)
   useEffect(() => {
@@ -58,6 +64,14 @@ export default function DashboardPage() {
       default:
         return "Command Center";
     }
+  };
+
+  const handleCommandSelect = (key: string) => {
+    if (key === "live_test") setIsLiveTesterOpen(true);
+    else if (key === "new_ticket") setIsNewTicketOpen(true);
+    else if (key === "embed_code") setIsEmbedModalOpen(true);
+    else if (key === "upload_doc") setActiveTab("knowledge");
+    else if (key === "webhooks" || key === "api_keys") setActiveTab("developer");
   };
 
   return (
@@ -98,22 +112,50 @@ export default function DashboardPage() {
           ) : (
             <DashboardOverview
               onOpenLiveTester={() => setIsLiveTesterOpen(true)}
-              isLiveTesterOpen={isLiveTesterOpen}
-              setIsLiveTesterOpen={setIsLiveTesterOpen}
               onOpenNewTicket={() => setIsNewTicketOpen(true)}
-              isNewTicketOpen={isNewTicketOpen}
-              setIsNewTicketOpen={setIsNewTicketOpen}
-              isCommandPaletteOpen={isCommandPaletteOpen}
-              setIsCommandPaletteOpen={setIsCommandPaletteOpen}
-              isUpgradeOpen={isUpgradeOpen}
-              setIsUpgradeOpen={setIsUpgradeOpen}
+              onOpenEmbedModal={() => setIsEmbedModalOpen(true)}
               onNavigateToTickets={() => setActiveTab("tickets")}
               onNavigateToKnowledge={() => setActiveTab("knowledge")}
               onNavigateToDeveloper={() => setActiveTab("developer")}
+              onOpenUpgrade={() => setIsUpgradeOpen(true)}
             />
           )}
         </main>
       </div>
+
+      {/* Slide-over Live AI Assistant Testing Drawer */}
+      <LiveAiTestDrawer
+        isOpen={isLiveTesterOpen}
+        onClose={() => setIsLiveTesterOpen(false)}
+      />
+
+      {/* Create Manual Ticket Modal */}
+      <CreateTicketModal
+        isOpen={isNewTicketOpen}
+        onClose={() => setIsNewTicketOpen(false)}
+        onCreated={(newTicket) => {
+          alert(`Escalation Ticket "${newTicket.subject}" created successfully!`);
+        }}
+      />
+
+      {/* Global Command Palette (⌘K) */}
+      <CommandPaletteModal
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        onSelectAction={handleCommandSelect}
+      />
+
+      {/* HTML Embed Script Snippet Modal */}
+      <EmbedScriptModal
+        isOpen={isEmbedModalOpen}
+        onClose={() => setIsEmbedModalOpen(false)}
+      />
+
+      {/* Plan Upgrade & Billing Modal */}
+      <UpgradeModal
+        isOpen={isUpgradeOpen}
+        onClose={() => setIsUpgradeOpen(false)}
+      />
     </div>
   );
 }

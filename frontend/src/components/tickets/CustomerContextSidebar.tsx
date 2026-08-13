@@ -4,7 +4,14 @@ import React from "react";
 import { User, Mail, Globe, Clock, BookOpen, ShieldCheck, Sparkles, ExternalLink } from "lucide-react";
 import { TicketItem } from "@/types/dashboard";
 
-export function CustomerContextSidebar({ ticket }: { ticket: TicketItem }) {
+export function CustomerContextSidebar({ ticket, messages = [] }: { ticket: TicketItem; messages?: any[] }) {
+  // Extract unique citations across all AI messages
+  const allCitations = messages
+    .filter(m => m.sender === "ai" && Array.isArray(m.citations))
+    .flatMap(m => m.citations);
+    
+  const uniqueCitations = Array.from(new Map(allCitations.map(c => [c.filename, c])).values());
+
   return (
     <div className="w-72 bg-white border-l border-slate-200/80 p-5 flex flex-col justify-between h-full overflow-y-auto space-y-6">
       {/* Customer Profile Section */}
@@ -54,14 +61,16 @@ export function CustomerContextSidebar({ ticket }: { ticket: TicketItem }) {
           <span>Referenced Documents</span>
         </div>
         <div className="space-y-1.5 text-[11px]">
-          <div className="p-2 bg-white rounded-xl border border-slate-200 text-slate-700 flex items-center justify-between">
-            <span className="truncate">Shipping_and_Returns.pdf</span>
-            <span className="text-[10px] font-bold text-emerald-600 shrink-0">94% match</span>
-          </div>
-          <div className="p-2 bg-white rounded-xl border border-slate-200 text-slate-700 flex items-center justify-between">
-            <span className="truncate">Warranty_Terms_2026.docx</span>
-            <span className="text-[10px] font-bold text-emerald-600 shrink-0">88% match</span>
-          </div>
+          {uniqueCitations.length === 0 ? (
+            <div className="text-slate-400 text-xs italic py-2 text-center">No documents referenced</div>
+          ) : (
+            uniqueCitations.map((cit: any, idx: number) => (
+              <div key={idx} className="p-2 bg-white rounded-xl border border-slate-200 text-slate-700 flex items-center justify-between">
+                <span className="truncate" title={cit.filename}>{cit.filename || "Unknown Document"}</span>
+                <span className="text-[10px] font-bold text-emerald-600 shrink-0">Cited</span>
+              </div>
+            ))
+          )}
         </div>
       </div>
 

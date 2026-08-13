@@ -25,6 +25,7 @@ class MessageResponse(BaseModel):
     conversation_id: UUID
     role: MessageRole
     content: str
+    citations: list[dict] | None = None
     created_at: datetime
     model_config = ConfigDict(
         from_attributes=True
