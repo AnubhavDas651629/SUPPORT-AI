@@ -78,9 +78,18 @@ class EscalationService(BaseService):
             )
             ticket_id = existing.id if existing else None
 
+        from app.services.organization_settings_service import OrganizationSettingsService
+        settings_service = OrganizationSettingsService(session=self.session)
+        org_settings = await settings_service.get_or_create_settings(
+            organization_id=conversation.organization_id
+        )
+
         escalation_message = load_prompt(
             "responses/user_escalated"
         )
+
+        if org_settings.support_email:
+            escalation_message += f"\n\nYou can also reach us directly at {org_settings.support_email}."
 
         return EscalationResult(
             answer=escalation_message,

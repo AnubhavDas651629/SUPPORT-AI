@@ -24,74 +24,7 @@ export function ConversationSessionMetadata({
           </div>
         </div>
 
-        {/* AI & Sentiment Status */}
-        <div className="space-y-2">
-          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-            Handling Mode
-          </div>
-          <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/70 space-y-1.5 text-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-slate-500">Autonomous AI:</span>
-              <span className="font-bold text-emerald-600">
-                {isEscalated ? "Escalated to Human" : "Active (96% Confidence)"}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-slate-500">Visitor Sentiment:</span>
-              <span className="font-bold text-slate-800">
-                {isEscalated ? "Urgent / Frustrated" : "Neutral / Satisfied"}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Device & Geolocation */}
-        <div className="space-y-2">
-          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-            Visitor Context
-          </div>
-          <div className="space-y-2 text-xs">
-            <div className="flex items-center justify-between text-slate-600">
-              <span className="flex items-center gap-1.5 text-slate-400">
-                <Globe className="w-3.5 h-3.5" />
-                <span>Origin IP</span>
-              </span>
-              <span className="font-mono font-medium">United States</span>
-            </div>
-
-            <div className="flex items-center justify-between text-slate-600">
-              <span className="flex items-center gap-1.5 text-slate-400">
-                <Laptop className="w-3.5 h-3.5" />
-                <span>Platform</span>
-              </span>
-              <span className="font-medium">Chrome / macOS</span>
-            </div>
-
-            <div className="flex items-center justify-between text-slate-600">
-              <span className="flex items-center gap-1.5 text-slate-400">
-                <Clock className="w-3.5 h-3.5" />
-                <span>Duration</span>
-              </span>
-              <span className="font-mono font-medium">3m 42s</span>
-            </div>
-          </div>
-        </div>
-
-        {/* RAG Knowledge Citations */}
-        <div className="space-y-2">
-          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-            Referenced Knowledge Base
-          </div>
-          <div className="p-3 rounded-2xl bg-blue-50/60 border border-blue-200/60 text-xs space-y-1.5">
-            <div className="flex items-center gap-1.5 text-blue-900 font-bold">
-              <Database className="w-3.5 h-3.5 text-blue-600" />
-              <span>pgvector Cosine Retrieval</span>
-            </div>
-            <p className="text-[11px] text-blue-800 leading-relaxed">
-              Matched top vector chunks with 94% cosine similarity to provide real-time autonomous answers.
-            </p>
-          </div>
-        </div>
+        {/* The detailed mocked metrics (Visitor Context, Handling Mode, RAG Citations) have been removed until backend tracking is implemented. */}
       </div>
 
       <div className="pt-4 border-t border-slate-100 text-[10px] text-slate-400 flex items-center gap-1.5">
