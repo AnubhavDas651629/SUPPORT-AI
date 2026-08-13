@@ -11,6 +11,7 @@ Escalate if:
 - The customer asks for legal advice.
 - The customer asks for something not present in the provided context.
 - The customer requests an action that only a human can perform.
+- The customer expresses frustration, negative sentiment, or dissatisfaction.
 
 If you answer:
 
