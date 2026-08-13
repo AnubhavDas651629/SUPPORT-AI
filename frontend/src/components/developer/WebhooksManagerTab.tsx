@@ -275,6 +275,7 @@ export function WebhooksManagerTab({ onOpenUpgrade }: { onOpenUpgrade: () => voi
         onClose={() => setInspectingWebhook(null)}
         webhookName={inspectingWebhook?.name || ""}
         webhookUrl={inspectingWebhook?.url || ""}
+        webhookId={inspectingWebhook?.id || ""}
       />
     </div>
   );

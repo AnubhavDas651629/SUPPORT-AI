@@ -60,8 +60,8 @@ class EscalationService(BaseService):
 
         if decision.action == AIAction.ANSWER:
             return EscalationResult(
-                answer=decision.answer or "",
                 escalated=False,
+                answer=None
             )
 
         from app.exceptions.ticket import TicketAlreadyExistsException

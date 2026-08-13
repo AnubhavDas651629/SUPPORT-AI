@@ -174,10 +174,18 @@ class ChatService(BaseService):
             question=question,
         )
 
+        if result.escalated and result.answer:
+            final_answer = result.answer
+        else:
+            final_answer = await self.llm_provider.complete(
+                messages=messages,
+                temperature=org_settings.temperature,
+            )
+
         assistant_message = await self.conversation_service.create_message(
             conversation_id=conversation.id,
             role=MessageRole.ASSISTANT,
-            content=result.answer
+            content=final_answer
         )
         fire_webhook_event(
             str(conversation.organization_id),
@@ -263,12 +271,7 @@ class ChatService(BaseService):
         )
 
         full_answer = ""
-        if result.escalated:
-            full_answer = result.answer
-            words = full_answer.split(" ")
-            for i, word in enumerate(words):
-                yield word + (" " if i < len(words) - 1 else "")
-        elif result.answer:
+        if result.escalated and result.answer:
             full_answer = result.answer
             words = full_answer.split(" ")
             for i, word in enumerate(words):

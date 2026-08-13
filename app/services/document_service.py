@@ -106,14 +106,7 @@ class DocumentService(BaseService):
             organization_id=organization_id,
             bytes_added=len(content)
         )
-        
-        processor = DocumentProcessor(
-            self.session
-        )
 
-        await processor.process(
-            document=document
-        )
 
         return document
 
