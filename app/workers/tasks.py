@@ -76,3 +76,21 @@ def dispatch_webhook_event_task(organization_id: str, event_type: str, data: dic
             data=data
         )
     run(_dispatch())
+
+
+@celery_app.task(
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    max_retries=3
+)
+def send_org_invite_email_task(email:str, org_name:str, role:str):
+    logger.info(f"Excecuting send_org_invite_email_task for {email}")
+    async def _send():
+        async with AsyncSessionLocal() as session:
+            service = EmailService(session=session)
+            await service.send_org_invitation_email(
+                email=email,
+                org_name=org_name,
+                role=role
+            )
+    run(_send())

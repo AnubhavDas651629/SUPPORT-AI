@@ -87,3 +87,16 @@ class EmailService(BaseService):
             subject=subject,
             body_text=text_content
         )
+
+
+    async def send_org_invitation_email(self, *, email: str, org_name: str, role: str) -> None:
+        subject = f"You've been added to {org_name} on {settings.app_name}"
+        text_content = f"Hi,\n\nYou have been added to the organization '{org_name}' with the role of {role}.\nLog in to your dashboard to view your new workspace!"
+        
+        self._send_smtp_email(
+            to_email=email,
+            subject=subject,
+            body_text=text_content
+        )
+
+        
