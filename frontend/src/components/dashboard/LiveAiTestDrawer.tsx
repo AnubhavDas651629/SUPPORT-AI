@@ -40,23 +40,38 @@ export function LiveAiTestDrawer({
     setMessages((prev) => [...prev, { sender: "user", text: userText }]);
     setIsStreaming(true);
 
+
     try {
+      if (!currentOrg) {
+        setMessages((prev) => [
+          ...prev,
+          { sender: "ai", text: "No active workspace selected. Please select an organization first." },
+        ]);
+        setIsStreaming(false);
+        return;
+      }
+
       const token = getAccessToken();
-      
+
       let kbId = null;
-      if (currentOrg) {
-        // Fetch org KBs to get one, or we can just send knowledge_base_id = null and let backend fail if none.
-        // Actually, backend requires either conversation_id or knowledge_base_id.
-        // If we don't have a KB, we must fetch it first if conversationId is null.
-        if (!conversationId) {
-          const resKb = await api.get(`/organizations/${currentOrg.id}/knowledge-bases`);
-          if (resKb.data && resKb.data.length > 0) {
-            kbId = resKb.data[0].id;
-          }
+      if (!conversationId) {
+        const resKb = await api.get(`/organizations/${currentOrg.id}/knowledge-bases`);
+        if (resKb.data && resKb.data.length > 0) {
+          kbId = resKb.data[0].id;
+        } else {
+          setMessages((prev) => [
+            ...prev,
+            {
+              sender: "ai",
+              text: "⚠️ No knowledge base found for this workspace. Please upload documents to a Knowledge Base first, then try again.",
+            },
+          ]);
+          setIsStreaming(false);
+          return;
         }
       }
 
-      const res = await fetch(`http://localhost:8000/api/v1/chat/stream`, {
+      const res = await fetch(`/api/v1/chat/stream`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -70,7 +85,11 @@ export function LiveAiTestDrawer({
         }),
       });
 
-      if (!res.ok) throw new Error("Failed to chat");
+      if (!res.ok) {
+        const errorBody = await res.text();
+        console.error("Chat stream error:", res.status, errorBody);
+        throw new Error(`Server error ${res.status}: ${errorBody}`);
+      }
 
       const reader = res.body?.getReader();
       const decoder = new TextDecoder();
@@ -125,12 +144,13 @@ export function LiveAiTestDrawer({
       }
 
     } catch (e) {
-      console.error(e);
+      const err = e as Error;
+      console.error(err);
       setMessages((prev) => [
         ...prev,
         {
           sender: "ai",
-          text: "Sorry, I encountered an error connecting to the server. Do you have an active knowledge base?",
+          text: `Sorry, I encountered an error: ${err?.message || "Unknown error"}. Check that your backend server is running and you have an active knowledge base.`,
         },
       ]);
     } finally {

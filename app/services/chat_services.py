@@ -186,7 +186,7 @@ class ChatService(BaseService):
             conversation_id=conversation.id,
             role=MessageRole.ASSISTANT,
             content=final_answer,
-            citations=[c.model_dump() for c in citations]
+            citations=[c.model_dump(mode='json') for c in citations]
         )
         fire_webhook_event(
             str(conversation.organization_id),
@@ -298,7 +298,7 @@ class ChatService(BaseService):
             conversation_id=conversation.id,
             role=MessageRole.ASSISTANT,
             content=full_answer,
-            citations=[c.model_dump() for c in citations]
+            citations=[c.model_dump(mode='json') for c in citations]
         )
         fire_webhook_event(
             str(conversation.organization_id),

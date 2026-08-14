@@ -34,7 +34,7 @@ export function DashboardHeader({
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   return (
-    <header className="h-16 bg-white border-b border-slate-200/80 px-6 sm:px-8 flex items-center justify-between sticky top-0 z-20 shadow-2xs">
+    <header className="h-16 bg-white dark:bg-slate-950 border-b border-slate-200/80 dark:border-slate-800 px-6 sm:px-8 flex items-center justify-between sticky top-0 z-20 shadow-2xs">
       {/* Left: Section Title */}
       <div className="flex items-center gap-4">
         <h1 className="text-lg font-bold text-slate-900 tracking-tight">{title}</h1>

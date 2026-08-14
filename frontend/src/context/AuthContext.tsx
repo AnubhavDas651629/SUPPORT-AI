@@ -15,6 +15,7 @@ interface AuthContextType {
   forgotPassword: (email: string) => Promise<string>;
   verifyOTP: (email: string, otp: string) => Promise<string>;
   resetPassword: (resetToken: string, newPassword: string) => Promise<string>;
+  googleLogin: (idToken: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -59,6 +60,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         id: "",
         email: username,
         full_name: username.split("@")[0],
+        is_active: true,
+      };
+      setUser(loggedUser);
+      localStorage.setItem("supportai_user", JSON.stringify(loggedUser));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const googleLogin = async (idToken: string) => {
+    setIsLoading(true);
+    try {
+      const response = await api.post<TokenResponse>("/auth/google", { id_token: idToken });
+      const { access_token, refresh_token } = response.data;
+      setTokens(access_token, refresh_token);
+      setToken(access_token);
+
+      // We should ideally fetch the full profile, but for now we set basic user
+      const loggedUser: User = {
+        id: "",
+        email: "google-user@example.com", // This is updated by fetching profile in real scenario
+        full_name: "Google User",
         is_active: true,
       };
       setUser(loggedUser);
@@ -125,6 +148,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         forgotPassword,
         verifyOTP,
         resetPassword,
+        googleLogin,
       }}
     >
       {children}

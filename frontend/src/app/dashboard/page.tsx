@@ -77,7 +77,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#F8FAFC]">
+    <div className="flex min-h-screen bg-[#F8FAFC] dark:bg-slate-950">
       {/* Permanent Left Sidebar Navigation */}
       <DashboardSidebar
         activeTab={activeTab}
@@ -96,7 +96,7 @@ export default function DashboardPage() {
         />
 
         {/* Dynamic Content Body */}
-        <main className="flex-1 p-6 sm:p-8 overflow-y-auto">
+        <main className="flex-1 p-6 sm:p-8 overflow-y-auto dark:bg-slate-950">
           {activeTab === "tickets" ? (
             <TicketInboxView />
           ) : activeTab === "conversations" ? (

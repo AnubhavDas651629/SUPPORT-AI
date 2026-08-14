@@ -21,6 +21,7 @@ import {
   Zap,
 } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useOrganization } from "@/context/OrganizationContext";
 import { api } from "@/lib/api";
 
@@ -75,12 +76,14 @@ export function DashboardSidebar({
   }, [currentOrg, activeTab]);
 
   return (
-    <aside className="w-64 bg-white border-r border-slate-200/80 flex flex-col justify-between h-screen sticky top-0 shrink-0 select-none z-30">
+    <aside className="w-64 bg-white dark:bg-slate-950 border-r border-slate-200/80 dark:border-slate-800 flex flex-col justify-between h-screen sticky top-0 shrink-0 select-none z-30">
       {/* Top Section: Logo & Org Switcher */}
       <div>
         {/* Brand Logo Header */}
-        <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
-          <Logo height={32} width={130} />
+        <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-center cursor-pointer transition-opacity hover:opacity-80">
+          <Link href="/">
+            <Logo height={32} width={130} />
+          </Link>
         </div>
 
         {/* Workspace / Org Switcher Dropdown */}
@@ -88,14 +91,14 @@ export function DashboardSidebar({
           <button
             type="button"
             onClick={() => setIsOrgDropdownOpen(!isOrgDropdownOpen)}
-            className="w-full flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 hover:bg-slate-100/80 border border-slate-200/70 transition text-left cursor-pointer group"
+            className="w-full flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900 hover:bg-slate-100/80 dark:hover:bg-slate-800 border border-slate-200/70 dark:border-slate-700 transition text-left cursor-pointer group"
           >
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-fuchsia-600 to-indigo-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
                 {currentOrg?.name ? currentOrg.name.charAt(0).toUpperCase() : "A"}
               </div>
               <div className="min-w-0 truncate">
-                <div className="text-xs font-bold text-slate-900 truncate">
+                <div className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
                   {currentOrg?.name || "Acme Support"}
                 </div>
                 <div className="flex items-center gap-1.5 mt-0.5">
@@ -117,8 +120,8 @@ export function DashboardSidebar({
 
           {/* Org Switcher Menu */}
           {isOrgDropdownOpen && (
-            <div className="absolute top-16 left-4 right-4 bg-white rounded-2xl border border-slate-200 shadow-xl p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-              <div className="text-[10px] font-semibold text-slate-400 px-2 py-1 uppercase tracking-wider">
+            <div className="absolute top-16 left-4 right-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+              <div className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 px-2 py-1 uppercase tracking-wider">
                 Workspaces
               </div>
               <div className="space-y-1 my-1 max-h-48 overflow-y-auto">
@@ -161,7 +164,7 @@ export function DashboardSidebar({
 
         {/* Main Navigation Menu */}
         <div className="px-3 pt-2">
-          <div className="text-[10px] font-bold text-slate-400 px-3 pb-2 uppercase tracking-wider">
+          <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 px-3 pb-2 uppercase tracking-wider">
             Menu
           </div>
           <nav className="space-y-1">
@@ -187,8 +190,8 @@ export function DashboardSidebar({
                   }}
                   className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition cursor-pointer ${
                     isSelected
-                      ? "bg-gradient-to-r from-[#FDF2F8] to-[#F5F3FF] text-fuchsia-700 border border-fuchsia-200/60 shadow-xs"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                      ? "bg-gradient-to-r from-[#FDF2F8] to-[#F5F3FF] dark:from-fuchsia-950/40 dark:to-indigo-950/40 text-fuchsia-700 dark:text-fuchsia-400 border border-fuchsia-200/60 dark:border-fuchsia-800/60 shadow-xs"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800/60"
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -244,11 +247,11 @@ export function DashboardSidebar({
         </div>
 
         {/* Settings & Help Footer Links */}
-        <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 px-2">
+        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 px-2">
           <button
             type="button"
             onClick={() => setActiveTab("settings")}
-            className="flex items-center gap-1.5 hover:text-slate-900 transition cursor-pointer"
+            className="flex items-center gap-1.5 hover:text-slate-900 dark:hover:text-slate-100 transition cursor-pointer"
           >
             <Settings className="w-3.5 h-3.5" />
             <span>Settings</span>
@@ -257,11 +260,14 @@ export function DashboardSidebar({
             href="https://docs.supportai.com"
             target="_blank"
             rel="noreferrer"
-            className="flex items-center gap-1.5 hover:text-slate-900 transition"
+            className="flex items-center gap-1.5 hover:text-slate-900 dark:hover:text-slate-100 transition"
           >
             <HelpCircle className="w-3.5 h-3.5" />
             <span>Help</span>
           </a>
+          <div className="ml-2">
+            <ThemeToggle />
+          </div>
         </div>
       </div>
     </aside>
