@@ -1,3 +1,4 @@
+from app.models.ticket import TicketPriority
 from enum import Enum
 from pydantic import BaseModel
 
@@ -11,3 +12,4 @@ class EscalationDecision(BaseModel):
     action: AIAction
     answer: str | None = None
     reason: str | None = None
+    priority: TicketPriority = TicketPriority.MEDIUM

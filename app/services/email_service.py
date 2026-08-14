@@ -4,6 +4,8 @@ import logging
 from app.services.base import BaseService
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
+from app.repositories.ticket_repositories import TicketRepository
+from app.services.organization_settings_service import OrganizationSettingsService
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +70,20 @@ class EmailService(BaseService):
 
 
     async def send_ticket_created_email(self, *, ticket_id: str) -> None:
-        msg = f"\n{'='*60}\nEMAIL NOTIFICATION\nTicket Created: {ticket_id}\nRecipient: support@example.com\nSubject: New Support Ticket\n{'='*60}\n"
-        print(msg, flush=True)
-        logger.info(msg)
+        ticket_repo = TicketRepository(self.session)
+        ticket = await ticket_repo.get_by_id(ticket_id=ticket_id)
+        if not ticket:
+            return
+        settings_service = OrganizationSettingsService(self.session)
+        settings = await settings_service.get_or_create_settings(
+            organization_id=ticket.organization_id
+        )
+        to_email = settings.support_email or "admin@yourdomain.com"
+        subject = f"URGENT: New Support Ticket Escalated (#{str(ticket.id)[:8]})"
+        text_content = f"An urgent ticket has been escalated by the AI.\nSubject: {ticket.subject}\nConversation ID: {ticket.conversation_id}"
+        
+        self._send_smtp_email(
+            to_email=to_email,
+            subject=subject,
+            body_text=text_content
+        )

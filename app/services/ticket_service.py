@@ -105,9 +105,11 @@ class TicketService(BaseService):
             description="Ticket created by AI.",
         )
 
-        send_ticket_create_email.delay(
-            str(ticket.id)
-        )
+
+        if priority == TicketPriority.URGENT:
+            send_ticket_create_email.delay(str(ticket.id))
+
+        
         fire_webhook_event(
             str(ticket.organization_id),
             WebhookEventType.TICKET_CREATED.value,

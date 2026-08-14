@@ -69,7 +69,7 @@ class EscalationService(BaseService):
         try:
             ticket = await self.ticket_service.create_ticket(
                 conversation_id=conversation.id,
-                priority=TicketPriority.MEDIUM,
+                priority=decision.priority,
             )
             ticket_id = ticket.id
         except TicketAlreadyExistsException:
