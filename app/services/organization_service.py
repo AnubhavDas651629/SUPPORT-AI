@@ -22,6 +22,7 @@ from app.redis.keys import RedisKeys
 from app.redis.client import redis_client
 from app.schemas.organization import OrganizationResponse
 from app.services.subscription_service import SubscriptionServices
+from app.workers.tasks import send_org_invite_email_task
 
 class OrganizationService(BaseService):
     def __init__(self, session: AsyncSession):
@@ -166,6 +167,16 @@ class OrganizationService(BaseService):
             role=role,
         )
         await self.session.commit()
+
+        org = await self.organization_repository.get_by_id(
+            organization_id=organization_id
+        )
+        send_org_invite_email_task.delay(
+            email=email,
+            org_name=org.name,
+            role=role.value
+        )
+
         return created_membership
 
 
