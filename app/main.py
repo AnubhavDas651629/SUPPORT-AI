@@ -30,6 +30,22 @@ from app.core.logging import setup_logging
 from app.middleware.logging_middleware import LoggingMiddleware
 from asgi_correlation_id import CorrelationIdMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+import sentry_sdk
+from prometheus_fastapi_instrumentator import Instrumentator
+from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from app.core.config import settings
+
+# initialize sentry(error tracking)
+if settings.sentry_dsn:
+    sentry_sdk.init(
+        dsn=settings.sentry_dsn,
+        environment=settings.environment,
+        traces_sample_rate=1.0 #captures 100% of the errors
+    )
 
 app = FastAPI(
     title="SupportAI",
@@ -95,7 +111,18 @@ app.include_router(usage.router, prefix="/api/v1")
 app.include_router(organization_settings.router, prefix="/api/v1")
 app.include_router(health.router, prefix="/api/v1")
 
+#initiliaze promethues(Metrics counter)
+# This creates a background counter and exposes the numbers at /metrics
+Instrumentator().instrument(app).expose(app)
 
+# 3. Initialize OpenTelemetry (Distributed Tracing Timelines)
+# This configures where the "Package Tracking" data should be sent
+provider = TracerProvider()
+processor = BatchSpanProcessor(OTLPSpanExporter(endpoint=settings.otlp_endpoint))
+provider.add_span_processor(processor)
+trace.set_tracer_provider(provider)
+# This injects the tracker into all our FastAPI routes
+FastAPIInstrumentor.instrument_app(app)
 
 @app.get("/")
 async def root():
