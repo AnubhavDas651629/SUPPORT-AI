@@ -44,7 +44,8 @@ if settings.sentry_dsn:
     sentry_sdk.init(
         dsn=settings.sentry_dsn,
         environment=settings.environment,
-        traces_sample_rate=1.0 #captures 100% of the errors
+        traces_sample_rate=1.0, #captures 100% of the errors
+        send_default_pii=True,
     )
 
 app = FastAPI(
@@ -113,7 +114,7 @@ app.include_router(health.router, prefix="/api/v1")
 
 #initiliaze promethues(Metrics counter)
 # This creates a background counter and exposes the numbers at /metrics
-Instrumentator().instrument(app).expose(app)
+Instrumentator().instrument(app).expose(app) 
 
 # 3. Initialize OpenTelemetry (Distributed Tracing Timelines)
 # This configures where the "Package Tracking" data should be sent
