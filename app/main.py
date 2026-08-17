@@ -37,13 +37,24 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan
 )
+#this is basically the factory in the back of the room that actaully prints the log to your terminal(or send it to aws)
+#Because of the custom add_correlation_id function we wrote, the Factory pauses and says: "Wait, let me look at the sticky-note on this request's shirt."
 setup_logging(json_logs=False)
 
-
+#the last middleware you add in the code is the first one that runs when a request arrives
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
-app.add_middleware(LoggingMiddleware),
-app.add_middleware(CorrelationIdMiddleware),
-app.add_middleware(GZipMiddleware, minimum_size=1000),
+app.add_middleware(LoggingMiddleware) #second step, when req walks in it clicks start on stopwatch and when it leaves, it clicks stop, and calculates how many miliseconds the visit took
+app.add_middleware(CorrelationIdMiddleware) #first step,whenever an API request arrives, the middleware immediatelt slaps a unique sticky note(a correlation ID, like req-55, Now, as that request travels deep into your database, talks to Redis, or calls OpenAI, it always has req-555 attached to it
+"""
+When a user requests data from your API (like a list of 1,000 support tickets), your server sends it back as raw JSON text. This can be quite large (say, 500 KB) and slow to download on bad Wi-Fi.
+
+GZipMiddleware stands at the door when the response is leaving. 
+It automatically squishes (compresses) that large JSON text down to maybe 50 KB, and 
+sends it to the user's browser. The browser then automatically un-squishes it.
+The minimum_size=1000 setting just means: "Don't bother compressing tiny responses under
+ 1000 bytes, because the act of compressing takes a tiny bit of time itself."
+"""
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 app.add_middleware(
     CORSMiddleware,
