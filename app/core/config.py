@@ -53,6 +53,12 @@ class Settings(BaseSettings):
     stripe_pro_price_id: str = ""
     stripe_enterprise_price_id: str = ""
 
+    # Observability
+    environment: str = "development"
+    sentry_dsn: str = ""
+    otlp_endpoint: str = "http://localhost:4318/v1/traces"
+
+
 
     # for fernet url safe ket enter  in terminal-> uv run python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
     webhook_encryption_key: str = ""
