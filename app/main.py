@@ -26,6 +26,10 @@ from app.core.lifespan import lifespan
 from app.api.v1.subscription import router as subscription_router, webhook_router as stripe_webhook_router
 from app.api.v1 import usage
 from app.api.v1 import health
+from app.core.logging import setup_logging
+from app.middleware.logging_middleware import LoggingMiddleware
+from asgi_correlation_id import CorrelationIdMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 
 app = FastAPI(
     title="SupportAI",
@@ -33,7 +37,14 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan
 )
+setup_logging(json_logs=False)
+
+
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
+app.add_middleware(LoggingMiddleware),
+app.add_middleware(CorrelationIdMiddleware),
+app.add_middleware(GZipMiddleware, minimum_size=1000),
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
