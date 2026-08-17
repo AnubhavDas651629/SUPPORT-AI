@@ -12,6 +12,8 @@ import { EmbedScriptModal } from "./EmbedScriptModal";
 import { UpgradeModal } from "./UpgradeModal";
 import { useOrganization } from "@/context/OrganizationContext";
 
+import { RecentActivityList } from "./RecentActivityList";
+
 export function DashboardOverview({
   onOpenLiveTester,
   onOpenNewTicket,
@@ -41,8 +43,8 @@ export function DashboardOverview({
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12">
-      {/* 1. Quick Action Launcher Cards (Inspiration 'Recommended Categories' style) */}
+    <div className="flex flex-col space-y-6 max-w-7xl mx-auto pb-12 h-full">
+      {/* 1. Quick Action Links Row */}
       <QuickActionCards
         onOpenLiveTester={() => onOpenLiveTester()}
         onOpenUploadDoc={() => onNavigateToKnowledge ? onNavigateToKnowledge() : alert("Upload Document: Select PDF, DOCX, or TXT for pgvector")}
@@ -52,16 +54,22 @@ export function DashboardOverview({
         onOpenApiKeys={() => onNavigateToDeveloper ? onNavigateToDeveloper() : onOpenUpgrade?.()}
       />
 
-      {/* 2. Real-Time Performance & Quota HUD */}
+      {/* 2. Compact Metrics Row */}
       <MetricsHUD />
 
-      {/* 3. Priority Human Escalation Ticket Queue (Inspiration list style) */}
-      <TicketQueueTable onOpenNewTicket={() => onOpenNewTicket()} />
+      {/* 3. Main Dashboard Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">
+        {/* Main Column: Needs Attention List */}
+        <div className="lg:col-span-2">
+          <TicketQueueTable onOpenNewTicket={() => onOpenNewTicket()} />
+        </div>
 
-      {/* 4. Knowledge Base & Vector Documents Ingestion Status */}
-      <KnowledgeBaseCard onOpenUploadModal={() => alert("Upload document to pgvector")} />
-
-
+        {/* Side Column: Recent Activity & Knowledge Base */}
+        <div className="space-y-6">
+          <RecentActivityList />
+          <KnowledgeBaseCard onOpenUploadModal={() => alert("Upload document to pgvector")} />
+        </div>
+      </div>
     </div>
   );
 }

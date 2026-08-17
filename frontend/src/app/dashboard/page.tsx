@@ -64,7 +64,7 @@ export default function DashboardPage() {
       case "settings":
         return "Workspace Organization & Team Settings";
       default:
-        return "Command Center";
+        return "Overview";
     }
   };
 
