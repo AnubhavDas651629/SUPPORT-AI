@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { ConversationListPane, ConversationItem } from "./ConversationListPane";
 import { ConversationDetailWorkspace } from "./ConversationDetailWorkspace";
+import { ConversationSessionMetadata } from "./ConversationSessionMetadata";
 import { LiveAiTestDrawer } from "@/components/dashboard/LiveAiTestDrawer";
 import { useOrganization } from "@/context/OrganizationContext";
 import { api } from "@/lib/api";
@@ -53,10 +54,13 @@ export function LiveConversationsView() {
     setConversations((prev) =>
       prev.map((c) => (c.id === convId ? { ...c, is_escalated: true } : c))
     );
+    if (selectedConversation?.id === convId) {
+      setSelectedConversation(prev => prev ? { ...prev, is_escalated: true } : null);
+    }
   };
 
   return (
-    <div className="flex gap-4 max-w-7xl mx-auto h-full">
+    <div className="flex max-w-[1400px] mx-auto h-[calc(100vh-120px)] bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
       {/* Left List Pane */}
       <ConversationListPane
         conversations={conversations}
@@ -71,6 +75,13 @@ export function LiveConversationsView() {
         conversation={selectedConversation}
         onEscalated={handleEscalated}
       />
+
+      {/* Session Intelligence Sidebar */}
+      {selectedConversation && (
+        <ConversationSessionMetadata
+          conversation={selectedConversation}
+        />
+      )}
 
       {/* Simulator Drawer for testing */}
       <LiveAiTestDrawer

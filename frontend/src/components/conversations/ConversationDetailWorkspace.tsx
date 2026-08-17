@@ -1,21 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import {
-  MessageSquare,
-  Bot,
-  User,
-  Send,
-  LifeBuoy,
-  Sparkles,
-  AlertCircle,
-  CheckCircle2,
-  Lock,
-  Loader2,
-  Flame,
-} from "lucide-react";
+import { MessageSquare, Send, LifeBuoy, CheckCircle2, Loader2, Bot, User } from "lucide-react";
 import { ConversationItem } from "./ConversationListPane";
-import { ConversationSessionMetadata } from "./ConversationSessionMetadata";
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
 import { api } from "@/lib/api";
@@ -98,11 +85,11 @@ export function ConversationDetailWorkspace({
 
   if (!conversation) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-white rounded-3xl border border-slate-200/80 shadow-2xs h-[calc(100vh-140px)] text-center p-8 text-slate-400">
-        <MessageSquare className="w-12 h-12 text-slate-200 mb-3" />
-        <h3 className="text-sm font-bold text-slate-800">No Conversation Selected</h3>
+      <div className="flex-1 flex flex-col items-center justify-center bg-white border-r border-slate-200 text-center p-8 text-slate-400">
+        <MessageSquare className="w-10 h-10 text-slate-200 mb-3" />
+        <h3 className="text-sm font-medium text-slate-700">No Conversation Selected</h3>
         <p className="text-xs text-slate-400 mt-1 max-w-sm">
-          Select a live session from the left queue to inspect the autonomous chat stream, view visitor context, or take over as human agent.
+          Select a session from the inbox to view details.
         </p>
       </div>
     );
@@ -120,7 +107,7 @@ export function ConversationDetailWorkspace({
       });
       setIsEscalated(true);
       onEscalated(conversation.id);
-      alert("Conversation escalated! A high-priority ticket has been created in your Escalated Tickets inbox.");
+      alert("Conversation escalated! A ticket has been routed to human support.");
     } catch (err: any) {
       setIsEscalated(true);
       onEscalated(conversation.id);
@@ -155,122 +142,126 @@ export function ConversationDetailWorkspace({
   };
 
   return (
-    <div className="flex-1 flex bg-white rounded-3xl border border-slate-200/80 shadow-2xs overflow-hidden h-[calc(100vh-140px)]">
-      {/* Main Chat Center Pane */}
-      <div className="flex-1 flex flex-col justify-between min-w-0 h-full">
-        {/* Header Bar */}
-        <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/40">
-          <div className="min-w-0 flex-1 mr-2">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-mono text-[11px] font-bold text-fuchsia-600 bg-fuchsia-50 px-2 py-0.5 rounded-md shrink-0">
-                #{conversation.id.substring(0, 8)}
-              </span>
-              <h2 className="text-sm font-extrabold text-slate-900 truncate">
-                {conversation.title || "Live Customer Session"}
-              </h2>
-            </div>
-            <div className="flex items-center gap-2 text-xs text-slate-400 mt-1">
-              <span>Status: <strong className={isEscalated ? "text-rose-600" : "text-emerald-600"}>{isEscalated ? "Human Agent Escalated" : "Autonomous AI Handling"}</strong></span>
-            </div>
-          </div>
-
-          {/* Take Over as Human Button */}
-          <div className="flex items-center gap-2 shrink-0">
-            {!isEscalated ? (
-              <button
-                type="button"
-                onClick={handleTakeover}
-                disabled={isEscalating}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white text-xs font-bold shadow-xs transition cursor-pointer disabled:opacity-50"
-              >
-                {isEscalating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <LifeBuoy className="w-3.5 h-3.5" />}
-                <span>Take Over as Human</span>
-              </button>
-            ) : (
-              <span className="text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 px-3 py-1.5 rounded-xl flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5 text-rose-600" />
-                <span>Ticket Escalated</span>
-              </span>
-            )}
+    <div className="flex-1 flex flex-col min-w-0 bg-white border-r border-slate-200">
+      {/* Header Bar */}
+      <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between gap-3 bg-white">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-semibold text-slate-900 truncate">
+              {conversation.title || "Visitor Session"}
+            </h2>
+            <span className="font-mono text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+              #{conversation.id.substring(0, 8)}
+            </span>
           </div>
         </div>
 
-        {/* Message Stream */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-[#F8FAFC]/50">
-          {isLoadingMessages ? (
-            <div className="py-12 flex flex-col items-center justify-center gap-2 text-slate-400 text-xs">
-              <Loader2 className="w-5 h-5 animate-spin text-fuchsia-600" />
-              <span>Loading messages...</span>
-            </div>
+        {/* Take Over as Human Button */}
+        <div className="flex items-center gap-2 shrink-0">
+          {!isEscalated ? (
+            <button
+              type="button"
+              onClick={handleTakeover}
+              disabled={isEscalating}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium transition cursor-pointer disabled:opacity-50"
+            >
+              {isEscalating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <LifeBuoy className="w-3.5 h-3.5" />}
+              <span>Take Over</span>
+            </button>
           ) : (
-            messages.map((m) => {
-              const isUser = m.role === "USER";
-              const isAgent = m.role === "AGENT";
-
-              return (
-                <div
-                  key={m.id}
-                  className={`flex flex-col ${isUser ? "items-start" : "items-end"}`}
-                >
-                  <div className="flex items-center gap-2 text-[10px] text-slate-400 mb-1 px-1">
-                    <span className="font-bold text-slate-700">
-                      {isUser ? "Visitor" : isAgent ? `${user?.full_name || "Agent"} (You)` : "Support AI Autonomous"}
-                    </span>
-                    <span>•</span>
-                    <span>{m.created_at || "Just now"}</span>
-                  </div>
-
-                  <div
-                    className={`max-w-[80%] p-4 rounded-2xl text-xs leading-relaxed shadow-2xs ${
-                      isAgent
-                        ? "bg-fuchsia-600 text-white rounded-br-xs"
-                        : !isUser
-                        ? "bg-slate-900 text-white rounded-br-xs"
-                        : "bg-white border border-slate-200/80 text-slate-800 rounded-bl-xs"
-                    }`}
-                  >
-                    <p>{m.content}</p>
-                  </div>
-                </div>
-              );
-            })
+            <span className="text-xs font-medium text-slate-500 flex items-center gap-1.5 border border-slate-200 px-2 py-1 rounded-md bg-slate-50">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+              <span>Escalated</span>
+            </span>
           )}
         </div>
-
-        {/* Live Human Agent Reply Composer */}
-        <form onSubmit={handleSendAgentReply} className="p-4 bg-white border-t border-slate-200 flex flex-col gap-2">
-          <div className="flex items-center justify-between mb-1 text-[10px] text-slate-400">
-            <span className="font-bold text-fuchsia-700 bg-fuchsia-50 px-2 py-0.5 rounded-md">
-              Human Agent Takeover Active
-            </span>
-            <span>Messages stream in real time to the visitor</span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              value={replyText}
-              onChange={(e) => setReplyText(e.target.value)}
-              placeholder="Type message directly to visitor..."
-              className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/20 focus:border-fuchsia-500 transition shadow-2xs"
-            />
-            <button
-              type="submit"
-              disabled={!replyText.trim() || isSending}
-              className="px-5 py-3 rounded-2xl bg-fuchsia-600 hover:bg-fuchsia-700 text-white text-xs font-semibold shadow-xs transition flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
-            >
-              {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              <span>Send</span>
-            </button>
-          </div>
-        </form>
       </div>
 
-      {/* Right Session Metadata Sidebar */}
-      <ConversationSessionMetadata
-        conversationId={conversation.id}
-        isEscalated={isEscalated}
-      />
+      {/* Message Stream */}
+      <div className="flex-1 overflow-y-auto p-5 space-y-6 bg-white">
+        {isLoadingMessages ? (
+          <div className="py-12 flex flex-col items-center justify-center gap-2 text-slate-400 text-xs">
+            <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+            <span>Loading...</span>
+          </div>
+        ) : (
+          messages.map((m) => {
+            const isUser = m.role === "USER";
+            const isAgent = m.role === "AGENT";
+            const isAi = m.role === "ASSISTANT";
+
+            return (
+              <div key={m.id} className="flex gap-3">
+                {/* Avatar Icon */}
+                <div className="shrink-0 mt-0.5">
+                  {isUser ? (
+                    <div className="w-7 h-7 rounded bg-slate-100 text-slate-500 flex items-center justify-center">
+                      <User className="w-4 h-4" />
+                    </div>
+                  ) : isAgent ? (
+                    <div className="w-7 h-7 rounded bg-blue-100 text-blue-600 flex items-center justify-center">
+                      <User className="w-4 h-4" />
+                    </div>
+                  ) : (
+                    <div className="w-7 h-7 rounded bg-fuchsia-100 text-fuchsia-600 flex items-center justify-center">
+                      <Bot className="w-4 h-4" />
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-baseline gap-2 mb-1">
+                    <span className="font-semibold text-slate-900 text-xs">
+                      {isUser ? "Visitor" : isAgent ? `${user?.full_name || "Agent"}` : "Support AI"}
+                    </span>
+                    <span className="text-[10px] text-slate-400">
+                      {m.created_at || "Just now"}
+                    </span>
+                  </div>
+                  
+                  <div className="text-sm text-slate-700 leading-relaxed">
+                    {m.content}
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Input Composer */}
+      <div className="p-4 bg-white border-t border-slate-200">
+        {isEscalated && (
+          <div className="flex items-center justify-between mb-2 px-1 text-[11px] text-slate-500">
+            <span className="font-medium text-emerald-600 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Human take-over active
+            </span>
+          </div>
+        )}
+        <form onSubmit={handleSendAgentReply} className="relative">
+          <textarea
+            value={replyText}
+            onChange={(e) => setReplyText(e.target.value)}
+            placeholder="Reply to visitor..."
+            rows={3}
+            className="w-full p-3 pr-12 bg-white border border-slate-300 rounded-md text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-500 focus:border-slate-500 resize-none transition"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSendAgentReply(e as any);
+              }
+            }}
+          />
+          <button
+            type="submit"
+            disabled={!replyText.trim() || isSending}
+            className="absolute right-2 bottom-2 p-1.5 rounded bg-slate-900 hover:bg-slate-800 text-white disabled:opacity-50 disabled:hover:bg-slate-900 transition cursor-pointer"
+          >
+            {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

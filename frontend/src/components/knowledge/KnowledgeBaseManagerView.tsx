@@ -6,12 +6,9 @@ import {
   Plus,
   Layers,
   Database,
-  CheckCircle2,
-  HardDrive,
-  Upload,
-  Sparkles,
-  Loader2,
-  AlertCircle,
+  ArrowRight,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { DocumentUploaderArea } from "./DocumentUploaderArea";
 import { DocumentsListTable } from "./DocumentsListTable";
@@ -24,7 +21,6 @@ import { UpgradeModal } from "@/components/dashboard/UpgradeModal";
 import { KnowledgeDocument } from "@/types/dashboard";
 import { useOrganization } from "@/context/OrganizationContext";
 import { api } from "@/lib/api";
-import { Pencil, Trash2 } from "lucide-react";
 
 interface KnowledgeBaseItem {
   id: string;
@@ -157,61 +153,69 @@ export function KnowledgeBaseManagerView() {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12">
-      {/* Knowledge Base Header Bar */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xs p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full uppercase">
-              RAG KNOWLEDGE BASE
-            </span>
-            <span className="text-xs text-slate-400">• pgvector Cosine Search</span>
-          </div>
-          <div className="flex items-center gap-3 mt-1 flex-wrap">
-            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">
-              {activeKb ? activeKb.name : "No Knowledge Base Selected"}
+    <div className="space-y-10 max-w-7xl mx-auto pb-16">
+      
+      {/* RAG Pipeline Overview Graphic (Subtle) */}
+      <div className="flex items-center gap-2 text-[10px] font-mono text-slate-400 border-b border-slate-200 pb-4">
+        <span className="font-bold text-slate-600">PIPELINE</span>
+        <ArrowRight className="w-3 h-3 text-slate-300" />
+        <span>Document</span>
+        <ArrowRight className="w-3 h-3 text-slate-300" />
+        <span>Chunking</span>
+        <ArrowRight className="w-3 h-3 text-slate-300" />
+        <span>Embeddings</span>
+        <ArrowRight className="w-3 h-3 text-slate-300" />
+        <span>pgvector</span>
+        <ArrowRight className="w-3 h-3 text-slate-300" />
+        <span className="text-emerald-600 font-medium">Retrieval</span>
+      </div>
+
+      {/* KB Selector and Header */}
+      <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+        <div className="flex-1">
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
+              {activeKb ? activeKb.name : "Knowledge Bases"}
             </h2>
             {activeKb && (
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 border-l border-slate-300 pl-3">
                 <button
                   type="button"
                   onClick={() => setIsEditKbOpen(true)}
-                  title="Edit Knowledge Base"
-                  className="flex items-center gap-1 px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition cursor-pointer"
+                  className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded transition cursor-pointer"
+                  title="Edit KB"
                 >
-                  <Pencil className="w-3 h-3 text-slate-500" />
-                  <span>Edit</span>
+                  <Pencil className="w-3.5 h-3.5" />
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsDeleteKbOpen(true)}
-                  title="Delete Knowledge Base"
-                  className="flex items-center gap-1 px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-semibold transition cursor-pointer"
+                  className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition cursor-pointer"
+                  title="Delete KB"
                 >
-                  <Trash2 className="w-3 h-3 text-rose-500" />
-                  <span>Delete</span>
+                  <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </div>
             )}
           </div>
-          <p className="text-xs text-slate-500 mt-1 max-w-2xl">
-            {activeKb ? activeKb.description || "No description provided." : "Create a Knowledge Base to organize, chunk, and index documents for your AI assistant."}
+          <p className="text-sm text-slate-500 mt-1 max-w-2xl">
+            {activeKb ? activeKb.description || "Manage documents and test retrieval for this knowledge base." : "Select or create a knowledge base to manage RAG documents."}
           </p>
         </div>
 
         {/* KB Switcher Tabs & + New KB Button */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap shrink-0">
           {kbs.length > 0 && (
-            <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-2xl border border-slate-200/70">
+            <div className="flex items-center gap-1 bg-slate-100/50 p-1 rounded-md border border-slate-200">
               {kbs.map((kb) => (
                 <button
                   key={kb.id}
                   type="button"
                   onClick={() => setSelectedKbId(kb.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer truncate max-w-[180px] ${
+                  className={`px-3 py-1.5 rounded-sm text-xs font-medium transition cursor-pointer max-w-[150px] truncate ${
                     selectedKbId === kb.id
-                      ? "bg-white text-slate-900 shadow-2xs font-bold"
-                      : "text-slate-500 hover:text-slate-800"
+                      ? "bg-white text-slate-900 shadow-sm border border-slate-200"
+                      : "text-slate-500 hover:text-slate-700"
                   }`}
                 >
                   {kb.name}
@@ -223,7 +227,7 @@ export function KnowledgeBaseManagerView() {
           <button
             type="button"
             onClick={() => setIsCreateKbOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-950 hover:bg-black text-white text-xs font-semibold shadow-xs transition cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-medium transition cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>New KB</span>
@@ -231,56 +235,57 @@ export function KnowledgeBaseManagerView() {
         </div>
       </div>
 
-      {/* Stats Summary Bar */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-        <div className="p-4 bg-white rounded-3xl border border-slate-200/80 shadow-2xs flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-2xl bg-fuchsia-50 text-fuchsia-600 flex items-center justify-center border border-fuchsia-100">
-            <BookOpen className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="text-xs font-bold text-slate-400 uppercase">Documents</div>
-            <div className="text-lg font-extrabold text-slate-900">{docs.length} Files</div>
-          </div>
+      {/* Stats Summary Strip */}
+      <div className="flex items-center gap-8 border-y border-slate-200 py-3">
+        <div className="flex items-center gap-2">
+          <BookOpen className="w-4 h-4 text-slate-400" />
+          <span className="text-sm font-medium text-slate-700">{docs.length} Documents</span>
         </div>
-
-        <div className="p-4 bg-white rounded-3xl border border-slate-200/80 shadow-2xs flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center border border-purple-100">
-            <Layers className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="text-xs font-bold text-slate-400 uppercase">Vector Chunks</div>
-            <div className="text-lg font-extrabold text-slate-900">{totalChunks.toLocaleString()} in pgvector</div>
-          </div>
+        <div className="flex items-center gap-2">
+          <Layers className="w-4 h-4 text-slate-400" />
+          <span className="text-sm font-medium text-slate-700">{totalChunks.toLocaleString()} Vector Chunks</span>
         </div>
-
-        <div className="p-4 bg-white rounded-3xl border border-slate-200/80 shadow-2xs flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
-            <Database className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="text-xs font-bold text-slate-400 uppercase">Indexing Health</div>
-            <div className="text-lg font-extrabold text-emerald-600">
-              {docs.length > 0 ? "100% Synced" : activeKb ? "Ready for Docs" : "Create KB First"}
-            </div>
-          </div>
+        <div className="flex items-center gap-2">
+          <Database className="w-4 h-4 text-slate-400" />
+          <span className={`text-sm font-medium ${docs.length > 0 ? "text-emerald-600" : "text-slate-500"}`}>
+            {docs.length > 0 ? "Indexes synced" : "Pending documents"}
+          </span>
         </div>
       </div>
 
-      {/* Document Ingestion Drag & Drop Uploader */}
-      <DocumentUploaderArea
-        onDocumentAdded={handleDocumentAdded}
-        kbId={selectedKbId}
-      />
+      {/* Document Ingestion & Table */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        <div className="lg:col-span-2 space-y-8">
+          <div>
+            <h3 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
+              1. Document Ingestion
+            </h3>
+            <DocumentUploaderArea
+              onDocumentAdded={handleDocumentAdded}
+              kbId={selectedKbId}
+            />
+          </div>
 
-      {/* Semantic Search Retrieval Query Tester */}
-      <VectorSearchTester documentsCount={docs.length} kbId={selectedKbId} />
+          <div>
+            <h3 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
+              2. Indexed Documents
+            </h3>
+            <DocumentsListTable
+              documents={docs}
+              onInspectDocument={(doc) => setInspectingDoc(doc)}
+              onDeleteDocument={handleDeleteDocument}
+            />
+          </div>
+        </div>
 
-      {/* Documents Table */}
-      <DocumentsListTable
-        documents={docs}
-        onInspectDocument={(doc) => setInspectingDoc(doc)}
-        onDeleteDocument={handleDeleteDocument}
-      />
+        {/* Semantic Search Retrieval Query Tester */}
+        <div className="lg:col-span-1 border-l border-slate-200 pl-8 space-y-3">
+          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+            3. Retrieval Testing
+          </h3>
+          <VectorSearchTester documentsCount={docs.length} kbId={selectedKbId} />
+        </div>
+      </div>
 
       {/* Chunk Inspector Modal */}
       <ChunkInspectorModal
