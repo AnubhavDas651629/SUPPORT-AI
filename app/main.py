@@ -25,6 +25,7 @@ from app.core.exception_handlers import register_exception_handlers
 from app.core.lifespan import lifespan
 from app.api.v1.subscription import router as subscription_router, webhook_router as stripe_webhook_router
 from app.api.v1 import usage
+from app.api.v1 import health
 
 app = FastAPI(
     title="SupportAI",
@@ -70,6 +71,7 @@ app.include_router(subscription_router, prefix="/api/v1")
 app.include_router(stripe_webhook_router, prefix="/api/v1")
 app.include_router(usage.router, prefix="/api/v1")
 app.include_router(organization_settings.router, prefix="/api/v1")
+app.include_router(health.router, prefix="/api/v1")
 
 
 

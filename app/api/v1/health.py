@@ -15,8 +15,7 @@ async def health_check(
 ):
     try:
         #check database
-        async for session in db:
-            await session.execute(text("SELECT 1"))
+        await db.execute(text("SELECT 1"))
 
         #check redis
         await redis.ping()
