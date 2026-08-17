@@ -4,6 +4,7 @@ import logging
 from app.services.base import BaseService
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
+from uuid import UUID
 from app.repositories.ticket_repositories import TicketRepository
 from app.services.organization_settings_service import OrganizationSettingsService
 
@@ -71,7 +72,7 @@ class EmailService(BaseService):
 
     async def send_ticket_created_email(self, *, ticket_id: str) -> None:
         ticket_repo = TicketRepository(self.session)
-        ticket = await ticket_repo.get_by_id(ticket_id=ticket_id)
+        ticket = await ticket_repo.get_by_id(ticket_id=UUID(ticket_id))
         if not ticket:
             return
         settings_service = OrganizationSettingsService(self.session)
@@ -87,3 +88,15 @@ class EmailService(BaseService):
             subject=subject,
             body_text=text_content
         )
+
+
+    async def send_org_invitation_email(self, *, email: str, org_name: str, role: str) -> None:
+        subject = f"You've been added to {org_name} on {settings.app_name}"
+        text_content = f"Hi,\n\nYou have been added to the organization '{org_name}' with the role of {role}.\nLog in to your dashboard to view your new workspace!"
+        
+        self._send_smtp_email(
+            to_email=email,
+            subject=subject,
+            body_text=text_content
+        )
+

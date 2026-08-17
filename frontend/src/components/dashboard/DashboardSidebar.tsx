@@ -33,7 +33,7 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { name: "Command Center", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
   { name: "Escalated Tickets", href: "/dashboard?tab=tickets", icon: LifeBuoy, badgeKey: "tickets" },
   { name: "Live Conversations", href: "/dashboard?tab=conversations", icon: MessageSquare },
   { name: "Knowledge Base", href: "/dashboard?tab=knowledge", icon: BookOpen },
@@ -171,7 +171,7 @@ export function DashboardSidebar({
             {NAV_ITEMS.map((item) => {
               const Icon = item.icon;
               const tabKey = item.name.toLowerCase().replace(/[^a-z0-9]/g, "");
-              const isSelected = activeTab === tabKey || (tabKey === "commandcenter" && activeTab === "overview");
+              const isSelected = activeTab === tabKey;
               const badgeCount = item.badgeKey === "tickets" && openTicketsCount > 0 ? openTicketsCount : null;
 
               return (
@@ -179,7 +179,7 @@ export function DashboardSidebar({
                   key={item.name}
                   type="button"
                   onClick={() => {
-                    if (tabKey === "commandcenter") setActiveTab("overview");
+                    if (tabKey === "overview") setActiveTab("overview");
                     else if (tabKey === "escalatedtickets") setActiveTab("tickets");
                     else if (tabKey === "liveconversations") setActiveTab("conversations");
                     else if (tabKey === "knowledgebase") setActiveTab("knowledge");

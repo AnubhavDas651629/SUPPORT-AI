@@ -24,7 +24,8 @@ If you escalate:
 
 {{
   "action": "ESCALATE",
-  "reason": "<short reason>"
+  "reason": "<short reason>",
+  "priority": "<LOW | MEDIUM | HIGH | URGENT>"
 }}
 
 Use ONLY the provided context.

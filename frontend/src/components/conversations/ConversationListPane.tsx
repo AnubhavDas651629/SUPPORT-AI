@@ -44,29 +44,28 @@ export function ConversationListPane({
   });
 
   return (
-    <div className="w-80 lg:w-96 bg-white rounded-3xl border border-slate-200/80 shadow-2xs flex flex-col justify-between overflow-hidden h-[calc(100vh-140px)] shrink-0">
+    <div className="w-80 lg:w-96 bg-slate-50 flex flex-col justify-between overflow-hidden shrink-0 border-r border-slate-200">
       {/* Search & Header */}
-      <div className="p-4 border-b border-slate-100 space-y-3">
+      <div className="p-3 border-b border-slate-200 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <MessageSquare className="w-4 h-4 text-fuchsia-600" />
-            <h3 className="text-sm font-extrabold text-slate-900">Live Conversations</h3>
+            <h3 className="text-sm font-semibold text-slate-900">Inbox</h3>
           </div>
-          <span className="text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full flex items-center gap-1">
+          <span className="text-[10px] font-medium text-slate-500 flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Streaming</span>
+            <span>Live</span>
           </span>
         </div>
 
         {/* Search */}
         <div className="relative">
-          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3" />
+          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search active chat sessions..."
-            className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/20 focus:border-fuchsia-500 transition"
+            placeholder="Search conversations..."
+            className="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-slate-400 transition"
           />
         </div>
 
@@ -77,41 +76,38 @@ export function ConversationListPane({
               key={f}
               type="button"
               onClick={() => setFilter(f)}
-              className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition cursor-pointer ${
+              className={`px-2.5 py-1 rounded text-[11px] font-medium transition cursor-pointer ${
                 filter === f
-                  ? "bg-fuchsia-600 text-white shadow-2xs"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200/60"
+                  ? "bg-slate-200 text-slate-900"
+                  : "text-slate-500 hover:bg-slate-200/50"
               }`}
             >
-              {f === "ALL" ? "All Sessions" : f === "AI" ? "AI Autonomous" : "Escalated"}
+              {f === "ALL" ? "All" : f === "AI" ? "AI Only" : "Escalated"}
             </button>
           ))}
         </div>
       </div>
 
       {/* List Body */}
-      <div className="flex-1 overflow-y-auto divide-y divide-slate-100 p-2 space-y-1">
+      <div className="flex-1 overflow-y-auto">
         {isLoading ? (
           <div className="p-8 text-center text-xs text-slate-400 flex flex-col items-center justify-center gap-2">
-            <Loader2 className="w-5 h-5 animate-spin text-fuchsia-600" />
-            <span>Loading active conversations...</span>
+            <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+            <span>Loading...</span>
           </div>
         ) : filtered.length === 0 ? (
           <div className="p-8 text-center text-xs text-slate-400 space-y-3">
-            <MessageSquare className="w-8 h-8 text-slate-200 mx-auto" />
+            <MessageSquare className="w-8 h-8 text-slate-300 mx-auto" />
             <div>
-              <p className="font-bold text-slate-700">No active conversations</p>
-              <p className="text-[11px] mt-0.5">
-                When visitors chat on your live widget, sessions stream here in real time.
-              </p>
+              <p className="font-medium text-slate-600">No conversations</p>
             </div>
             {onOpenSimulator && (
               <button
                 type="button"
                 onClick={onOpenSimulator}
-                className="px-3 py-1.5 rounded-xl bg-fuchsia-600 hover:bg-fuchsia-700 text-white text-xs font-semibold shadow-xs transition cursor-pointer"
+                className="px-3 py-1.5 rounded bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium transition cursor-pointer"
               >
-                Test AI Chat Simulator
+                Test AI Simulator
               </button>
             )}
           </div>
@@ -123,44 +119,38 @@ export function ConversationListPane({
               <div
                 key={conv.id}
                 onClick={() => onSelectConversation(conv)}
-                className={`p-3.5 rounded-2xl transition cursor-pointer space-y-2 border ${
+                className={`p-3 transition cursor-pointer space-y-1 border-l-[3px] border-b border-b-slate-200/50 ${
                   isSelected
-                    ? "bg-gradient-to-r from-[#FDF2F8]/80 to-[#F5F3FF]/60 border-fuchsia-300/80 shadow-xs"
-                    : "hover:bg-slate-50/80 border-transparent"
+                    ? "bg-white border-l-slate-900"
+                    : "hover:bg-white/60 border-l-transparent"
                 }`}
               >
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-6 h-6 rounded-lg bg-fuchsia-100 text-fuchsia-600 flex items-center justify-center font-bold text-[10px] shrink-0">
-                      <Bot className="w-3.5 h-3.5" />
-                    </div>
-                    <h4 className="text-xs font-bold text-slate-900 truncate">
+                    <h4 className={`text-sm truncate ${isSelected ? 'font-semibold text-slate-900' : 'font-medium text-slate-700'}`}>
                       {conv.title || "Visitor Session"}
                     </h4>
                   </div>
 
-                  <span
-                    className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0 ${
-                      conv.is_escalated
-                        ? "bg-rose-100 text-rose-700"
-                        : "bg-emerald-100 text-emerald-700"
-                    }`}
-                  >
-                    {conv.is_escalated ? "Human Agent" : "Autonomous AI"}
-                  </span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className={`w-1.5 h-1.5 rounded-full ${conv.is_escalated ? 'bg-rose-500' : 'bg-emerald-500'}`} />
+                    <span className="text-[10px] font-medium text-slate-500">
+                      {conv.is_escalated ? "Human" : "AI"}
+                    </span>
+                  </div>
                 </div>
 
-                <p className="text-xs text-slate-500 line-clamp-1 leading-relaxed">
+                <p className={`text-xs line-clamp-1 ${isSelected ? 'text-slate-600' : 'text-slate-500'}`}>
                   {conv.last_message || "Active customer query in progress..."}
                 </p>
 
                 <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1">
                   <span className="flex items-center gap-1">
-                    <Clock className="w-3 h-3 text-slate-400" />
+                    <Clock className="w-3 h-3 text-slate-300" />
                     <span>{conv.updated_at}</span>
                   </span>
 
-                  <span className="font-semibold text-slate-600">
+                  <span className="font-medium">
                     {conv.messages_count || 2} msgs
                   </span>
                 </div>
@@ -171,10 +161,10 @@ export function ConversationListPane({
       </div>
 
       {/* Bottom Summary Bar */}
-      <div className="p-3 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between text-[11px] text-slate-500">
-        <span>{filtered.length} total sessions</span>
-        <span className="font-semibold text-emerald-600">
-          {conversations.filter((c) => !c.is_escalated).length} handled by AI
+      <div className="p-3 border-t border-slate-200 bg-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+        <span>{filtered.length} total</span>
+        <span className="font-medium text-slate-700">
+          {conversations.filter((c) => !c.is_escalated).length} AI handled
         </span>
       </div>
     </div>

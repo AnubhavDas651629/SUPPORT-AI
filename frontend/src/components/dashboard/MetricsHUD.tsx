@@ -70,123 +70,73 @@ export function MetricsHUD() {
     : "100%";
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 w-full">
+    <div className="flex flex-col sm:flex-row bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden divide-y sm:divide-y-0 sm:divide-x divide-slate-200">
       {/* Metric 1: Monthly AI Quota */}
-      <div className="p-4 bg-white rounded-3xl border border-slate-200/80 shadow-2xs flex flex-col justify-between">
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-            Monthly AI Quota
+      <div className="flex-1 p-4 sm:p-5 flex flex-col justify-between hover:bg-slate-50/50 transition">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+            <Bot className="w-4 h-4 text-slate-400" />
+            Monthly Quota
           </span>
-          <div className="w-7 h-7 rounded-xl bg-fuchsia-50 text-fuchsia-600 flex items-center justify-center border border-fuchsia-100">
-            <Bot className="w-3.5 h-3.5" />
-          </div>
+          <span className="text-xs font-medium text-slate-400">{aiPercent}% Used</span>
         </div>
-
-        <div className="mt-2 mb-3">
-          <div className="text-xl font-extrabold text-slate-900 tracking-tight">
-            {aiUsed} <span className="text-xs font-medium text-slate-400">/ {aiLimit} msgs</span>
-          </div>
-          <div className="flex items-center justify-between text-[11px] text-slate-400 mt-0.5">
-            <span>Quota Used</span>
-            <span className="font-semibold text-slate-700">{aiPercent}%</span>
-          </div>
-        </div>
-
-        {/* Progress Bar */}
-        <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-fuchsia-500 to-fuchsia-600 rounded-full transition-all duration-500"
-            style={{ width: `${Math.max(aiPercent, 2)}%` }}
-          />
+        <div className="flex items-baseline gap-2">
+          <div className="text-2xl font-bold text-slate-900 tracking-tight">{aiUsed}</div>
+          <div className="text-sm font-medium text-slate-500">/ {aiLimit} msgs</div>
         </div>
       </div>
 
       {/* Metric 2: Open Escalation Tickets */}
-      <div className="p-4 bg-white rounded-3xl border border-slate-200/80 shadow-2xs flex flex-col justify-between">
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+      <div className="flex-1 p-4 sm:p-5 flex flex-col justify-between hover:bg-slate-50/50 transition">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+            <LifeBuoy className="w-4 h-4 text-slate-400" />
             Escalation Queue
           </span>
-          <div className="w-7 h-7 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center border border-rose-100">
-            <LifeBuoy className="w-3.5 h-3.5" />
-          </div>
-        </div>
-
-        <div className="mt-2 mb-3">
-          <div className="text-xl font-extrabold text-slate-900 tracking-tight">
-            {openTicketsCount} <span className="text-xs font-medium text-slate-400">Pending</span>
-          </div>
           {urgentCount > 0 ? (
-            <div className="flex items-center gap-1.5 text-[11px] text-rose-600 font-semibold mt-0.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
-              <span>{urgentCount} Urgent escalation{urgentCount > 1 ? "s" : ""}</span>
-            </div>
+            <span className="flex items-center gap-1.5 text-[11px] text-rose-600 font-semibold px-2 py-0.5 bg-rose-50 rounded">
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+              {urgentCount} Urgent
+            </span>
           ) : (
-            <div className="flex items-center gap-1 text-[11px] text-emerald-600 font-semibold mt-0.5">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>{openTicketsCount === 0 ? "All caught up" : "Normal SLA"}</span>
-            </div>
+            <span className="flex items-center gap-1 text-[11px] text-slate-500">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> All caught up
+            </span>
           )}
         </div>
-
-        <div className="flex items-center justify-between text-[10px] text-slate-400 pt-2 border-t border-slate-100">
-          <span>Avg response SLA</span>
-          <span className="font-bold text-slate-700">{openTicketsCount > 0 ? "15 mins" : "0 pending"}</span>
+        <div className="flex items-baseline gap-2">
+          <div className="text-2xl font-bold text-slate-900 tracking-tight">{openTicketsCount}</div>
+          <div className="text-sm font-medium text-slate-500">Pending</div>
         </div>
       </div>
 
-      {/* Metric 3: Knowledge Base Sync */}
-      <div className="p-4 bg-white rounded-3xl border border-slate-200/80 shadow-2xs flex flex-col justify-between">
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-            Vector Embeddings
+      {/* Metric 3: Vector Embeddings */}
+      <div className="flex-1 p-4 sm:p-5 flex flex-col justify-between hover:bg-slate-50/50 transition">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+            <BookOpen className="w-4 h-4 text-slate-400" />
+            Vector Store
           </span>
-          <div className="w-7 h-7 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100">
-            <BookOpen className="w-3.5 h-3.5" />
-          </div>
+          <span className="text-[11px] font-medium text-slate-400">pgvector</span>
         </div>
-
-        <div className="mt-2 mb-3">
-          <div className="text-xl font-extrabold text-slate-900 tracking-tight">
-            {totalDocsCount} <span className="text-xs font-medium text-slate-400">Docs</span>
-          </div>
-          <div className="flex items-center gap-1 text-[11px] text-emerald-600 font-semibold mt-0.5">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>{totalDocsCount > 0 ? "100% pgvector Synced" : "Ready for Upload"}</span>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between text-[10px] text-slate-400 pt-2 border-t border-slate-100">
-          <span>Total Chunks</span>
-          <span className="font-bold text-slate-700">{totalChunksCount.toLocaleString()} vectors</span>
+        <div className="flex items-baseline gap-2">
+          <div className="text-2xl font-bold text-slate-900 tracking-tight">{totalDocsCount}</div>
+          <div className="text-sm font-medium text-slate-500">Docs Synced</div>
         </div>
       </div>
 
       {/* Metric 4: AI Resolution Rate */}
-      <div className="p-4 bg-white rounded-3xl border border-slate-200/80 shadow-2xs flex flex-col justify-between">
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-            AI Resolution Rate
+      <div className="flex-1 p-4 sm:p-5 flex flex-col justify-between hover:bg-slate-50/50 transition">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+            <TrendingUp className="w-4 h-4 text-slate-400" />
+            Resolution Rate
           </span>
-          <div className="w-7 h-7 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
-            <TrendingUp className="w-3.5 h-3.5" />
-          </div>
+          <span className="text-[11px] font-medium text-slate-400">Total: {conversationsCount}</span>
         </div>
-
-        <div className="mt-2 mb-3">
-          <div className="text-xl font-extrabold text-slate-900 tracking-tight">
-            {automationRate}
-          </div>
-          <div className="flex items-center gap-1 text-[11px] text-emerald-600 font-semibold mt-0.5">
-            <span>{conversationsCount} total conversation{conversationsCount !== 1 ? "s" : ""}</span>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between text-[10px] text-slate-400 pt-2 border-t border-slate-100">
-          <span>Autonomous deflection</span>
-          <span className="font-bold text-slate-700">
-            {conversationsCount > 0 ? `${Math.max(0, conversationsCount - openTicketsCount)} / ${conversationsCount}` : "Ready"}
-          </span>
+        <div className="flex items-baseline gap-2">
+          <div className="text-2xl font-bold text-slate-900 tracking-tight">{automationRate}</div>
+          <div className="text-sm font-medium text-slate-500">Autonomous</div>
         </div>
       </div>
     </div>

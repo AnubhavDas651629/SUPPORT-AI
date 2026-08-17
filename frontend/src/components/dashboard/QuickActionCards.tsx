@@ -74,47 +74,21 @@ export function QuickActionCards({
   ];
 
   return (
-    <div className="w-full">
-      {/* Section Header */}
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-bold text-slate-900 tracking-tight">
-          Recommended Quick Actions
-        </h2>
-        <span className="text-[11px] text-slate-400 font-medium">Quick setup shortcuts</span>
-      </div>
-
-      {/* Grid of 6 Action Cards (matches inspiration layout) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {actions.map((act) => {
-          const Icon = act.icon;
-          return (
-            <button
-              key={act.title}
-              type="button"
-              onClick={act.action}
-              className="p-3.5 bg-white hover:bg-slate-50/80 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-xs transition-all text-left flex items-start justify-between group cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 transition group-hover:scale-105 ${act.iconColor}`}
-                >
-                  <Icon className="w-4 h-4 stroke-[2.2]" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-bold text-slate-900 group-hover:text-fuchsia-600 transition">
-                    {act.title}
-                  </h3>
-                  <p className="text-[11px] text-slate-400 mt-0.5 line-clamp-1">
-                    {act.desc}
-                  </p>
-                </div>
-              </div>
-
-              <ArrowUpRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-fuchsia-600 transition shrink-0 ml-1" />
-            </button>
-          );
-        })}
-      </div>
+    <div className="flex flex-wrap items-center gap-2 mb-4">
+      {actions.map((act) => {
+        const Icon = act.icon;
+        return (
+          <button
+            key={act.title}
+            type="button"
+            onClick={act.action}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-md hover:bg-slate-50 hover:text-slate-900 transition cursor-pointer text-xs font-medium text-slate-600 shadow-sm"
+          >
+            <Icon className="w-3.5 h-3.5 text-slate-400" />
+            <span>{act.title}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }
