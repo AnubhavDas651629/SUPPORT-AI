@@ -58,6 +58,18 @@ app = FastAPI(
 #Because of the custom add_correlation_id function we wrote, the Factory pauses and says: "Wait, let me look at the sticky-note on this request's shirt."
 setup_logging(json_logs=False)
 
+@app.middleware("http")
+async def add_security_headers(request, call_next):
+    response = await call_next(request)
+    # Prevent browsers from guessing the file type (prevents malicious uploads)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    # Prevent other websites from putting your app in an invisible iframe (Clickjacking)
+    response.headers["X-Frame-Options"] = "DENY"
+    # Force browsers to use HTTPS
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    return response
+
+
 #the last middleware you add in the code is the first one that runs when a request arrives
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 app.add_middleware(LoggingMiddleware) #second step, when req walks in it clicks start on stopwatch and when it leaves, it clicks stop, and calculates how many miliseconds the visit took

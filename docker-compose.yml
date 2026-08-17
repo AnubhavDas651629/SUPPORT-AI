@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  # 1. YOUR FASTAPI BACKEND
+  api:
+    build: .  # This tells Docker: "Look for the Dockerfile in this directory and build the box."
+    ports:
+      - "8000:8000" # Maps port 8000 on your Mac to port 8000 inside the container
+    environment:
+      # These tell FastAPI to connect to the other Docker containers, not your Mac!
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/support_ai
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672//
+    env_file:
+      - .env # This securely injects your OpenAI and Sentry keys from your Mac
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+
+  # 2. YOUR CELERY WORKER
+  worker:
+    build: .  # It uses the exact same Dockerfile (so it has the same python code)
+    command: ["celery", "-A", "app.workers.celery_app", "worker", "--loglevel=info"]
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/support_ai
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672//
+    env_file:
+      - .env
+    depends_on:
+      - rabbitmq
+      - redis
+
+  # 3. POSTGRES DATABASE
+  postgres:
+    image: postgres:15 # Downloads the official Postgres box from the internet
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=support_ai
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # This ensures data isn't deleted if the box turns off
+
+  # 4. REDIS CACHE
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379" # We map this to 6380 so it doesn't conflict with the Redis currently running on your Mac!
+
+  # 5. RABBITMQ MESSAGE BROKER
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5673:5672" # Mapped to 5673 to avoid conflicts with your Mac
+      - "15673:15672" # The RabbitMQ Admin UI
+
+  # 6. PROMETHEUS (Metrics Scraper)
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml # Mounts our custom config
+
+  # 7. GRAFANA (Beautiful Dashboards)
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3001:3000" # Mapped to 3001 so it doesn't conflict with your React Frontend on port 3000!
+
+# This defines the permanent hard drive storage for the Postgres database
+volumes:
+  postgres_data:
