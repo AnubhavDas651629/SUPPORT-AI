@@ -17,6 +17,6 @@ jobs:
         username: ${{ secrets.AWS_USERNAME }}
         key: ${{ secrets.AWS_SSH_KEY }}
         script: |
-          cd ~/support-ai
+          cd ~/SUPPORT-AI
           git pull origin main
           docker compose up --build -d api worker
