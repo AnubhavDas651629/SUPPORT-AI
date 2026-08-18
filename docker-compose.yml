@@ -8,6 +8,7 @@ services:
       - "8000:8000" # Maps port 8000 on your Mac to port 8000 inside the container
     environment:
       # These tell FastAPI to connect to the other Docker containers, not your Mac!
+      - OTLP_ENDPOINT=http://jaeger:4318/v1/traces
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/support_ai
       - REDIS_HOST=redis
       - REDIS_PORT=6379
@@ -36,7 +37,7 @@ services:
 
   # 3. POSTGRES DATABASE
   postgres:
-    image: postgres:15 # Downloads the official Postgres box from the internet
+    image: pgvector/pgvector:pg15 # Downloads the official Postgres box from the internet
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -72,6 +73,26 @@ services:
     image: grafana/grafana
     ports:
       - "3001:3000" # Mapped to 3001 so it doesn't conflict with your React Frontend on port 3000!
+
+    # 8. JAEGER (OpenTelemetry Timelines)
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686" # The beautiful UI for viewing timelines
+      - "4318:4318"   # The port where it catches data from FastAPI
+
+  # 9. NGINX PROXY MANAGER (The Traffic Cop & HTTPS Provider)
+  nginx:
+    image: 'jc21/nginx-proxy-manager:latest'
+    ports:
+      - '80:80'    # Public HTTP Traffic
+      - '81:81'    # The Admin Dashboard
+      - '443:443'  # Public HTTPS Traffic
+    volumes:
+      - ./data:/data
+      - ./letsencrypt:/etc/letsencrypt
+    depends_on:
+      - api
 
 # This defines the permanent hard drive storage for the Postgres database
 volumes:
