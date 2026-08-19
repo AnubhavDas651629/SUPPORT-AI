@@ -12,18 +12,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Install uv
+        run: pipx install uv
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install pytest pytest-asyncio httpx
+        run: uv sync
 
       - name: Run Tests
-        run: pytest tests/test_api.py
+        run: uv run pytest tests/test_api.py
 
   deploy:
     runs-on: ubuntu-latest
