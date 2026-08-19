@@ -26,6 +26,16 @@ jobs:
         run: uv sync
 
       - name: Run Tests
+        env:
+          APP_NAME: "test"
+          DEBUG: "true"
+          DATABASE_URL: "postgresql+asyncpg://postgres:postgres@localhost:5432/postgres"
+          JWT_SECRET: "fake_secret"
+          JWT_ALGORITHM: "HS256"
+          ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+          REFRESH_TOKEN_EXPIRE_DAYS: "7"
+          OPENAI_API_KEY: "fake_key"
+          RABBITMQ_URL: "amqp://guest:guest@localhost/"
         run: uv run pytest tests/test_api.py
 
   deploy:
