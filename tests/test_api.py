@@ -15,3 +15,4 @@ def test_read_root():
     
     # 3. Check that the JSON response matches what we expect
     assert response.json() == {"message": "Welcome to SupportAI"}
+
