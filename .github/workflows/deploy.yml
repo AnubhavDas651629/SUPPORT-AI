@@ -54,6 +54,7 @@ jobs:
           REFRESH_TOKEN_EXPIRE_DAYS: "7"
           OPENAI_API_KEY: "fake_key"
           RABBITMQ_URL: "amqp://guest:guest@localhost/"
+          WEBHOOK_ENCRYPTION_KEY: "GCbODGRuponiLNgdR5xx-YeIs_ylxC1MaCMb_r2LYlY="
         run: |
           uv run alembic upgrade head
           uv run pytest --cov=app tests/
