@@ -14,6 +14,7 @@ class SubscriptionStatus(str, Enum):
 PLAN_LIMITS = {
     PlanTier.FREE: {
         "max_ai_responses_per_month": 100,
+        "max_ai_tokens_per_month": 100_000,
         "max_knowledge_bases": 1,
         "max_documents_per_kb": 10,
         "max_members": 1,
@@ -24,6 +25,7 @@ PLAN_LIMITS = {
     },
     PlanTier.PRO: {
         "max_ai_responses_per_month": 10000,
+        "max_ai_tokens_per_month": 10_000_000,
         "max_knowledge_bases": 10,
         "max_documents_per_kb": 500,
         "max_members": 10,
@@ -34,6 +36,7 @@ PLAN_LIMITS = {
     },
     PlanTier.ENTERPRISE: {
         "max_ai_responses_per_month": 500000,
+        "max_ai_tokens_per_month": 500_000_000,
         "max_knowledge_bases": 100,
         "max_documents_per_kb": 10000,
         "max_members": 100,

@@ -29,6 +29,8 @@ class OrganizationUsage(Base, UUIDMixin, TimestampMixin):
 
     # counters -> incremented atomically as events happen
     ai_responses_used: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    prompt_tokens_used: Mapped[int] = mapped_column(BigInteger, default=0, nullable=False)
+    completion_tokens_used: Mapped[int] = mapped_column(BigInteger, default=0, nullable=False)
     storage_bytes_used: Mapped[int] = mapped_column(BigInteger, default=0, nullable=False)
     conversations_started: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 

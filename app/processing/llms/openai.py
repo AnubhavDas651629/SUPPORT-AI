@@ -22,26 +22,38 @@ class OpenAIProvivder(LLMProvider):
         retry=retry_if_exception_type((openai.RateLimitError, openai.APIConnectionError, openai.InternalServerError)),
         reraise=return_fallback_message
     )
-    async def complete(self, *, messages: list[dict], temperature: float = 0) -> str:
+    async def complete(self, *, messages: list[dict], temperature: float = 0) -> tuple[str, int, int]:
         response = await client.chat.completions.create(
             model = self.MODEL,
             messages=messages,
             temperature=temperature
         )
-        return response.choices[0].message.content or ""
+        content = response.choices[0].message.content or ""
+        prompt_tokens = response.usage.prompt_tokens if response.usage else 0
+        completion_tokens = response.usage.completion_tokens if response.usage else 0
+        return content, prompt_tokens, completion_tokens
 
-    async def stream(self, *, messages: list[dict], temperature: float = 0) -> AsyncGenerator[str, None]:
+    async def stream(self, *, messages: list[dict], temperature: float = 0) -> AsyncGenerator[str | dict, None]:
         try:
             stream_response = await client.chat.completions.create(
                 model = self.MODEL,
                 messages=messages,
                 temperature=temperature,
-                stream=True
+                stream=True,
+                stream_options={"include_usage": True}
             )
             async for chunk in stream_response:
-                delta = chunk.choices[0].delta.content
-                if delta:
-                    yield delta
+                if len(chunk.choices) > 0:
+                    delta = chunk.choices[0].delta.content
+                    if delta:
+                        yield delta
+                
+                # Check for usage on the final chunk
+                if chunk.usage is not None:
+                    yield {
+                        "prompt_tokens": chunk.usage.prompt_tokens,
+                        "completion_tokens": chunk.usage.completion_tokens
+                    }
                     
         except (openai.RateLimitError, openai.APIConnectionError, openai.InternalServerError, openai.OpenAIError):
             # Graceful Degradation: Yield a polite fallback string instead of crashing!

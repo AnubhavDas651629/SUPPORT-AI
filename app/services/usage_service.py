@@ -68,21 +68,30 @@ class UsageService(BaseService):
             organization_id=organization_id
         )
         max_responses = limits.get("max_ai_responses_per_month", 0)
+        max_tokens = limits.get("max_ai_tokens_per_month", 0)
 
         if usage.ai_responses_used >= max_responses:
             raise PlanLimitExceededException(
                 message=f"You have used all {max_responses} AI responses for this month. Please upgrade your plan"
             )
+            
+        total_tokens = usage.prompt_tokens_used + usage.completion_tokens_used
+        if total_tokens >= max_tokens:
+            raise PlanLimitExceededException(
+                message=f"You have reached your limit of {max_tokens} AI tokens for this month. Please upgrade your plan."
+            )
 
-    async def record_ai_response(self, *, organization_id: UUID) -> None:
-        """Increment the AI response counter by 1 after a successful response."""
+    async def record_ai_response(self, *, organization_id: UUID, prompt_tokens: int = 0, completion_tokens: int = 0) -> None:
+        """Increment the AI response counter and tokens after a successful response."""
         # 1. Guarantee the row exists in DB for this period
         await self._get_or_create_usage(
             organization_id=organization_id
         )
         # 2. Atomically increment in Postgres
         await self.usage_repository.increment_ai_response(
-            organization_id=organization_id
+            organization_id=organization_id,
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens
         )
         await self.session.commit()
 
@@ -182,6 +191,12 @@ class UsageService(BaseService):
             "ai_responses": {
                 "used": usage.ai_responses_used,
                 "limit": limits.get("max_ai_responses_per_month")
+            },
+            "ai_tokens": {
+                "prompt_tokens_used": usage.prompt_tokens_used,
+                "completion_tokens_used": usage.completion_tokens_used,
+                "total_used": usage.prompt_tokens_used + usage.completion_tokens_used,
+                "limit": limits.get("max_ai_tokens_per_month")
             },
             "storage_bytes":{
                 "used": usage.storage_bytes_used,

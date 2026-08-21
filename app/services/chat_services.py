@@ -107,7 +107,7 @@ class ChatService(BaseService):
             }
         ]
 
-        title = await self.llm_provider.complete(
+        title, _, _ = await self.llm_provider.complete(
             messages=messages
         )
         return title.strip()
@@ -184,10 +184,12 @@ class ChatService(BaseService):
             question=question,
         )
 
+        prompt_tokens = 0
+        completion_tokens = 0
         if result.escalated and result.answer:
             final_answer = result.answer
         else:
-            final_answer = await self.llm_provider.complete(
+            final_answer, prompt_tokens, completion_tokens = await self.llm_provider.complete(
                 messages=messages,
                 temperature=org_settings.temperature,
             )
@@ -206,7 +208,9 @@ class ChatService(BaseService):
 
         # 3. Record AI response usage
         await usage_service.record_ai_response(
-            organization_id=conversation.organization_id
+            organization_id=conversation.organization_id,
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens
         )
 
         title = await self._generate_title(
@@ -288,6 +292,8 @@ class ChatService(BaseService):
             question=question,
         )
 
+        prompt_tokens = 0
+        completion_tokens = 0
         full_answer = ""
         if result.escalated and result.answer:
             full_answer = result.answer
@@ -295,12 +301,16 @@ class ChatService(BaseService):
             for i, word in enumerate(words):
                 yield word + (" " if i < len(words) - 1 else "")
         else:
-            async for token in self.llm_provider.stream(
+            async for chunk in self.llm_provider.stream(
                 messages=messages,
                 temperature=org_settings.temperature,
             ):
-                full_answer += token
-                yield token
+                if isinstance(chunk, str):
+                    full_answer += chunk
+                    yield chunk
+                elif isinstance(chunk, dict):
+                    prompt_tokens = chunk["prompt_tokens"]
+                    completion_tokens = chunk["completion_tokens"]
 
         citations = [
             Citation(
@@ -325,7 +335,9 @@ class ChatService(BaseService):
 
         # 4. Record AI response usage
         await usage_service.record_ai_response(
-            organization_id=conversation.organization_id
+            organization_id=conversation.organization_id,
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens
         )
 
 

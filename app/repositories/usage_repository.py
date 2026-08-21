@@ -35,6 +35,8 @@ class UsageRepository(BaseRepository):
             period_start=period_start,
             period_end=period_end,
             ai_responses_used=0,
+            prompt_tokens_used=0,
+            completion_tokens_used=0,
             storage_bytes_used=0,
             conversations_started=0
         )
@@ -43,9 +45,9 @@ class UsageRepository(BaseRepository):
         return usage
 
     #bytes added is the file size in bytes of a newly uploaded document
-    async def increment_ai_response(self, *, organization_id:UUID) -> None:
+    async def increment_ai_response(self, *, organization_id:UUID, prompt_tokens: int = 0, completion_tokens: int = 0) -> None:
         """
-        Atomically add 1 to ai_responses_used for the current preiod
+        Atomically add 1 to ai_responses_used and add tokens for the current period
         """
         now = datetime.now(UTC)
         await self.session.execute(
@@ -55,7 +57,11 @@ class UsageRepository(BaseRepository):
                 OrganizationUsage.period_start <= now,
                 OrganizationUsage.period_end > now
             )
-        .values(ai_responses_used=OrganizationUsage.ai_responses_used + 1)
+        .values(
+            ai_responses_used=OrganizationUsage.ai_responses_used + 1,
+            prompt_tokens_used=OrganizationUsage.prompt_tokens_used + prompt_tokens,
+            completion_tokens_used=OrganizationUsage.completion_tokens_used + completion_tokens
+        )
         )
 
     async def increment_storage(self, *, organization_id:UUID, bytes_added: int) -> None:

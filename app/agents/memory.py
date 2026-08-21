@@ -62,7 +62,7 @@ class MemoryCompressor:
                 "content": f"CONVERSATION HISTORY:\n{history_text}"
             }
         ]
-        summary = await self.llm.complete(messages=messages)
+        summary, _, _ = await self.llm.complete(messages=messages)
         final_summary = f"[COMPRESSED HISTORY]: {summary.strip()}"
         print(f"📦 COMPRESSED SUMMARY: {final_summary}")
 
