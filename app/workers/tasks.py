@@ -94,3 +94,17 @@ def send_org_invite_email_task(email:str, org_name:str, role:str):
                 role=role
             )
     run(_send())
+
+@celery_app.task(
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    max_retries=3
+)
+def compress_conversation_memory_task(conversation_id: str):
+    logger.info(f"Executing compress_conversation_memory_task for {conversation_id}")
+    async def _compress():
+        async with AsyncSessionLocal() as session:
+            from app.agents.memory import MemoryCompressor
+            compressor = MemoryCompressor(session=session)
+            await compressor.compress_conversation(conversation_id=conversation_id)
+    run(_compress())

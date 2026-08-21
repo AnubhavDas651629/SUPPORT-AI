@@ -29,6 +29,9 @@ celery_app.conf.update(
         },
         "app.workers.tasks.dispatch_webhook_event_task": {
             "queue": "webhooks"
+        },
+        "app.workers.tasks.compress_conversation_memory_task": {
+            "queue": "background_tasks"
         }
     },
 
