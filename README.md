@@ -14,14 +14,18 @@ Built for teams shipping AI support *now*, not a research demo: multi-tenant iso
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-pgvector-336791)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6)
 
+**🔗 Live demo: [supportai.duckdns.org](https://supportai.duckdns.org/)**
+
 ---
 
 ## Demo
 
+**Try it live: [supportai.duckdns.org](https://supportai.duckdns.org/)**
+
 <!-- TODO: drop in a GIF or screenshots here — e.g. docs/screenshots/dashboard.png, docs/screenshots/widget.png -->
 <!-- Suggested shots: (1) the embeddable widget answering a question with citations, (2) the escalated-tickets queue, (3) the AI Assistant Studio's live test drawer -->
 
-> Screenshots/GIF coming — run `docker compose up --build` and open `http://localhost:3000` for the dashboard or `app/static/demo.html` for the embeddable widget.
+> Screenshots/GIF coming soon. To run it yourself locally: `docker compose up --build`, then open `http://localhost:3000` for the dashboard or `app/static/demo.html` for the embeddable widget.
 
 ---
 
