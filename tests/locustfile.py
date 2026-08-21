@@ -1,3 +1,4 @@
+#for load testing and seeing server capacity
 from locust import HttpUser, task, between
 import uuid
 
