@@ -1,5 +1,9 @@
-import { redirect } from "next/navigation";
+import { HeroSection } from "@/components/landing/HeroSection";
 
 export default function HomePage() {
-  redirect("/login");
+  return (
+    <main className="min-h-screen bg-[#020617]">
+      <HeroSection />
+    </main>
+  );
 }
