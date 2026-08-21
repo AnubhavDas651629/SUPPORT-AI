@@ -14,14 +14,18 @@ Built for teams shipping AI support *now*, not a research demo: multi-tenant iso
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-pgvector-336791)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6)
 
+**🔗 Live demo: [supportai.duckdns.org](https://supportai.duckdns.org/)**
+
 ---
 
 ## Demo
 
+**Try it live: [supportai.duckdns.org](https://supportai.duckdns.org/)**
+
 <!-- TODO: drop in a GIF or screenshots here — e.g. docs/screenshots/dashboard.png, docs/screenshots/widget.png -->
 <!-- Suggested shots: (1) the embeddable widget answering a question with citations, (2) the escalated-tickets queue, (3) the AI Assistant Studio's live test drawer -->
 
-> Screenshots/GIF coming — run `docker compose up --build` and open `http://localhost:3000` for the dashboard or `app/static/demo.html` for the embeddable widget.
+> Screenshots/GIF coming soon. To run it yourself locally: `docker compose up --build`, then open `http://localhost:3000` for the dashboard or `app/static/demo.html` for the embeddable widget.
 
 ---
 
@@ -35,6 +39,64 @@ Most "AI support" projects are a thin prompt wrapped around an LLM call. Support
 - **Usage is metered like a real SaaS product** — AI responses, tokens, documents, storage, and seats are all checked against `FREE`/`PRO`/`ENTERPRISE` plan limits before an operation runs, wired straight into Stripe Checkout and webhooks.
 - **Security isn't an afterthought** — hardcoded prompt-injection directives on every system prompt, Fernet-encrypted webhook secrets, SHA-256 hashed API keys, Redis-backed rate limiting on every public surface.
 - **Observability is wired in, not planned** — Prometheus metrics, Jaeger tracing, Sentry error capture, and correlation IDs across the whole request lifecycle, from commit one.
+
+## Tech Stack
+
+Most early-stage AI projects stop at "it calls OpenAI." This one is load-tested, traced, metered, and billed like a real SaaS product.
+
+**Backend & API**
+| Tool | Why |
+| :--- | :--- |
+| Python 3.12 / FastAPI | Async-first API layer with a strict router → service → repository boundary |
+| SQLAlchemy 2.0 (AsyncSession) | Fully async ORM — no blocking DB calls on the request path |
+| Alembic | Versioned schema migrations (31 revisions and counting) |
+| Pydantic v2 | Request/response validation and structured LLM outputs (not free-text parsing) |
+
+**AI / LLM**
+| Tool | Why |
+| :--- | :--- |
+| OpenAI `gpt-4.1-mini` | Chat generation, routing, and escalation decisions |
+| OpenAI `text-embedding-3-small` | Document embeddings for retrieval |
+| pgvector (PostgreSQL) | Cosine similarity search over document chunks, no separate vector DB to operate |
+
+**Data & Async Processing**
+| Tool | Why |
+| :--- | :--- |
+| PostgreSQL | Primary datastore, multi-tenant relational schema |
+| Redis | Rate limiting, OTP cache, session bookkeeping |
+| RabbitMQ | Celery broker for background work |
+| Celery (+ Beat) | Email delivery, webhook dispatch, memory compression, scheduled cleanup |
+
+**Observability**
+| Tool | Why |
+| :--- | :--- |
+| Prometheus + Grafana | Metrics collection and dashboards |
+| Jaeger (OpenTelemetry) | Distributed tracing across services |
+| Sentry | Error tracking with full request context |
+| Correlation IDs | Every request traceable end-to-end across logs and traces |
+
+**Testing & Load**
+| Tool | Why |
+| :--- | :--- |
+| pytest (async, real DB fixture) | Integration tests against a real Postgres/pgvector instance, rolled back per test |
+| Locust | Load testing the chat and widget endpoints — verifies the rate limiter holds under pressure, not just that the code runs |
+
+**Security**
+| Tool | Why |
+| :--- | :--- |
+| JWT + rotating refresh tokens | Dashboard session auth |
+| Google OAuth | Server-verified social login |
+| Fernet (AES-128-CBC + HMAC-SHA256) | Webhook signing secrets encrypted at rest |
+| SHA-256 | API key hashing |
+
+**Frontend & DevOps**
+| Tool | Why |
+| :--- | :--- |
+| Next.js 16 / React 19 / TypeScript | Dashboard, App Router, strict typing |
+| Tailwind CSS 4 | Styling, no separate design-system dependency |
+| Docker / Docker Compose | Full local + prod stack: api, worker, postgres, redis, rabbitmq, prometheus, grafana, jaeger, nginx |
+| GitHub Actions | CI (test + coverage) → CD (deploy on push to `main`) |
+| Stripe | Checkout, subscriptions, plan-tier billing webhooks |
 
 ## Roadmap
 
