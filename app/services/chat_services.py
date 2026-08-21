@@ -31,6 +31,8 @@ from app.services.organization_settings_service import OrganizationSettingsServi
 from app.core.webhook_events import WebhookEventType
 from app.utils.webhook_payloads import serialize_conversation_payload, serialize_message_payload
 from app.utils.webhook_dispatch import fire_webhook_event
+from app.agents.router import AgentRouter
+from app.agents.specialists import get_specialized_system_prompt
 
 class ChatService(BaseService):
     def __init__(self, session: AsyncSession):
@@ -50,6 +52,7 @@ class ChatService(BaseService):
         history: list[Message],
         chunks: list[DocumentChunk],
         question: str,
+        route:str,
         system_prompt_override: str | None = None,
     ) -> list[dict]:
         history_text = "\n\n".join(
@@ -62,9 +65,7 @@ class ChatService(BaseService):
             for chunk in chunks
         )
 
-        system_prompt = load_prompt(
-            "customer_support/system"
-        )
+        system_prompt = get_specialized_system_prompt(route)
         # add any custom instruction from the organization
         if system_prompt_override:
             system_prompt += f"\n\nAdditional Instructions:\n{system_prompt_override}"
@@ -172,10 +173,14 @@ class ChatService(BaseService):
             organization_id=conversation.organization_id
         )
 
+        router = AgentRouter()
+        route = await route.route_conversation(question)
+
         messages = self._build_messages(
             history=history,
             chunks=chunks,
             question=question,
+            route=route,
             system_prompt_override=org_settings.system_prompt_override,
         )
 
@@ -268,10 +273,14 @@ class ChatService(BaseService):
             organization_id=conversation.organization_id
         )
 
+        router = AgentRouter()
+        route = await router.route_conversation(question)
+
         messages = self._build_messages(
             history=history,
             chunks=chunks,
             question=question,
+            route = route,
             system_prompt_override=org_settings.system_prompt_override,
         )
 

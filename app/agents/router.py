@@ -2,7 +2,7 @@
 #if it's a technical question, ai will detect and route to the technical ai agent, and so forth for all situations
 
 from enum import Enum
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from app.processing.llms.factory import LLMFactory
 
 #allowed routes
@@ -13,9 +13,10 @@ class ConversationRoute(str, Enum):
 
 #JSON structure the AI must return in
 class RouterResponse(BaseModel):
-    route: ConversationRoute
-    confidence: float
-    reason: str
+    reason: str = Field(description="Explain your step-by-step reasoning for choosing the route.")
+    route: ConversationRoute = Field(description="The final categorized route.")
+    confidence: float = Field(description="A score between 0.0 and 1.0 indicating how confident you are.")
+
 
 #router agent
 class AgentRouter:
