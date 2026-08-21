@@ -1,6 +1,48 @@
-# Support-AI: Multi-Tenant Agentic Customer Support & RAG Platform
+# Support-AI
 
-Support-AI is an asynchronous, multi-tenant AI customer support platform built with **Python 3.12**, **FastAPI**, **SQLAlchemy 2.0** (AsyncSession), and **PostgreSQL** (pgvector). It combines Retrieval-Augmented Generation (RAG), an LLM-based query router with specialist personas, automated ticket escalation, Stripe billing, outbound webhooks, an embeddable JS chat widget, and a Next.js dashboard — backed by a Celery/RabbitMQ task queue and Redis caching layer, with Prometheus/Grafana metrics and Jaeger tracing wired in from the start.
+**AI that actually resolves support tickets — and knows exactly when to hand off to a human.**
+
+Every support team faces the same tradeoff: chatbots that hallucinate answers and infuriate customers, or human queues that don't scale. Support-AI is a multi-tenant platform that answers customer questions from a company's own knowledge base (RAG, cited sources), and — instead of guessing when it's wrong — runs every single turn through a dedicated escalation model that decides whether to answer or open a ticket for a human. No prompt-tuning gamble, no silent failures: it's a structured decision, logged and auditable, every time.
+
+Built for teams shipping AI support *now*, not a research demo: multi-tenant isolation, Stripe-metered usage limits, HMAC-signed outbound webhooks, and prompt-injection guardrails are in the codebase today, not on a roadmap.
+
+[![CI](https://github.com/AnubhavDas651629/SUPPORT-AI/actions/workflows/deploy.yml/badge.svg)](https://github.com/AnubhavDas651629/SUPPORT-AI/actions/workflows/deploy.yml)
+![Python](https://img.shields.io/badge/python-3.12-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-async-009688)
+![Next.js](https://img.shields.io/badge/Next.js-16-black)
+![React](https://img.shields.io/badge/React-19-61DAFB)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-pgvector-336791)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6)
+
+---
+
+## Demo
+
+<!-- TODO: drop in a GIF or screenshots here — e.g. docs/screenshots/dashboard.png, docs/screenshots/widget.png -->
+<!-- Suggested shots: (1) the embeddable widget answering a question with citations, (2) the escalated-tickets queue, (3) the AI Assistant Studio's live test drawer -->
+
+> Screenshots/GIF coming — run `docker compose up --build` and open `http://localhost:3000` for the dashboard or `app/static/demo.html` for the embeddable widget.
+
+---
+
+## What Makes This Different
+
+Most "AI support" projects are a thin prompt wrapped around an LLM call. Support-AI is built like production infrastructure from day one:
+
+- **Escalation is a structured decision, not a vibe** — every chat turn is scored by a dedicated `EscalationDecision` model (Pydantic-bounded structured output, not free-text parsing). If it escalates, the AI's draft answer is discarded outright in favor of a ticket — no half-answered, half-escalated responses.
+- **Specialist routing** — a lightweight router classifies each turn (`BILLING` / `TECHNICAL` / `GENERAL`) before generation, so answers come from the right persona instead of one generic system prompt trying to do everything.
+- **Multi-tenant from the schema up** — every table, query, and service call is scoped to `organization_id`, enforced twice (repository + service layer), not bolted on with a middleware filter.
+- **Usage is metered like a real SaaS product** — AI responses, tokens, documents, storage, and seats are all checked against `FREE`/`PRO`/`ENTERPRISE` plan limits before an operation runs, wired straight into Stripe Checkout and webhooks.
+- **Security isn't an afterthought** — hardcoded prompt-injection directives on every system prompt, Fernet-encrypted webhook secrets, SHA-256 hashed API keys, Redis-backed rate limiting on every public surface.
+- **Observability is wired in, not planned** — Prometheus metrics, Jaeger tracing, Sentry error capture, and correlation IDs across the whole request lifecycle, from commit one.
+
+## Roadmap
+
+- [ ] Multi-channel ingestion — Slack, email, and Zendesk/Intercom ticket import into the same knowledge base
+- [ ] Fine-grained analytics — deflection rate, escalation reasons, and CSAT correlated to AI answers
+- [ ] Multi-LLM support — provider abstraction already exists (`app/processing/llms/`); add Anthropic/local model backends
+- [ ] Voice/phone support channel
+- [ ] SOC 2 readiness track for enterprise customers
 
 ---
 
@@ -22,11 +64,16 @@ Support-AI is an asynchronous, multi-tenant AI customer support platform built w
 14. [Project Directory Structure](#14-project-directory-structure)
 15. [Setup & Local Development](#15-setup--local-development)
 
+*Sections below are the full engineering deep-dive — diagrams, schemas, and exception tables — for anyone doing technical due diligence.*
+
 ---
 
 ## 1. System Architecture
 
 The application follows a strict **layered architecture**: routers never touch ORM models or raw SQL — they call services, which call repositories for data access.
+
+<details>
+<summary>Full system diagram</summary>
 
 ```mermaid
 graph TD
@@ -81,6 +128,8 @@ graph TD
         WebhookSvc --> OutboundHTTP[Outbound HTTP - Customer Endpoints]
     end
 ```
+
+</details>
 
 ### Architectural Highlights
 - **Strict layered boundary**: API routes (`app/api/v1/`) never interact directly with ORM models or raw SQL. Controllers only call service methods and map internal DTOs to Pydantic API response schemas.
@@ -344,6 +393,9 @@ Plan tiers are `FREE`, `PRO`, and `ENTERPRISE` (`app/core/plan_config.py`). `Usa
 
 ## 7. Entity Relationship & Domain Data Model
 
+<details>
+<summary>Full ER diagram</summary>
+
 ```mermaid
 erDiagram
     ORGANIZATIONS ||--o{ ORGANIZATION_MEMBERS : contains
@@ -367,6 +419,8 @@ erDiagram
     TICKETS ||--o{ TICKET_NOTES : annotated_by
     WEBHOOK_ENDPOINTS ||--o{ WEBHOOK_DELIVERIES : records
 ```
+
+</details>
 
 | Model | Table | Purpose |
 | :--- | :--- | :--- |
@@ -417,6 +471,9 @@ erDiagram
 
 Domain exceptions live in `app/exceptions/` and are mapped centrally in `app/core/exception_handlers.py` — routers never construct `HTTPException`s themselves.
 
+<details>
+<summary>Full exception table</summary>
+
 | Domain Exception | Trigger Condition | HTTP Status |
 | :--- | :--- | :--- |
 | `UserAlreadyExistsException` | Email already registered | `409 Conflict` |
@@ -440,6 +497,8 @@ Domain exceptions live in `app/exceptions/` and are mapped centrally in `app/cor
 | `FeatureNotAllowedException` | Tier doesn't include the requested feature (API keys/webhooks/branding) | `403 Forbidden` |
 | `stripe.SignatureVerificationError` | Invalid Stripe webhook signature | `400 Bad Request` |
 | `stripe.StripeError` | Any other Stripe API failure | `502 Bad Gateway` |
+
+</details>
 
 ---
 
@@ -483,6 +542,9 @@ uv run python tests/cleanup_loadtest.py   # deletes loadtest_* users after a Loc
 ---
 
 ## 14. Project Directory Structure
+
+<details>
+<summary>Full directory tree</summary>
 
 ```text
 support-ai/
@@ -549,6 +611,8 @@ support-ai/
         ├── celery_app.py          # Celery app, queue routing & Beat schedule
         └── tasks.py               # OTP/invite/ticket emails, webhook dispatch, memory compression, session cleanup
 ```
+
+</details>
 
 ---
 
@@ -645,3 +709,7 @@ uv run python scripts/set_tier.py              # list all orgs and their current
 uv run python scripts/set_tier.py <ORG> PRO     # change an org's plan tier
 ./scripts/backup.sh                             # pg_dump + gzip a Postgres backup
 ```
+
+---
+
+Building an AI support platform, or looking for one? Reach out at **anubhavdas651@gmail.com**.
