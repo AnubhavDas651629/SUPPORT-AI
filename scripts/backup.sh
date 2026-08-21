@@ -11,7 +11,7 @@ FILENAME="backup_${DATE}.sql.gz"
 BACKUP_DIR="/tmp/backups"
 
 echo "============================================="
-echo "🚀 Starting Automated Database Backup..."
+echo " Starting Automated Database Backup..."
 echo "============================================="
 
 # 1. Create a temporary directory to store the backup
