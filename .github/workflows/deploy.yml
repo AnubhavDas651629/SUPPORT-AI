@@ -8,6 +8,24 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -36,7 +54,9 @@ jobs:
           REFRESH_TOKEN_EXPIRE_DAYS: "7"
           OPENAI_API_KEY: "fake_key"
           RABBITMQ_URL: "amqp://guest:guest@localhost/"
-        run: uv run pytest tests/test_api.py
+        run: |
+          uv run alembic upgrade head
+          uv run pytest --cov=app tests/
 
   deploy:
     runs-on: ubuntu-latest

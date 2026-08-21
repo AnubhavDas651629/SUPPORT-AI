@@ -1,0 +1,10 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'fastapi'
+    static_configs:
+      - targets: ['api:8000']
+
+
+#This just tells Prometheus: "Every 15 seconds, ping api:8000/metrics and save the numbers.")
