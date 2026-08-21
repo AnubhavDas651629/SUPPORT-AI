@@ -59,7 +59,7 @@ Docker Compose (`docker-compose.yml`) spins up api, worker, postgres (pgvector),
 **Multi-tenancy**: every domain resource (knowledge bases, conversations, tickets, webhooks, API keys) is scoped by `organization_id`, enforced both in repository queries and again in the service layer. Any new query/service method touching tenant data must filter by org.
 
 **Two auth mechanisms**, both implemented in `app/dependencies/`:
-- JWT session tokens (`Authorization: Bearer`) for the dashboard frontend — issued via an email OTP flow (OTP cached in Redis, sent via Celery to the `high_priority` queue).
+- JWT session tokens (`Authorization: Bearer`) for the dashboard frontend — issued via email+password login (`OAuth2PasswordRequestForm`) or Google OAuth (`POST /auth/google`, ID token verified server-side), paired with a rotating refresh token tracked in `user_sessions` (`POST /auth/refresh` rotates on use). Email OTP (cached in Redis, sent via Celery to the `high_priority` queue) is used **only** for the forgot-password flow, not for registration or normal login.
 - API keys (`X-API-Key`), SHA-256 hashed at rest, scoped per organization, used by the embeddable widget (`app/static/widget.js`) and external clients via `app/api/v1/widget.py`.
 
 **Async everywhere**: all DB access uses SQLAlchemy 2.0 `AsyncSession`. Relationship loading must be declared explicitly (e.g. `selectinload`) in repository queries — async lazy-loading is not available and will raise `MissingGreenlet`. Session lifecycle: repositories `flush()`, services own the `commit()` boundary for multi-repository operations.
@@ -76,7 +76,7 @@ Docker Compose (`docker-compose.yml`) spins up api, worker, postgres (pgvector),
 
 **Observability**: Sentry (errors), Prometheus (`/metrics` via `prometheus-fastapi-instrumentator`), and OpenTelemetry/Jaeger (tracing) are all wired up in `app/main.py`; `app/core/logging.py` + `app/middleware/logging_middleware.py` handle structured request logging, and `CorrelationIdMiddleware` attaches a correlation ID that flows through logs/traces for a request. Middleware order in `main.py` matters — the last-added middleware runs first on the way in.
 
-**Usage/plan enforcement**: `UsageService` checks metered usage (chat messages, documents, knowledge bases) against plan tier (`PlanTier.FREE`/`STARTER`/`PRO`, configured in `app/core/plan_config.py`) before allowing AI-driven operations to proceed; `SubscriptionService` handles Stripe checkout sessions and processes Stripe webhook events to keep `organization_subscriptions` in sync.
+**Usage/plan enforcement**: `UsageService` checks metered usage (AI responses, AI tokens, documents, knowledge bases, members, storage) against plan tier (`PlanTier.FREE`/`PRO`/`ENTERPRISE`, configured in `app/core/plan_config.py`) before allowing AI-driven operations to proceed; `SubscriptionService` handles Stripe checkout sessions and processes Stripe webhook events to keep `organization_subscriptions` in sync.
 
 ## Notes
 
