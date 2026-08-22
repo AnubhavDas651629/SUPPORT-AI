@@ -17,7 +17,10 @@ const COLUMNS = [
     heading: "Developers",
     links: [
       { label: "API overview", href: "#developers" },
-      { label: "Interactive docs", href: "http://localhost:8000/docs" },
+      // The live OpenAPI docs live on the API host, which a marketing visitor
+      // has no address for — the in-app Developers page links to the
+      // configured one instead.
+      { label: "Integration examples", href: "#developers" },
       { label: "Webhooks", href: "#developers" },
       { label: "Chat widget", href: "#conversations" },
     ],
