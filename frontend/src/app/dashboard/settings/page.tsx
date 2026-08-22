@@ -148,7 +148,7 @@ export default function SettingsPage() {
                 </code>
                 <p className="mt-1.5 text-[12.5px] text-subtle">
                   Required by most API calls — see{" "}
-                  <Link href="/dashboard/developers" className="text-accent hover:underline">
+                  <Link href="/dashboard/developers" className="text-accent-text underline underline-offset-2">
                     Developers
                   </Link>
                   .
@@ -276,7 +276,7 @@ export default function SettingsPage() {
                     </p>
                     <p className="mt-0.5 text-[12.5px] leading-relaxed text-muted">
                       Managed on the{" "}
-                      <Link href="/dashboard/agents" className="text-accent hover:underline">
+                      <Link href="/dashboard/agents" className="text-accent-text underline underline-offset-2">
                         Agents
                       </Link>{" "}
                       page.
@@ -327,7 +327,7 @@ export default function SettingsPage() {
                   <p className="text-[13px] leading-relaxed text-muted">{plan.blurb}</p>
                   <Link
                     href="/dashboard/settings/billing"
-                    className="inline-flex items-center gap-1 rounded text-[13px] font-medium text-accent hover:underline"
+                    className="inline-flex items-center gap-1 rounded text-[13px] font-medium text-accent-text hover:underline"
                   >
                     Manage plan
                     <ArrowRight className="size-3.5" />

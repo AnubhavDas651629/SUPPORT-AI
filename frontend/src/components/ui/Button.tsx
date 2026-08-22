@@ -26,7 +26,7 @@ const variants: Record<ButtonVariant, string> = {
     "bg-surface text-fg border border-line-strong hover:bg-surface-2",
   ghost: "text-muted hover:text-fg hover:bg-surface-2",
   danger: "bg-danger text-white hover:opacity-90 dark:text-[#1a0a0a]",
-  link: "text-accent hover:underline underline-offset-4 px-0 h-auto",
+  link: "text-accent-text hover:underline underline-offset-4 px-0 h-auto",
 };
 
 const sizes: Record<ButtonSize, string> = {

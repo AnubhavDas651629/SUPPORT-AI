@@ -96,7 +96,7 @@ export function MessageThread({ messages }: { messages: Message[] }) {
             {outbound && (
               <span
                 aria-hidden="true"
-                className="mt-1 flex size-6 shrink-0 items-center justify-center rounded-full border border-accent-line bg-accent-soft text-accent"
+                className="mt-1 flex size-6 shrink-0 items-center justify-center rounded-full border border-accent-line bg-accent-soft text-accent-text"
               >
                 <Icon className="size-3" />
               </span>

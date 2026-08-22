@@ -20,18 +20,22 @@
 
   --fg: #111113;
   --fg-muted: #5f5f68;
-  --fg-subtle: #8b8b93;
+  --fg-subtle: #6e6e78;
   --fg-inverted: #fafafa;
 
   --accent: #2c5cff;
   --accent-hover: #1f49dd;
+  /* The accent used as foreground text, stepped for 4.5:1 on both the plain
+     surface and the tinted accent-soft one. --accent stays the fill colour,
+     where white text needs it dark enough to read. */
+  --accent-text: #2450e6;
   --accent-fg: #ffffff;
   --accent-soft: #eef2ff;
   --accent-line: #c7d2fe;
 
   --success: #15803d;
   --success-soft: #ecfdf3;
-  --warning: #a16207;
+  --warning: #8f5700;
   --warning-soft: #fefce8;
   --danger: #c62828;
   --danger-soft: #fef2f2;
@@ -55,11 +59,12 @@
 
   --fg: #f4f4f5;
   --fg-muted: #a0a0aa;
-  --fg-subtle: #74747f;
+  --fg-subtle: #86868f;
   --fg-inverted: #08080a;
 
   --accent: #4363ff;
   --accent-hover: #5b78ff;
+  --accent-text: #7d95ff;
   --accent-fg: #ffffff;
   --accent-soft: #141a33;
   --accent-line: #2b3670;
@@ -94,6 +99,7 @@
 
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
+  --color-accent-text: var(--accent-text);
   --color-accent-fg: var(--accent-fg);
   --color-accent-soft: var(--accent-soft);
   --color-accent-line: var(--accent-line);

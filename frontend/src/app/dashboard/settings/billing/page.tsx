@@ -147,7 +147,7 @@ export default function BillingPage() {
               <ul className="mt-5 flex-1 space-y-2">
                 {definition.highlights.map((item) => (
                   <li key={item} className="flex gap-2 text-[13px] leading-relaxed text-muted">
-                    <Check className="mt-0.5 size-3.5 shrink-0 text-accent" aria-hidden="true" />
+                    <Check className="mt-0.5 size-3.5 shrink-0 text-accent-text" aria-hidden="true" />
                     {item}
                   </li>
                 ))}

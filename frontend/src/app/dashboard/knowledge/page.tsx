@@ -95,7 +95,7 @@ export default function KnowledgePage() {
         <p className="rounded-control border border-warning/25 bg-warning-soft px-3 py-2 text-[13px] text-warning">
           You&apos;ve reached the {limit} knowledge base
           {limit === 1 ? "" : "s"} your plan allows.{" "}
-          <Link href="/dashboard/settings/billing" className="font-medium underline">
+          <Link href="/dashboard/settings/billing" className="font-medium underline underline-offset-2">
             Compare plans
           </Link>
         </p>
@@ -199,7 +199,7 @@ export default function KnowledgePage() {
 
                 <Link
                   href={`/dashboard/knowledge/${kb.id}`}
-                  className="mt-4 rounded border-t border-line pt-3 text-[13px] font-medium text-accent hover:underline"
+                  className="mt-4 rounded border-t border-line pt-3 text-[13px] font-medium text-accent-text hover:underline"
                 >
                   Open
                 </Link>

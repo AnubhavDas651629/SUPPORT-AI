@@ -63,14 +63,15 @@ export function Menu({
 
   return (
     <div ref={rootRef} className="relative">
-      <span
-        onClick={() => setOpen((v) => !v)}
-        className="contents"
-        aria-haspopup="menu"
-        aria-expanded={open}
-      >
-        {trigger}
-      </span>
+      {/* The menu's ARIA state has to live on the real trigger control — a
+          wrapper <span> carries no role, so aria-haspopup there is invalid. */}
+      {React.isValidElement(trigger)
+        ? React.cloneElement(trigger as React.ReactElement<Record<string, unknown>>, {
+            onClick: () => setOpen((v) => !v),
+            "aria-haspopup": "menu",
+            "aria-expanded": open,
+          })
+        : trigger}
       {open && (
         <div
           ref={listRef}

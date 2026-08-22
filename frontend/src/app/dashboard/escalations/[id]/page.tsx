@@ -96,7 +96,7 @@ export default function EscalationDetailPage() {
             <span aria-hidden="true">·</span>
             <Link
               href={`/dashboard/conversations?id=${ticket.data.conversation_id}`}
-              className="inline-flex items-center gap-1 rounded font-medium text-accent hover:underline"
+              className="inline-flex items-center gap-1 rounded font-medium text-accent-text hover:underline"
             >
               <MessagesSquare className="size-3" />
               View conversation

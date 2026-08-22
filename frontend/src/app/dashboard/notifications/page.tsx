@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { PageHeader, Panel } from "@/components/ui/Panel";
 import { Button } from "@/components/ui/Button";
-import { Tabs } from "@/components/ui/Tabs";
+import { TabPanel, Tabs } from "@/components/ui/Tabs";
 import { EmptyState, ErrorState, LoadingRows } from "@/components/ui/States";
 import { DerivedNote } from "@/components/dashboard/DerivedNote";
 import {
@@ -29,7 +29,7 @@ const KIND_META: Record<
   NotificationKind,
   { icon: typeof Bell; className: string; label: string }
 > = {
-  escalation: { icon: TicketPlus, className: "text-accent", label: "Escalation" },
+  escalation: { icon: TicketPlus, className: "text-accent-text", label: "Escalation" },
   sla_breach: { icon: AlertTriangle, className: "text-danger", label: "SLA" },
   resolved: { icon: CheckCircle2, className: "text-success", label: "Resolved" },
   assignment: { icon: UserCheck, className: "text-warning", label: "Assigned" },
@@ -87,32 +87,38 @@ export default function NotificationsPage() {
           className="px-3"
         />
 
-        {snapshot.error ? (
-          <ErrorState message={snapshot.error} onRetry={snapshot.refetch} />
-        ) : snapshot.initialLoading ? (
-          <LoadingRows rows={6} />
-        ) : visible.length === 0 ? (
-          <EmptyState
-            icon={Bell}
-            title={tab === "unread" ? "You're all caught up" : "Nothing yet"}
-            description={
-              tab === "unread"
-                ? "New escalations, SLA breaches and closures show up here."
-                : "Notifications appear as Support-AI escalates and your team resolves."
-            }
-          />
-        ) : (
-          <ul className="divide-y divide-line">
-            {visible.slice(0, 100).map((notification) => (
-              <NotificationRow
-                key={notification.id}
-                notification={notification}
-                isRead={read.has(notification.id)}
-                onRead={() => markRead([notification.id])}
+        {/* Both panels exist so each tab's aria-controls resolves to a real
+            element, as the tabs pattern requires. */}
+        {(["unread", "all"] as const).map((id) => (
+          <TabPanel key={id} id={id} active={id === tab}>
+            {snapshot.error ? (
+              <ErrorState message={snapshot.error} onRetry={snapshot.refetch} />
+            ) : snapshot.initialLoading ? (
+              <LoadingRows rows={6} />
+            ) : visible.length === 0 ? (
+              <EmptyState
+                icon={Bell}
+                title={id === "unread" ? "You're all caught up" : "Nothing yet"}
+                description={
+                  id === "unread"
+                    ? "New escalations, SLA breaches and closures show up here."
+                    : "Notifications appear as Support-AI escalates and your team resolves."
+                }
               />
-            ))}
-          </ul>
-        )}
+            ) : (
+              <ul className="divide-y divide-line">
+                {visible.slice(0, 100).map((notification) => (
+                  <NotificationRow
+                    key={notification.id}
+                    notification={notification}
+                    isRead={read.has(notification.id)}
+                    onRead={() => markRead([notification.id])}
+                  />
+                ))}
+              </ul>
+            )}
+          </TabPanel>
+        ))}
       </Panel>
 
       <DerivedNote>

@@ -167,7 +167,7 @@ export default function OverviewPage() {
                 action={
                   <Link
                     href="/dashboard/escalations"
-                    className="rounded text-[13px] font-medium text-accent hover:underline"
+                    className="rounded text-[13px] font-medium text-accent-text hover:underline"
                   >
                     View all
                   </Link>
@@ -247,7 +247,7 @@ export default function OverviewPage() {
                 action={
                   <Link
                     href="/dashboard/conversations"
-                    className="rounded text-[13px] font-medium text-accent hover:underline"
+                    className="rounded text-[13px] font-medium text-accent-text hover:underline"
                   >
                     View all
                   </Link>
@@ -288,7 +288,7 @@ export default function OverviewPage() {
                 action={
                   <Link
                     href="/dashboard/knowledge"
-                    className="rounded text-[13px] font-medium text-accent hover:underline"
+                    className="rounded text-[13px] font-medium text-accent-text hover:underline"
                   >
                     Manage
                   </Link>

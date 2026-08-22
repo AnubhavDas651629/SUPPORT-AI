@@ -135,7 +135,7 @@ export default function AuditLogsPage() {
                           <span className="flex items-center gap-2">
                             <span
                               aria-hidden="true"
-                              className="flex size-5 items-center justify-center rounded-full bg-accent-soft text-[9px] font-semibold text-accent"
+                              className="flex size-5 items-center justify-center rounded-full bg-accent-soft text-[9px] font-semibold text-accent-text"
                             >
                               AI
                             </span>
@@ -152,7 +152,7 @@ export default function AuditLogsPage() {
                       <Td className="max-w-xs">
                         <Link
                           href={`/dashboard/escalations/${entry.ticketId}`}
-                          className="block truncate rounded text-[13px] text-accent hover:underline"
+                          className="block truncate rounded text-[13px] text-accent-text hover:underline"
                         >
                           {truncate(entry.ticketSubject, 40)}
                         </Link>

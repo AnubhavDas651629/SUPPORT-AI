@@ -42,7 +42,7 @@ export function OrgSwitcher({ onNavigate }: { onNavigate?: () => void }) {
         >
           <span
             aria-hidden="true"
-            className="flex size-6 shrink-0 items-center justify-center rounded-[5px] bg-accent-soft text-[11px] font-semibold text-accent"
+            className="flex size-6 shrink-0 items-center justify-center rounded-[5px] bg-accent-soft text-[11px] font-semibold text-accent-text"
           >
             {(currentOrg?.name ?? "?").slice(0, 2).toUpperCase()}
           </span>
@@ -82,7 +82,7 @@ export function OrgSwitcher({ onNavigate }: { onNavigate?: () => void }) {
                 >
                   <span className="min-w-0 flex-1 truncate">{org.name}</span>
                   {org.id === currentOrg?.id && (
-                    <Check className="size-3.5 shrink-0 text-accent" />
+                    <Check className="size-3.5 shrink-0 text-accent-text" />
                   )}
                 </button>
               ))}

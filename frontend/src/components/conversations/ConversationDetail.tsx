@@ -107,7 +107,7 @@ export function ConversationDetail({
                 </Badge>
                 <Link
                   href={`/dashboard/escalations/${ticket.id}`}
-                  className="inline-flex items-center gap-0.5 rounded text-[12px] font-medium text-accent hover:underline"
+                  className="inline-flex items-center gap-0.5 rounded text-[12px] font-medium text-accent-text hover:underline"
                 >
                   Open escalation
                   <ArrowUpRight className="size-3" />

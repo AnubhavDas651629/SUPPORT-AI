@@ -60,7 +60,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                       <item.icon
                         className={cn(
                           "size-4 shrink-0",
-                          isActive ? "text-accent" : "text-subtle group-hover:text-muted",
+                          isActive ? "text-accent-text" : "text-subtle group-hover:text-muted",
                         )}
                       />
                       <span className="truncate">{item.label}</span>
@@ -90,7 +90,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                 <Link
                   href="/dashboard/settings/billing"
                   onClick={onNavigate}
-                  className="inline-flex items-center gap-0.5 rounded text-[12px] font-medium text-accent hover:underline"
+                  className="inline-flex items-center gap-0.5 rounded text-[12px] font-medium text-accent-text hover:underline"
                 >
                   Upgrade
                   <ArrowUpRight className="size-3" />

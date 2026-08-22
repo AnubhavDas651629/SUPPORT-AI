@@ -26,7 +26,7 @@ export function AgentsSection() {
               </p>
               <p className="mt-1.5 font-mono text-[12px] leading-relaxed text-fg">
                 route<span className="text-subtle">:</span>{" "}
-                <span className="text-accent">billing</span>
+                <span className="text-accent-text">billing</span>
                 <br />
                 confidence<span className="text-subtle">:</span> 0.91
               </p>
@@ -43,7 +43,7 @@ export function AgentsSection() {
                 className={`p-5 sm:p-6 ${i > 0 ? "border-t border-line sm:border-l sm:border-t-0" : ""}`}
               >
                 <agent.icon
-                  className={`size-4.5 ${agent.route === "billing" ? "text-accent" : "text-subtle"}`}
+                  className={`size-4.5 ${agent.route === "billing" ? "text-accent-text" : "text-subtle"}`}
                 />
                 <h3 className="mt-3 text-[14.5px] font-semibold tracking-[-0.01em] text-fg">
                   {agent.name}

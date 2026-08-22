@@ -40,7 +40,7 @@ export function OrganizationSetup() {
 
       <div className="flex flex-1 items-center justify-center px-4 py-10">
         <div className="w-full max-w-md">
-          <p className="text-[13px] font-medium text-accent">Step 1 of 3</p>
+          <p className="text-[13px] font-medium text-accent-text">Step 1 of 3</p>
           <h1 className="mt-2 text-2xl font-semibold tracking-[-0.015em] text-fg">
             Create your organization
           </h1>

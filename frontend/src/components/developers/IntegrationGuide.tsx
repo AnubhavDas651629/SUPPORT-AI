@@ -79,7 +79,7 @@ export function isFromSupportAI(rawBody, signatureHeader, secret) {
             href={`${host}/docs`}
             target="_blank"
             rel="noreferrer noopener"
-            className="inline-flex items-center gap-1 rounded text-[13px] font-medium text-accent hover:underline"
+            className="inline-flex items-center gap-1 rounded text-[13px] font-medium text-accent-text hover:underline"
           >
             API docs
             <ExternalLink className="size-3" />

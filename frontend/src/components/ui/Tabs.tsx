@@ -74,7 +74,7 @@ export function Tabs({
               <span
                 className={cn(
                   "ml-1.5 rounded-full px-1.5 py-0.5 text-[11px] tnum",
-                  active ? "bg-accent-soft text-accent" : "bg-surface-2 text-subtle",
+                  active ? "bg-accent-soft text-accent-text" : "bg-surface-2 text-subtle",
                 )}
               >
                 {tab.count}
@@ -100,12 +100,14 @@ export function TabPanel({
 }) {
   if (!active) return null;
   return (
+    // tabIndex 0 keeps the panel reachable when its content scrolls; the
+    // global focus ring stays visible rather than being suppressed.
     <div
       role="tabpanel"
       id={`panel-${id}`}
       aria-labelledby={`tab-${id}`}
       tabIndex={0}
-      className={cn("focus-visible:outline-none", className)}
+      className={className}
     >
       {children}
     </div>

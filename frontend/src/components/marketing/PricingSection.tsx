@@ -29,7 +29,7 @@ export function PricingSection() {
                   {plan.name}
                 </h3>
                 {featured && (
-                  <span className="rounded-full border border-accent-line bg-accent-soft px-2 py-0.5 text-[11px] font-medium text-accent">
+                  <span className="rounded-full border border-accent-line bg-accent-soft px-2 py-0.5 text-[11px] font-medium text-accent-text">
                     Most teams
                   </span>
                 )}
@@ -49,7 +49,7 @@ export function PricingSection() {
               <ul className="mt-6 flex-1 space-y-2.5">
                 {plan.highlights.map((item) => (
                   <li key={item} className="flex gap-2.5 text-[13px] leading-relaxed text-muted">
-                    <Check className="mt-0.5 size-3.5 shrink-0 text-accent" aria-hidden="true" />
+                    <Check className="mt-0.5 size-3.5 shrink-0 text-accent-text" aria-hidden="true" />
                     {item}
                   </li>
                 ))}

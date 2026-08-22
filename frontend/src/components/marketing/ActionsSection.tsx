@@ -60,7 +60,7 @@ export function ActionsSection() {
                     className={`rounded px-1.5 py-0.5 font-mono text-[10.5px] font-medium ${
                       call.verb === "GET"
                         ? "bg-info-soft text-info"
-                        : "bg-accent-soft text-accent"
+                        : "bg-accent-soft text-accent-text"
                     }`}
                   >
                     {call.verb}

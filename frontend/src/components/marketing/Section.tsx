@@ -54,7 +54,7 @@ export function Section({
           <div className="max-w-2xl">
             {eyebrow && (
               <p className="flex items-center gap-2.5 font-mono text-[11px] uppercase tracking-[0.14em] text-subtle">
-                {index && <span className="text-accent">{index}</span>}
+                {index && <span className="text-accent-text">{index}</span>}
                 {eyebrow}
               </p>
             )}

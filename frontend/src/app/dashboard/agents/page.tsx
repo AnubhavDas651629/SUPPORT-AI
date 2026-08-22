@@ -87,7 +87,7 @@ export default function AgentsPage() {
                     </span>
                     <Link
                       href={`/dashboard/agents/${agent.route}`}
-                      className="inline-flex items-center gap-1 rounded text-[13px] font-medium text-accent hover:underline"
+                      className="inline-flex items-center gap-1 rounded text-[13px] font-medium text-accent-text hover:underline"
                     >
                       Configuration
                       <ArrowRight className="size-3.5" />

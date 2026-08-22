@@ -80,7 +80,7 @@ function LoginForm() {
             <button
               type="button"
               onClick={() => setForgotOpen(true)}
-              className="rounded text-[12.5px] text-accent hover:underline"
+              className="rounded text-[12.5px] text-accent-text hover:underline"
             >
               Forgot password?
             </button>
@@ -133,7 +133,7 @@ export default function LoginPage() {
       footer={
         <>
           New to Support-AI?{" "}
-          <Link href="/register" className="rounded font-medium text-accent hover:underline">
+          <Link href="/register" className="rounded font-medium text-accent-text hover:underline">
             Create an account
           </Link>
         </>

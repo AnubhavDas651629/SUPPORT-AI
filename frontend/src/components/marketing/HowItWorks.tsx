@@ -89,7 +89,7 @@ export function HowItWorks() {
               <span className="font-mono text-[11px] text-subtle" aria-hidden="true">
                 →
               </span>
-              <Tag className="border-accent-line bg-accent-soft text-accent">
+              <Tag className="border-accent-line bg-accent-soft text-accent-text">
                 {step.io.out}
               </Tag>
             </div>
