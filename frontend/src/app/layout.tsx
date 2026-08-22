@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
-import { GoogleOAuthProvider } from "@react-oauth/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { ToastProvider } from "@/components/ui/Toast";
+import { GoogleAuthProvider } from "@/components/auth/GoogleAuthProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -30,8 +30,6 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
-
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -45,11 +43,11 @@ export default function RootLayout({
           Skip to content
         </a>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <GoogleOAuthProvider clientId={googleClientId}>
+          <GoogleAuthProvider>
             <AuthProvider>
               <ToastProvider>{children}</ToastProvider>
             </AuthProvider>
-          </GoogleOAuthProvider>
+          </GoogleAuthProvider>
         </ThemeProvider>
       </body>
     </html>

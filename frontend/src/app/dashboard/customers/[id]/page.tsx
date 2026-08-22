@@ -85,7 +85,7 @@ export default function CustomerDetailPage() {
         />
       </StatGrid>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <Panel>
           <PanelHeader
             title="Recent conversations"

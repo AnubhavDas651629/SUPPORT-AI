@@ -100,7 +100,7 @@ export default function SettingsPage() {
         }
       />
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="space-y-6">
           <Panel>
             <PanelHeader
@@ -138,13 +138,14 @@ export default function SettingsPage() {
                 <Input id="org-slug" value={currentOrg?.slug ?? ""} readOnly disabled />
               </Field>
               <div>
-                <p className="mb-1.5 text-[13px] font-medium text-fg">Organization ID</p>
-                <div className="flex items-center gap-2">
-                  <code className="min-w-0 flex-1 truncate rounded-control border border-line bg-surface-2 px-3 py-2 font-mono text-[12px] text-muted">
-                    {currentOrg?.id}
-                  </code>
+                <div className="mb-1.5 flex items-center justify-between gap-2">
+                  <p className="text-[13px] font-medium text-fg">Organization ID</p>
                   <CopyButton value={currentOrg?.id ?? ""} label="Copy" />
                 </div>
+                {/* break-all so a UUID can't set a min-content wider than a phone. */}
+                <code className="block break-all rounded-control border border-line bg-surface-2 px-3 py-2 font-mono text-[12px] text-muted">
+                  {currentOrg?.id}
+                </code>
                 <p className="mt-1.5 text-[12.5px] text-subtle">
                   Required by most API calls — see{" "}
                   <Link href="/dashboard/developers" className="text-accent hover:underline">

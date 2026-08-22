@@ -32,7 +32,7 @@ export default function AgentsPage() {
         description="Support-AI routes each message to a specialist before answering. Routes and prompts are defined in the backend; the behaviour below is yours to tune."
       />
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="space-y-6">
           <div className="grid gap-px overflow-hidden rounded-panel border border-line bg-line">
             {AGENTS.map((agent) => {

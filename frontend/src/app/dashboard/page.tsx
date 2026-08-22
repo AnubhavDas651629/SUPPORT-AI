@@ -159,7 +159,7 @@ export default function OverviewPage() {
             />
           </ChartFrame>
 
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
             <Panel className="lg:col-span-2">
               <PanelHeader
                 title="Queue"
@@ -240,7 +240,7 @@ export default function OverviewPage() {
             </div>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
             <Panel>
               <PanelHeader
                 title="Recent conversations"

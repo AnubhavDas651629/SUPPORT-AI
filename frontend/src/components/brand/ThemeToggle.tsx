@@ -4,29 +4,23 @@ import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
 import { IconButton } from "@/components/ui/Button";
 
+/**
+ * Renders identically on the server and on first paint: both icons are always
+ * in the DOM and the active theme's `.dark` class on <html> decides which is
+ * visible. Branching on the resolved theme during render would hydrate
+ * differently from the server HTML.
+ */
 export function ThemeToggle({ size = "md" }: { size?: "sm" | "md" }) {
-  // next-themes leaves resolvedTheme undefined until it has read the document,
-  // which is exactly the "not hydrated yet" signal — no mounted flag needed.
   const { resolvedTheme, setTheme } = useTheme();
-
-  if (!resolvedTheme) {
-    return (
-      <span
-        aria-hidden="true"
-        className={size === "sm" ? "block size-8" : "block size-9.5"}
-      />
-    );
-  }
-
-  const isDark = resolvedTheme === "dark";
 
   return (
     <IconButton
-      label={isDark ? "Switch to light theme" : "Switch to dark theme"}
+      label="Toggle light and dark theme"
       size={size}
-      onClick={() => setTheme(isDark ? "light" : "dark")}
+      onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
     >
-      {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
+      <Moon className="size-4 dark:hidden" />
+      <Sun className="hidden size-4 dark:block" />
     </IconButton>
   );
 }

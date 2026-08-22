@@ -216,7 +216,7 @@ export default function AnalyticsPage() {
             />
           </ChartFrame>
 
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
             <Panel>
               <PanelHeader title="Queue by status" />
               <div className="p-4 sm:p-5">
@@ -247,7 +247,7 @@ export default function AnalyticsPage() {
             </Panel>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
             <Panel>
               <PanelHeader
                 title="Team workload"

@@ -68,7 +68,7 @@ export default function BillingPage() {
         <InlineAlert>{checkout.error ?? portal.error}</InlineAlert>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <Panel>
           <PanelHeader title="Current plan" />
           {!subscription ? (

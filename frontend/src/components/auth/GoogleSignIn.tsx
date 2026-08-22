@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
-import { useTheme } from "next-themes";
 import { InlineAlert } from "@/components/ui/States";
 
 /**
@@ -21,9 +20,6 @@ export function GoogleSignIn({
   onCredential: (idToken: string) => void;
   text?: "signin_with" | "signup_with" | "continue_with";
 }) {
-  // resolvedTheme is undefined until next-themes has read the document, which
-  // doubles as the hydration signal for Google's own injected button.
-  const { resolvedTheme } = useTheme();
   const [error, setError] = useState<string | null>(null);
 
   if (!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) {
@@ -37,10 +33,6 @@ export function GoogleSignIn({
       </p>
     );
   }
-
-  // Google's script paints its own button; hold space until the theme is known
-  // so it doesn't flash the wrong variant.
-  if (!resolvedTheme) return <div className="h-10" aria-hidden="true" />;
 
   return (
     <div className="space-y-2">
@@ -56,7 +48,9 @@ export function GoogleSignIn({
             }
           }}
           onError={() => setError("Google sign-in was cancelled or failed.")}
-          theme={resolvedTheme === "dark" ? "filled_black" : "outline"}
+          // A fixed variant: branching on the resolved theme would render
+          // differently on the server than on hydration.
+          theme="outline"
           text={text}
           shape="rectangular"
           width="352"
