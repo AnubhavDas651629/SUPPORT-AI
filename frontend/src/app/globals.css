@@ -118,25 +118,34 @@
 
 /* ------------------------------------------------------------------------- */
 
-* {
-  border-color: var(--line);
-}
+/* Base rules live in @layer base so Tailwind utilities (which sit in
+   @layer utilities) can still override them — unlayered CSS would win
+   against every layer and silently break `border-accent`, `outline-*` etc. */
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--line);
+  }
 
-html {
-  -webkit-text-size-adjust: 100%;
-}
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
 
-body {
-  background: var(--bg);
-  color: var(--fg);
-  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
-}
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
 
-/* Consistent, always-visible keyboard focus. */
-:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-  border-radius: 3px;
+  /* Consistent, always-visible keyboard focus. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
 }
 
 /* Tabular numbers wherever figures are compared vertically. */
