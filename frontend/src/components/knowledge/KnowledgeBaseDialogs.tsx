@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog, Dialog } from "@/components/ui/Dialog";
 import { Field, Input, Textarea } from "@/components/ui/Field";
@@ -27,11 +27,16 @@ export function KnowledgeBaseFormDialog({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
 
-  useEffect(() => {
-    if (!open) return;
+  // Reset the form whenever the dialog opens for a different target. Adjusting
+  // state during render (React's documented pattern) avoids the extra render
+  // an effect would cause.
+  const openFor = open ? (existing?.id ?? "new") : null;
+  const [syncedFor, setSyncedFor] = useState<string | null>(null);
+  if (openFor !== syncedFor) {
+    setSyncedFor(openFor);
     setName(existing?.name ?? "");
     setDescription(existing?.description ?? "");
-  }, [open, existing]);
+  }
 
   const save = useAsyncAction(async () => {
     const payload = { name: name.trim(), description: description.trim() || null };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { BookOpen, FileText, MoreHorizontal, Plus } from "lucide-react";
 import { PageHeader, Panel } from "@/components/ui/Panel";
@@ -33,38 +33,38 @@ export default function KnowledgePage() {
 
   const bases = useResource(() => knowledgeApi.list(orgId!), [orgId]);
 
-  const [stats, setStats] = useState<Record<string, DocStats>>({});
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<KnowledgeBaseListItem | null>(null);
   const [deleting, setDeleting] = useState<KnowledgeBaseListItem | null>(null);
 
   // Document counts need one request per base — there is no aggregate endpoint.
-  const loadStats = useCallback(async () => {
-    if (!orgId || !bases.data) return;
-    const results = await Promise.allSettled(
-      bases.data.map(async (kb) => ({
-        id: kb.id,
-        documents: await documentsApi.list(orgId, kb.id),
-      })),
-    );
-    const next: Record<string, DocStats> = {};
-    for (const result of results) {
-      if (result.status !== "fulfilled") continue;
-      const count = (status: DocumentStatus) =>
-        result.value.documents.filter((d) => d.status === status).length;
-      next[result.value.id] = {
-        total: result.value.documents.length,
-        ready: count("READY"),
-        processing: count("PROCESSING") + count("UPLOADING"),
-        failed: count("FAILED"),
-      };
-    }
-    setStats(next);
-  }, [orgId, bases.data]);
-
-  useEffect(() => {
-    loadStats();
-  }, [loadStats]);
+  // Keyed on the base ids so it re-runs when a base is added or removed.
+  const baseIds = (bases.data ?? []).map((kb) => kb.id).join(",");
+  const stats = useResource<Record<string, DocStats>>(
+    async () => {
+      const results = await Promise.allSettled(
+        (bases.data ?? []).map(async (kb) => ({
+          id: kb.id,
+          documents: await documentsApi.list(orgId!, kb.id),
+        })),
+      );
+      const next: Record<string, DocStats> = {};
+      for (const result of results) {
+        if (result.status !== "fulfilled") continue;
+        const count = (status: DocumentStatus) =>
+          result.value.documents.filter((d) => d.status === status).length;
+        next[result.value.id] = {
+          total: result.value.documents.length,
+          ready: count("READY"),
+          processing: count("PROCESSING") + count("UPLOADING"),
+          failed: count("FAILED"),
+        };
+      }
+      return next;
+    },
+    [orgId, baseIds],
+    { enabled: !!orgId && !!bases.data },
+  );
 
   const limit = subscription?.limits.max_knowledge_bases;
   const atLimit = limit != null && (bases.data?.length ?? 0) >= limit;
@@ -133,7 +133,7 @@ export default function KnowledgePage() {
       ) : (
         <div className="grid gap-px overflow-hidden rounded-panel border border-line bg-line sm:grid-cols-2 xl:grid-cols-3">
           {bases.data!.map((kb) => {
-            const stat = stats[kb.id];
+            const stat = stats.data?.[kb.id];
             return (
               <article key={kb.id} className="flex flex-col bg-surface p-4 sm:p-5">
                 <div className="flex items-start justify-between gap-2">

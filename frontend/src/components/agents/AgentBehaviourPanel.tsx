@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Panel, PanelHeader } from "@/components/ui/Panel";
 import { Button } from "@/components/ui/Button";
 import { Field, Textarea, Toggle } from "@/components/ui/Field";
@@ -33,13 +33,17 @@ export function AgentBehaviourPanel() {
   const [autoTicket, setAutoTicket] = useState(true);
   const [dirty, setDirty] = useState(false);
 
-  useEffect(() => {
-    if (!settings.data) return;
+  // Seed the form from whatever the API last returned. Adjusting state during
+  // render is React's documented pattern for this and costs one fewer render
+  // than an effect.
+  const [syncedFrom, setSyncedFrom] = useState<OrganizationSettings | null>(null);
+  if (settings.data && settings.data !== syncedFrom) {
+    setSyncedFrom(settings.data);
     setPrompt(settings.data.system_prompt_override ?? "");
     setTemperature(settings.data.temperature);
     setAutoTicket(settings.data.auto_create_ticket_on_escalation);
     setDirty(false);
-  }, [settings.data]);
+  }
 
   const save = useAsyncAction(async () => {
     const next = await settingsApi.update(currentOrg!.id, {

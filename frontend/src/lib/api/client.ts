@@ -116,6 +116,9 @@ api.interceptors.response.use(
       flushQueue(refreshErr, null);
       clearTokens();
       if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
+        // Reached from an interceptor with no router in scope, and a hard load
+        // is what we want anyway — the session is gone.
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination
         window.location.href = "/login?expired=1";
       }
       return Promise.reject(refreshErr);

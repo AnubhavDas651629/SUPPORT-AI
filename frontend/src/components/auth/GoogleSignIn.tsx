@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import { useTheme } from "next-themes";
 import { InlineAlert } from "@/components/ui/States";
@@ -21,11 +21,10 @@ export function GoogleSignIn({
   onCredential: (idToken: string) => void;
   text?: "signin_with" | "signup_with" | "continue_with";
 }) {
+  // resolvedTheme is undefined until next-themes has read the document, which
+  // doubles as the hydration signal for Google's own injected button.
   const { resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => setMounted(true), []);
 
   if (!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) {
     return (
@@ -41,7 +40,7 @@ export function GoogleSignIn({
 
   // Google's script paints its own button; hold space until the theme is known
   // so it doesn't flash the wrong variant.
-  if (!mounted) return <div className="h-10" aria-hidden="true" />;
+  if (!resolvedTheme) return <div className="h-10" aria-hidden="true" />;
 
   return (
     <div className="space-y-2">

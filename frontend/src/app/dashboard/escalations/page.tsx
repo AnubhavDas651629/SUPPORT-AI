@@ -40,9 +40,18 @@ export default function EscalationsPage() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  const [extraPages, setExtraPages] = useState<Ticket[]>([]);
-  const [cursor, setCursor] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(false);
+  const queryKey = `${status}|${priority}|${debouncedSearch}`;
+
+  /**
+   * Pages loaded past the first are keyed by the query that produced them, so
+   * changing a filter discards them without an effect-driven reset.
+   */
+  const [accumulated, setAccumulated] = useState<{
+    queryKey: string;
+    items: Ticket[];
+    cursor: string | null;
+    hasMore: boolean;
+  } | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
 
@@ -57,12 +66,9 @@ export default function EscalationsPage() {
     [orgId, status, priority, debouncedSearch],
   );
 
-  // Reset accumulated pages whenever the query changes.
-  useEffect(() => {
-    setExtraPages([]);
-    setCursor(page.data?.next_cursor ?? null);
-    setHasMore(page.data?.has_more ?? false);
-  }, [page.data]);
+  const current = accumulated?.queryKey === queryKey ? accumulated : null;
+  const cursor = current?.cursor ?? page.data?.next_cursor ?? null;
+  const hasMore = current?.hasMore ?? page.data?.has_more ?? false;
 
   const members = useResource(() => membersApi.list(orgId!), [orgId]);
   const memberById = useMemo(
@@ -71,8 +77,8 @@ export default function EscalationsPage() {
   );
 
   const tickets = useMemo(
-    () => [...(page.data?.items ?? []), ...extraPages],
-    [page.data, extraPages],
+    () => [...(page.data?.items ?? []), ...(current?.items ?? [])],
+    [page.data, current],
   );
 
   const loadMore = useCallback(async () => {
@@ -87,15 +93,18 @@ export default function EscalationsPage() {
         cursor,
         limit: 25,
       });
-      setExtraPages((prev) => [...prev, ...next.items]);
-      setCursor(next.next_cursor);
-      setHasMore(next.has_more);
+      setAccumulated((prev) => ({
+        queryKey,
+        items: [...(prev?.queryKey === queryKey ? prev.items : []), ...next.items],
+        cursor: next.next_cursor,
+        hasMore: next.has_more,
+      }));
     } catch (err) {
       setLoadMoreError(apiErrorMessage(err));
     } finally {
       setLoadingMore(false);
     }
-  }, [orgId, cursor, status, priority, debouncedSearch]);
+  }, [orgId, cursor, status, priority, debouncedSearch, queryKey]);
 
   const activeFilters = Boolean(status || priority || debouncedSearch);
 

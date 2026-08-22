@@ -45,16 +45,14 @@ export function OrganizationProvider({ children }: { children: React.ReactNode }
   const [role, setRole] = useState<OrganizationRole | null>(null);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [usage, setUsage] = useState<UsageSummary | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [loadedOrgs, setLoadedOrgs] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadOrganizations = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
     try {
       const list = await organizationsApi.list();
       setOrganizations(list);
+      setError(null);
 
       const saved =
         typeof window !== "undefined" ? localStorage.getItem(ACTIVE_ORG_KEY) : null;
@@ -65,14 +63,22 @@ export function OrganizationProvider({ children }: { children: React.ReactNode }
       setOrganizations([]);
     } finally {
       setLoadedOrgs(true);
-      setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
     if (!user) return;
-    loadOrganizations();
+    let cancelled = false;
+    (async () => {
+      if (!cancelled) await loadOrganizations();
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [user, loadOrganizations]);
+
+  // Derived rather than toggled: we are loading until the list has come back.
+  const isLoading = !loadedOrgs;
 
   const currentOrg = useMemo(
     () => organizations.find((o) => o.id === currentOrgId) ?? null,
@@ -101,7 +107,13 @@ export function OrganizationProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     if (!currentOrgId) return;
     if (typeof window !== "undefined") localStorage.setItem(ACTIVE_ORG_KEY, currentOrgId);
-    loadOrgDetail();
+    let cancelled = false;
+    (async () => {
+      if (!cancelled) await loadOrgDetail();
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [currentOrgId, loadOrgDetail]);
 
   const selectOrg = useCallback((id: string) => {

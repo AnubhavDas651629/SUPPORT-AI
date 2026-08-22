@@ -13,12 +13,23 @@ export interface ResourceState<T> {
   setData: (updater: T | ((prev: T | null) => T | null)) => void;
 }
 
+interface Snapshot<T> {
+  /** Which request this result belongs to. */
+  key: string;
+  data: T | null;
+  error: string | null;
+}
+
 /**
  * Fetches a resource and tracks loading / error / data.
  *
  * `deps` behaves like a useEffect dependency list: when any entry changes the
  * fetcher runs again. Passing `null`/`undefined` in deps skips the fetch, which
  * is how routes wait for the active organization to resolve.
+ *
+ * Loading is *derived* — it's true whenever the snapshot we hold isn't for the
+ * request we currently want — rather than toggled with setState inside the
+ * effect, which would cascade an extra render on every fetch.
  */
 export function useResource<T>(
   fetcher: () => Promise<T>,
@@ -27,54 +38,71 @@ export function useResource<T>(
 ): ResourceState<T> {
   const enabled = options.enabled ?? deps.every((d) => d !== null && d !== undefined);
 
-  const [data, setDataState] = useState<T | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(enabled);
-  const [hasLoaded, setHasLoaded] = useState(false);
+  const [reloadCount, setReloadCount] = useState(0);
+  const [snapshot, setSnapshot] = useState<Snapshot<T> | null>(null);
 
+  const requestKey = `${JSON.stringify(deps)}::${reloadCount}`;
+
+  // The fetcher closes over render values, so it changes identity every render.
+  // Keep the latest in a ref, written from an effect (never during render).
   const fetcherRef = useRef(fetcher);
-  fetcherRef.current = fetcher;
-  // Guards against a slow earlier request overwriting a newer result.
-  const requestId = useRef(0);
+  useEffect(() => {
+    fetcherRef.current = fetcher;
+  });
 
-  const run = useCallback(async () => {
-    if (!enabled) {
-      setLoading(false);
-      return;
-    }
-    const id = ++requestId.current;
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await fetcherRef.current();
-      if (id === requestId.current) setDataState(result);
-    } catch (err) {
-      if (id === requestId.current) setError(apiErrorMessage(err));
-    } finally {
-      if (id === requestId.current) {
-        setLoading(false);
-        setHasLoaded(true);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, ...deps]);
+  // Guards against a slow earlier request overwriting a newer result.
+  const activeKey = useRef<string>("");
 
   useEffect(() => {
-    run();
-  }, [run]);
+    if (!enabled) return;
 
-  const setData = useCallback((updater: T | ((prev: T | null) => T | null)) => {
-    setDataState((prev) =>
-      typeof updater === "function" ? (updater as (p: T | null) => T | null)(prev) : updater,
-    );
+    activeKey.current = requestKey;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const result = await fetcherRef.current();
+        if (!cancelled && activeKey.current === requestKey) {
+          setSnapshot({ key: requestKey, data: result, error: null });
+        }
+      } catch (err) {
+        if (!cancelled && activeKey.current === requestKey) {
+          setSnapshot({ key: requestKey, data: null, error: apiErrorMessage(err) });
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled, requestKey]);
+
+  const refetch = useCallback(async () => {
+    setReloadCount((n) => n + 1);
   }, []);
 
+  const setData = useCallback(
+    (updater: T | ((prev: T | null) => T | null)) => {
+      setSnapshot((prev) => {
+        const nextData =
+          typeof updater === "function"
+            ? (updater as (p: T | null) => T | null)(prev?.data ?? null)
+            : updater;
+        return { key: prev?.key ?? requestKey, data: nextData, error: null };
+      });
+    },
+    [requestKey],
+  );
+
+  const settled = snapshot?.key === requestKey;
+  const loading = enabled && !settled;
+
   return {
-    data,
-    error,
+    data: snapshot?.data ?? null,
+    error: settled ? snapshot!.error : null,
     loading,
-    initialLoading: loading && !hasLoaded,
-    refetch: run,
+    initialLoading: loading && snapshot === null,
+    refetch,
     setData,
   };
 }

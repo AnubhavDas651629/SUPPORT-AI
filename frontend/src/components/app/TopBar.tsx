@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Menu as MenuIcon, LogOut, User as UserIcon, Building2 } from "lucide-react";
 import { IconButton } from "@/components/ui/Button";
 import { Menu } from "@/components/ui/Menu";
@@ -16,6 +16,7 @@ import { NotificationBell } from "./NotificationBell";
 
 export function TopBar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, logout } = useAuth();
   const [navOpen, setNavOpen] = useState(false);
 
@@ -75,16 +76,12 @@ export function TopBar() {
               {
                 label: "Organization settings",
                 icon: Building2,
-                onSelect: () => {
-                  window.location.href = "/dashboard/settings";
-                },
+                onSelect: () => router.push("/dashboard/settings"),
               },
               {
                 label: "Members",
                 icon: UserIcon,
-                onSelect: () => {
-                  window.location.href = "/dashboard/members";
-                },
+                onSelect: () => router.push("/dashboard/members"),
               },
               { label: "Sign out", icon: LogOut, destructive: true, onSelect: logout },
             ]}

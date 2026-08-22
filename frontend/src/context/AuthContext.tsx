@@ -109,6 +109,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(() => {
     clearTokens();
     setUser(null);
+    // A full page load, not a client transition: it drops every provider's
+    // cached organization and queue state along with the token.
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     if (typeof window !== "undefined") window.location.href = "/login";
   }, []);
 

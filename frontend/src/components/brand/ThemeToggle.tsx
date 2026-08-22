@@ -1,19 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
 import { IconButton } from "@/components/ui/Button";
 
 export function ThemeToggle({ size = "md" }: { size?: "sm" | "md" }) {
+  // next-themes leaves resolvedTheme undefined until it has read the document,
+  // which is exactly the "not hydrated yet" signal — no mounted flag needed.
   const { resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
 
-  // Theme is unknown during SSR — render a stable placeholder to avoid a
-  // hydration mismatch and a flash of the wrong icon.
-  useEffect(() => setMounted(true), []);
-
-  if (!mounted) {
+  if (!resolvedTheme) {
     return (
       <span
         aria-hidden="true"
