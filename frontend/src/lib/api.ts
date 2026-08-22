@@ -121,3 +121,34 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+/**
+ * Pulls a human-readable message out of a FastAPI error response.
+ *
+ * FastAPI returns `detail` as a string for domain exceptions and as a list of
+ * `{loc, msg}` objects for request-validation failures; this normalises both
+ * so callers can render one string.
+ */
+export function apiErrorMessage(error: unknown, fallback = "Something went wrong."): string {
+  if (axios.isAxiosError(error)) {
+    const detail = error.response?.data?.detail;
+    if (typeof detail === "string") return detail;
+    if (Array.isArray(detail) && detail.length > 0) {
+      const first = detail[0];
+      if (typeof first?.msg === "string") {
+        const field = Array.isArray(first.loc) ? first.loc[first.loc.length - 1] : null;
+        return field ? `${field}: ${first.msg}` : first.msg;
+      }
+    }
+    if (typeof error.response?.data?.message === "string") {
+      return error.response.data.message;
+    }
+    if (error.code === "ERR_NETWORK") {
+      return "Can't reach the Support-AI API. Is the backend running?";
+    }
+    if (error.response?.status === 403) return "You don't have permission to do that.";
+    if (error.response?.status === 404) return "Not found.";
+  }
+  if (error instanceof Error && error.message) return error.message;
+  return fallback;
+}

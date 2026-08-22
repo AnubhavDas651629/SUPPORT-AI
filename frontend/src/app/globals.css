@@ -54,3 +54,247 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* ===========================================================================
+   PUBLIC SURFACE DESIGN SYSTEM
+   ---------------------------------------------------------------------------
+   Tokens and base rules for the landing page and the login/register screens.
+
+   The authenticated dashboard above this line styles itself with literal
+   Tailwind palette classes (slate-*, and ~300 bare `border` utilities that
+   rely on Tailwind's currentColor default). So every rule here that would
+   otherwise apply document-wide — the border-color default, the surface
+   background, the focus ring — is scoped to `.sai-public`, which the landing
+   and auth layouts put on their root element. The dashboard is untouched.
+
+   The @theme block is safe to declare globally: it only defines utilities
+   (bg-surface, text-muted, …), which affect an element only where used.
+   =========================================================================== */
+
+:root {
+  --bg: #ffffff;
+  --bg-inset: #fafafa;
+  --surface: #ffffff;
+  --surface-2: #f5f5f6;
+  --surface-3: #ebebed;
+  --line: #e5e5e8;
+  --line-strong: #d3d3d8;
+
+  --fg: #111113;
+  --fg-muted: #5f5f68;
+  --fg-subtle: #6e6e78;
+  --fg-inverted: #fafafa;
+
+  --accent: #2c5cff;
+  --accent-hover: #1f49dd;
+  /* The accent used as foreground text, stepped for 4.5:1 on both the plain
+     surface and the tinted accent-soft one. --accent stays the fill colour,
+     where white text needs it dark enough to read. */
+  --accent-text: #2450e6;
+  --accent-fg: #ffffff;
+  --accent-soft: #eef2ff;
+  --accent-line: #c7d2fe;
+
+  --success: #15803d;
+  --success-soft: #ecfdf3;
+  --warning: #8f5700;
+  --warning-soft: #fefce8;
+  --danger: #c62828;
+  --danger-soft: #fef2f2;
+  --info: #0e7490;
+  --info-soft: #ecfeff;
+
+  --ring: #2c5cff;
+
+  --radius-control: 6px;
+  --radius-panel: 10px;
+}
+
+.dark {
+  --bg: #08080a;
+  --bg-inset: #0c0c0f;
+  --surface: #0e0e12;
+  --surface-2: #16161b;
+  --surface-3: #1e1e25;
+  --line: #232329;
+  --line-strong: #35353e;
+
+  --fg: #f4f4f5;
+  --fg-muted: #a0a0aa;
+  --fg-subtle: #86868f;
+  --fg-inverted: #08080a;
+
+  --accent: #4363ff;
+  --accent-hover: #5b78ff;
+  --accent-text: #7d95ff;
+  --accent-fg: #ffffff;
+  --accent-soft: #141a33;
+  --accent-line: #2b3670;
+
+  --success: #4ade80;
+  --success-soft: #0d1f16;
+  --warning: #fbbf24;
+  --warning-soft: #211a08;
+  --danger: #f87171;
+  --danger-soft: #250f10;
+  --info: #38bdf8;
+  --info-soft: #071c26;
+
+  --ring: #5b78ff;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-inset: var(--bg-inset);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+
+  --color-fg: var(--fg);
+  --color-muted: var(--fg-muted);
+  --color-subtle: var(--fg-subtle);
+  --color-inverted: var(--fg-inverted);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-text: var(--accent-text);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-line: var(--accent-line);
+
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+
+  --color-ring: var(--ring);
+
+  --radius-control: var(--radius-control);
+  --radius-panel: var(--radius-panel);
+
+  /* Deliberately NOT --font-mono: that token feeds Tailwind preflight's
+     code/pre/kbd/samp rule, so overriding it would restyle every <code> in the
+     dashboard too. `font-code` is public-surface only. */
+  --font-code: var(--font-mono-code), ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+/* Chart colours for the landing page's analytics section. Series 1 is the
+   product accent, series 2 its validated orange companion; the pair clears the
+   CVD, normal-vision and contrast gates on both surfaces. */
+:root {
+  --chart-secondary: #eb6834;
+  --chart-ordinal-1: #86b6ef;
+  --chart-ordinal-2: #5598e7;
+  --chart-ordinal-3: #2a78d6;
+  --chart-ordinal-4: #184f95;
+  --chart-grid: color-mix(in srgb, var(--fg) 8%, transparent);
+}
+
+.dark {
+  --chart-secondary: #d95926;
+  --chart-ordinal-1: #1c5cab;
+  --chart-ordinal-2: #256abf;
+  --chart-ordinal-3: #3987e5;
+  --chart-ordinal-4: #86b6ef;
+  --chart-grid: color-mix(in srgb, var(--fg) 10%, transparent);
+}
+
+/* --- Scoped base rules ---------------------------------------------------
+   In @layer base so Tailwind utilities (which sit in @layer utilities) can
+   still override them; unlayered CSS would beat every layer and silently
+   break border-accent, outline-* and friends. */
+@layer base {
+  .sai-public {
+    background: var(--bg);
+    color: var(--fg);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  .sai-public,
+  .sai-public *,
+  .sai-public ::after,
+  .sai-public ::before,
+  .sai-public ::backdrop,
+  .sai-public ::file-selector-button {
+    border-color: var(--line);
+  }
+
+  .sai-public :where(code, pre, kbd, samp) {
+    font-family: var(--font-mono-code), ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  /* Consistent, always-visible keyboard focus on the public surface. */
+  .sai-public :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
+}
+
+/* Tabular numbers wherever figures are compared vertically. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Motion --------------------------------------------------------------- */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes scale-in {
+  from { opacity: 0; transform: translateY(4px) scale(0.985); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+
+.animate-fade-up { animation: fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-fade-in { animation: fade-in 0.3s ease-out both; }
+.animate-scale-in { animation: scale-in 0.16s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--fg) 6%, transparent), transparent);
+  animation: shimmer 1.4s infinite;
+}
+
+/* Applied document-wide: honouring the OS reduced-motion setting is a
+   correctness fix for the dashboard too, and it changes no default styling. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .skeleton::after { display: none; }
+}
+
+/* Grid / hairline background used on the landing page. */
+.bg-grid {
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--fg) 6%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--fg) 6%, transparent) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
