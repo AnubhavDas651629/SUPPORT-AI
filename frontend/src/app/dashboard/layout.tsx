@@ -1,11 +1,17 @@
-import { Metadata } from "next";
 import { OrganizationProvider } from "@/context/OrganizationContext";
+import { AuthGuard } from "@/components/app/AuthGuard";
+import { AppShell } from "@/components/app/AppShell";
 
-export const metadata: Metadata = {
-  title: "Command Center | Support AI",
-  description: "Manage your AI support agent, monitor escalated tickets, and inspect real-time vector embeddings.",
-};
-
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  return <OrganizationProvider>{children}</OrganizationProvider>;
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <AuthGuard>
+      <OrganizationProvider>
+        <AppShell>{children}</AppShell>
+      </OrganizationProvider>
+    </AuthGuard>
+  );
 }

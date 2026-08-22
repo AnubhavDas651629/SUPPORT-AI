@@ -1,56 +1,243 @@
 @import "tailwindcss";
 
-/* Tailwind v4: enable class-based dark mode */
+/* Class-based dark mode (driven by next-themes) */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* ---------------------------------------------------------------------------
+   Design tokens.
+   Every colour is declared once here as a raw value and exposed to Tailwind
+   through @theme inline, so `bg-surface`, `text-muted`, `border-line` etc.
+   automatically follow the active colour scheme.
+--------------------------------------------------------------------------- */
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --bg: #ffffff;
+  --bg-inset: #fafafa;
+  --surface: #ffffff;
+  --surface-2: #f5f5f6;
+  --surface-3: #ebebed;
+  --line: #e5e5e8;
+  --line-strong: #d3d3d8;
+
+  --fg: #111113;
+  --fg-muted: #5f5f68;
+  --fg-subtle: #8b8b93;
+  --fg-inverted: #fafafa;
+
+  --accent: #2c5cff;
+  --accent-hover: #1f49dd;
+  --accent-fg: #ffffff;
+  --accent-soft: #eef2ff;
+  --accent-line: #c7d2fe;
+
+  --success: #15803d;
+  --success-soft: #ecfdf3;
+  --warning: #a16207;
+  --warning-soft: #fefce8;
+  --danger: #c62828;
+  --danger-soft: #fef2f2;
+  --info: #0e7490;
+  --info-soft: #ecfeff;
+
+  --ring: #2c5cff;
+
+  --radius-control: 6px;
+  --radius-panel: 10px;
 }
 
 .dark {
-  --background: #020617;
-  --foreground: #f1f5f9;
+  --bg: #08080a;
+  --bg-inset: #0c0c0f;
+  --surface: #0e0e12;
+  --surface-2: #16161b;
+  --surface-3: #1e1e25;
+  --line: #232329;
+  --line-strong: #35353e;
+
+  --fg: #f4f4f5;
+  --fg-muted: #a0a0aa;
+  --fg-subtle: #74747f;
+  --fg-inverted: #08080a;
+
+  --accent: #4363ff;
+  --accent-hover: #5b78ff;
+  --accent-fg: #ffffff;
+  --accent-soft: #141a33;
+  --accent-line: #2b3670;
+
+  --success: #4ade80;
+  --success-soft: #0d1f16;
+  --warning: #fbbf24;
+  --warning-soft: #211a08;
+  --danger: #f87171;
+  --danger-soft: #250f10;
+  --info: #38bdf8;
+  --info-soft: #071c26;
+
+  --ring: #5b78ff;
+
   color-scheme: dark;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.97);
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-inset: var(--bg-inset);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+
+  --color-fg: var(--fg);
+  --color-muted: var(--fg-muted);
+  --color-subtle: var(--fg-subtle);
+  --color-inverted: var(--fg-inverted);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-line: var(--accent-line);
+
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+
+  --color-ring: var(--ring);
+
+  --radius-control: var(--radius-control);
+  --radius-panel: var(--radius-panel);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono-code), ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+/* ------------------------------------------------------------------------- */
+
+* {
+  border-color: var(--line);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+/* Consistent, always-visible keyboard focus. */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* Tabular numbers wherever figures are compared vertically. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Motion ------------------------------------------------------------- */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes scale-in {
+  from { opacity: 0; transform: translateY(4px) scale(0.985); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes slide-in-right {
+  from { transform: translateX(100%); }
+  to   { transform: none; }
+}
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+@keyframes trace-dash {
+  to { stroke-dashoffset: 0; }
+}
+
+.animate-fade-up { animation: fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-fade-in { animation: fade-in 0.3s ease-out both; }
+.animate-scale-in { animation: scale-in 0.16s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-slide-in-right { animation: slide-in-right 0.22s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--fg) 6%, transparent), transparent);
+  animation: shimmer 1.4s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  .skeleton::after { display: none; }
 }
 
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  20%, 60% { transform: translateX(-4px); }
-  40%, 80% { transform: translateX(4px); }
-}
-
-.animate-fadeIn {
-  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.animate-shake {
-  animation: shake 0.4s ease-in-out;
-}
-
-/* Custom smooth scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
+/* --- Scrollbars ---------------------------------------------------------- */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: var(--line-strong);
   border-radius: 9999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+::-webkit-scrollbar-thumb:hover { background-color: var(--fg-subtle); background-clip: content-box; }
+
+/* Grid / hairline background used on marketing surfaces. */
+.bg-grid {
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--fg) 6%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--fg) 6%, transparent) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+/* ---------------------------------------------------------------------------
+   Chart colours.
+   Series 1 is the product accent; series 2 is its validated orange companion.
+   The ordinal ramp runs low -> high severity and is always paired with a text
+   label, so colour never carries meaning on its own.
+--------------------------------------------------------------------------- */
+:root {
+  --chart-secondary: #eb6834;
+  --chart-ordinal-1: #86b6ef;
+  --chart-ordinal-2: #5598e7;
+  --chart-ordinal-3: #2a78d6;
+  --chart-ordinal-4: #184f95;
+  --chart-grid: color-mix(in srgb, var(--fg) 8%, transparent);
+}
+
+.dark {
+  --chart-secondary: #d95926;
+  --chart-ordinal-1: #1c5cab;
+  --chart-ordinal-2: #256abf;
+  --chart-ordinal-3: #3987e5;
+  --chart-ordinal-4: #86b6ef;
+  --chart-grid: color-mix(in srgb, var(--fg) 10%, transparent);
 }

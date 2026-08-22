@@ -1,5 +1,3 @@
-import { redirect } from "next/navigation";
-
-export default function HomePage() {
-  redirect("/login");
+export default function Home() {
+  return <main className="p-10">Landing placeholder</main>;
 }
